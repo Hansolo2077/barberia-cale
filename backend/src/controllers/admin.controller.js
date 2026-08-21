@@ -5,7 +5,10 @@ function isValidDate(date) {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 }
 
-function getAppointments(req, res) {
+async function getAppointments(
+  req,
+  res
+) {
   try {
     const {
       startDate,
@@ -16,7 +19,8 @@ function getAppointments(req, res) {
     // Gestión de citas obtiene todas las citas.
     if (!startDate && !endDate) {
       const appointments =
-        appointmentService.getAllAppointments();
+        await appointmentService
+          .getAllAppointments();
 
       return res.json({
         success: true,
@@ -24,7 +28,8 @@ function getAppointments(req, res) {
       });
     }
 
-    // Si viene solo una fecha, la solicitud es incompleta.
+    // Si viene solo una fecha,
+    // la solicitud es incompleta.
     if (!startDate || !endDate) {
       return res.status(400).json({
         success: false,
@@ -53,10 +58,11 @@ function getAppointments(req, res) {
     }
 
     const appointments =
-      appointmentService.getAppointmentsByDateRange(
-        startDate,
-        endDate
-      );
+      await appointmentService
+        .getAppointmentsByDateRange(
+          startDate,
+          endDate
+        );
 
     return res.json({
       success: true,
@@ -78,95 +84,10 @@ function getAppointments(req, res) {
   }
 }
 
-function acceptAppointment(req, res) {
-  try {
-    const appointmentId =
-      Number(req.params.id);
-
-    if (
-      !Number.isInteger(appointmentId) ||
-      appointmentId <= 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Identificador de cita inválido.",
-      });
-    }
-
-    const appointment =
-      appointmentService.acceptAppointment(
-        appointmentId
-      );
-
-    return res.json({
-      success: true,
-      message:
-        "La cita fue aceptada correctamente.",
-      appointment,
-    });
-  } catch (error) {
-    console.error(
-      "ERROR ACEPTANDO CITA:",
-      error
-    );
-
-    return res
-      .status(error.statusCode || 500)
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo aceptar la cita.",
-      });
-  }
-}
-
-function rejectAppointment(req, res) {
-  try {
-    const appointmentId =
-      Number(req.params.id);
-
-    if (
-      !Number.isInteger(appointmentId) ||
-      appointmentId <= 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Identificador de cita inválido.",
-      });
-    }
-
-    const appointment =
-      appointmentService.rejectAppointment(
-        appointmentId
-      );
-
-    return res.json({
-      success: true,
-      message:
-        "La cita fue rechazada correctamente.",
-      appointment,
-    });
-  } catch (error) {
-    console.error(
-      "ERROR RECHAZANDO CITA:",
-      error
-    );
-
-    return res
-      .status(error.statusCode || 500)
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo rechazar la cita.",
-      });
-  }
-}
-
-function cancelAppointment(req, res) {
+async function acceptAppointment(
+  req,
+  res
+) {
   try {
     const appointmentId =
       Number(req.params.id);
@@ -185,7 +106,111 @@ function cancelAppointment(req, res) {
     }
 
     const appointment =
-      appointmentService
+      await appointmentService
+        .acceptAppointment(
+          appointmentId
+        );
+
+    return res.json({
+      success: true,
+      message:
+        "La cita fue aceptada correctamente.",
+      appointment,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR ACEPTANDO CITA:",
+      error
+    );
+
+    return res
+      .status(
+        error.statusCode || 500
+      )
+      .json({
+        success: false,
+        message:
+          error.message ||
+          "No se pudo aceptar la cita.",
+      });
+  }
+}
+
+async function rejectAppointment(
+  req,
+  res
+) {
+  try {
+    const appointmentId =
+      Number(req.params.id);
+
+    if (
+      !Number.isInteger(
+        appointmentId
+      ) ||
+      appointmentId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Identificador de cita inválido.",
+      });
+    }
+
+    const appointment =
+      await appointmentService
+        .rejectAppointment(
+          appointmentId
+        );
+
+    return res.json({
+      success: true,
+      message:
+        "La cita fue rechazada correctamente.",
+      appointment,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR RECHAZANDO CITA:",
+      error
+    );
+
+    return res
+      .status(
+        error.statusCode || 500
+      )
+      .json({
+        success: false,
+        message:
+          error.message ||
+          "No se pudo rechazar la cita.",
+      });
+  }
+}
+
+async function cancelAppointment(
+  req,
+  res
+) {
+  try {
+    const appointmentId =
+      Number(req.params.id);
+
+    if (
+      !Number.isInteger(
+        appointmentId
+      ) ||
+      appointmentId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Identificador de cita inválido.",
+      });
+    }
+
+    const appointment =
+      await appointmentService
         .cancelAppointmentByAdmin(
           appointmentId
         );
@@ -215,7 +240,10 @@ function cancelAppointment(req, res) {
   }
 }
 
-function completeAppointment(req, res) {
+async function completeAppointment(
+  req,
+  res
+) {
   try {
     const appointmentId =
       Number(req.params.id);
@@ -234,7 +262,7 @@ function completeAppointment(req, res) {
     }
 
     const appointment =
-      appointmentService
+      await appointmentService
         .completeAppointment(
           appointmentId
         );

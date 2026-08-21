@@ -1,4 +1,5 @@
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
     createContext,
     ReactNode,
@@ -6,109 +7,257 @@ import {
     useEffect,
     useState,
 } from "react";
-import { Platform } from "react-native";
 
-type User = {
-  id: number;
-  firstName: string;
-  lastName: string;
+import {
+    AuthUser,
+    loginUser,
+    registerUser,
+} from "../api/auth.api";
+
+type LoginData = {
   phone: string;
-  role: "CLIENT" | "ADMIN";
+
+  password: string;
+
+  rememberMe: boolean;
+};
+
+type RegisterData = {
+  firstName: string;
+
+  lastName: string;
+
+  phone: string;
+
+  password: string;
+
+  rememberMe: boolean;
+};
+
+type StoredSession = {
+  token: string;
+
+  user: AuthUser;
 };
 
 type AuthContextType = {
-  user: User | null;
-  token: string | null;
+  user:
+    | AuthUser
+    | null;
+
+  token:
+    | string
+    | null;
+
   loading: boolean;
-  signIn: (token: string, user: User) => Promise<void>;
-  signOut: () => Promise<void>;
+
+  signIn:
+    (
+      data: LoginData
+    ) => Promise<AuthUser>;
+
+  signUp:
+    (
+      data: RegisterData
+    ) => Promise<AuthUser>;
+
+  signOut:
+    () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+const SESSION_KEY =
+  "@barberia_cale_session";
 
-const TOKEN_KEY = "auth_token";
-const USER_KEY = "auth_user";
+const AuthContext =
+  createContext<
+    AuthContextType | undefined
+  >(undefined);
 
-async function saveItem(key: string, value: string) {
-  if (Platform.OS === "web") {
-    localStorage.setItem(key, value);
-    return;
-  }
-
-  await SecureStore.setItemAsync(key, value);
-}
-
-async function getItem(key: string) {
-  if (Platform.OS === "web") {
-    return localStorage.getItem(key);
-  }
-
-  return await SecureStore.getItemAsync(key);
-}
-
-async function deleteItem(key: string) {
-  if (Platform.OS === "web") {
-    localStorage.removeItem(key);
-    return;
-  }
-
-  await SecureStore.deleteItemAsync(key);
-}
+type AuthProviderProps = {
+  children:
+    ReactNode;
+};
 
 export function AuthProvider({
   children,
-}: {
-  children: ReactNode;
-}) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+}: AuthProviderProps) {
+  const [
+    user,
+    setUser,
+  ] =
+    useState<AuthUser | null>(
+      null
+    );
+
+  const [
+    token,
+    setToken,
+  ] =
+    useState<string | null>(
+      null
+    );
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(true);
 
   useEffect(() => {
-    loadSession();
+    restoreSession();
   }, []);
 
-  async function loadSession() {
+  async function restoreSession() {
     try {
-      const storedToken = await getItem(TOKEN_KEY);
-      const storedUser = await getItem(USER_KEY);
+      const storedSession =
+        await AsyncStorage
+          .getItem(
+            SESSION_KEY
+          );
 
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+      if (!storedSession) {
+        return;
       }
+
+      const parsedSession:
+        StoredSession =
+          JSON.parse(
+            storedSession
+          );
+
+      if (
+        !parsedSession.token ||
+        !parsedSession.user
+      ) {
+        await AsyncStorage
+          .removeItem(
+            SESSION_KEY
+          );
+
+        return;
+      }
+
+      setToken(
+        parsedSession.token
+      );
+
+      setUser(
+        parsedSession.user
+      );
     } catch (error) {
       console.error(
-        "Error cargando sesión:",
+        "Error restaurando sesión:",
         error
       );
+
+      await AsyncStorage
+        .removeItem(
+          SESSION_KEY
+        );
     } finally {
       setLoading(false);
     }
   }
 
-  async function signIn(
-    newToken: string,
-    newUser: User
+  async function saveSession(
+    session:
+      StoredSession,
+    rememberMe:
+      boolean
   ) {
-    await saveItem(TOKEN_KEY, newToken);
-    await saveItem(
-      USER_KEY,
-      JSON.stringify(newUser)
+    /*
+     * Siempre actualizamos
+     * la sesión en memoria.
+     */
+    setToken(
+      session.token
     );
 
-    setToken(newToken);
-    setUser(newUser);
+    setUser(
+      session.user
+    );
+
+    /*
+     * Si el usuario quiere
+     * mantener sesión:
+     * guardamos el token.
+     */
+    if (rememberMe) {
+      await AsyncStorage
+        .setItem(
+          SESSION_KEY,
+          JSON.stringify(
+            session
+          )
+        );
+
+      return;
+    }
+
+    /*
+     * Si no quiere persistencia,
+     * eliminamos cualquier sesión
+     * guardada anteriormente.
+     */
+    await AsyncStorage
+      .removeItem(
+        SESSION_KEY
+      );
+  }
+
+  async function signIn(
+    data: LoginData
+  ) {
+    const result =
+      await loginUser(
+        data
+      );
+
+    await saveSession(
+      {
+        token:
+          result.token,
+
+        user:
+          result.user,
+      },
+      data.rememberMe
+    );
+
+    return result.user;
+  }
+
+  async function signUp(
+    data: RegisterData
+  ) {
+    const result =
+      await registerUser(
+        data
+      );
+
+    await saveSession(
+      {
+        token:
+          result.token,
+
+        user:
+          result.user,
+      },
+      data.rememberMe
+    );
+
+    return result.user;
   }
 
   async function signOut() {
-    await deleteItem(TOKEN_KEY);
-    await deleteItem(USER_KEY);
+    setUser(null);
 
     setToken(null);
-    setUser(null);
+
+    await AsyncStorage
+      .removeItem(
+        SESSION_KEY
+      );
   }
 
   return (
@@ -118,6 +267,7 @@ export function AuthProvider({
         token,
         loading,
         signIn,
+        signUp,
         signOut,
       }}
     >
@@ -127,11 +277,14 @@ export function AuthProvider({
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context =
+    useContext(
+      AuthContext
+    );
 
   if (!context) {
     throw new Error(
-      "useAuth debe utilizarse dentro de AuthProvider"
+      "useAuth debe utilizarse dentro de AuthProvider."
     );
   }
 

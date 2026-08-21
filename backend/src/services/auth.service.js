@@ -1,13 +1,32 @@
 const bcrypt = require("bcryptjs");
 const db = require("../database/db");
 
-function registerUser({ firstName, lastName, phone, password }) {
-  // Buscar si ya existe el celular
-  const existingUser = db
-    .prepare("SELECT id FROM users WHERE phone = ?")
-    .get(phone);
+async function registerUser({
+  firstName,
+  lastName,
+  phone,
+  password,
+}) {
+  const cleanFirstName =
+    firstName.trim();
 
-  if (existingUser) {
+  const cleanLastName =
+    lastName.trim();
+
+  const existingUserResult =
+    await db.query(
+      `
+        SELECT id
+        FROM users
+        WHERE phone = $1
+        LIMIT 1
+      `,
+      [phone]
+    );
+
+  if (
+    existingUserResult.rows.length > 0
+  ) {
     const error = new Error(
       "Ya existe una cuenta registrada con este número de celular."
     );
@@ -16,35 +35,113 @@ function registerUser({ firstName, lastName, phone, password }) {
     throw error;
   }
 
-  // Convertir la contraseña en un hash seguro
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  // Insertar usuario
-  const result = db
-    .prepare(`
-      INSERT INTO users (
-        first_name,
-        last_name,
-        phone,
-        password_hash,
-        role
-      )
-      VALUES (?, ?, ?, ?, 'CLIENT')
-    `)
-    .run(
-      firstName.trim(),
-      lastName.trim(),
-      phone,
-      passwordHash
+  const passwordHash =
+    bcrypt.hashSync(
+      password,
+      10
     );
 
-  return {
-    id: result.lastInsertRowid,
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
-    phone,
-    role: "CLIENT",
-  };
+  try {
+    const insertResult =
+      await db.query(
+        `
+          INSERT INTO users (
+            first_name,
+            last_name,
+            phone,
+            password_hash,
+            role
+          )
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            'CLIENT'
+          )
+          RETURNING
+            id,
+            first_name,
+            last_name,
+            phone,
+            role
+        `,
+        [
+          cleanFirstName,
+          cleanLastName,
+          phone,
+          passwordHash,
+        ]
+      );
+
+    const user =
+      insertResult.rows[0];
+
+    return {
+      id: user.id,
+      firstName:
+        user.first_name,
+      lastName:
+        user.last_name,
+      phone:
+        user.phone,
+      role:
+        user.role,
+    };
+  } catch (error) {
+    /*
+     * PostgreSQL unique_violation.
+     * This protects us against a race condition
+     * where two requests try to register the
+     * same phone number at nearly the same time.
+     */
+    if (error.code === "23505") {
+      const conflictError =
+        new Error(
+          "Ya existe una cuenta registrada con este número de celular."
+        );
+
+      conflictError.statusCode =
+        409;
+
+      throw conflictError;
+    }
+
+    throw error;
+  }
+}
+
+async function findUserByPhone(
+  phone
+) {
+  const result =
+    await db.query(
+      `
+        SELECT
+          id,
+          first_name,
+          last_name,
+          phone,
+          password_hash,
+          role
+        FROM users
+        WHERE phone = $1
+        LIMIT 1
+      `,
+      [phone]
+    );
+
+  return result.rows[0];
+}
+
+function verifyPassword(
+  password,
+  passwordHash
+) {
+  return bcrypt.compareSync(
+    password,
+    passwordHash
+  );
 }
 
 module.exports = {
@@ -52,23 +149,3 @@ module.exports = {
   findUserByPhone,
   verifyPassword,
 };
-
-function findUserByPhone(phone) {
-  return db
-    .prepare(`
-      SELECT
-        id,
-        first_name,
-        last_name,
-        phone,
-        password_hash,
-        role
-      FROM users
-      WHERE phone = ?
-    `)
-    .get(phone);
-}
-
-function verifyPassword(password, passwordHash) {
-  return bcrypt.compareSync(password, passwordHash);
-}

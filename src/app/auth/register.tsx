@@ -1,7 +1,10 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+
 import {
-    Alert,
+    useState,
+} from "react";
+
+import {
     Pressable,
     ScrollView,
     StyleSheet,
@@ -10,7 +13,11 @@ import {
     View,
 } from "react-native";
 
-import { registerUser } from "../../api/auth.api";
+import BackButton from "../../components/BackButton";
+
+import { useAuth } from "../../context/AuthContext";
+
+import { showMessage } from "../../utils/show-message";
 
 import {
     COLORS,
@@ -19,89 +26,147 @@ import {
     SPACING,
 } from "../../constants/app-theme";
 
-import BackButton from "../../components/BackButton";
-
 export default function RegisterScreen() {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const [nombre, setNombre] =
-    useState("");
+  const {
+    signUp,
+  } = useAuth();
 
-  const [apellido, setApellido] =
-    useState("");
+  const [
+    firstName,
+    setFirstName,
+  ] = useState("");
 
-  const [celular, setCelular] =
-    useState("");
+  const [
+    lastName,
+    setLastName,
+  ] = useState("");
 
-  const [password, setPassword] =
-    useState("");
+  const [
+    phone,
+    setPhone,
+  ] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [
+    password,
+    setPassword,
+  ] = useState("");
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] = useState("");
+
+  const [
+    rememberMe,
+    setRememberMe,
+  ] = useState(true);
+
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
 
   async function handleRegister() {
-    const nombreLimpio =
-      nombre.trim();
+    const cleanFirstName =
+      firstName.trim();
 
-    const apellidoLimpio =
-      apellido.trim();
+    const cleanLastName =
+      lastName.trim();
 
-    const celularLimpio =
-      celular.trim();
+    const cleanPhone =
+      phone.trim();
 
     if (
-      !nombreLimpio ||
-      !apellidoLimpio ||
-      !celularLimpio ||
-      !password
+      !cleanFirstName ||
+      !cleanLastName ||
+      !cleanPhone ||
+      !password ||
+      !confirmPassword
     ) {
-      Alert.alert(
+      showMessage(
         "Datos incompletos",
-        "Completa todos los campos antes de continuar."
+        "Completa todos los campos para crear tu cuenta."
       );
+
       return;
     }
 
     if (
       !/^\d{8}$/.test(
-        celularLimpio
+        cleanPhone
       )
     ) {
-      Alert.alert(
+      showMessage(
         "Número inválido",
-        "El número de celular debe contener 8 dígitos."
+        "El número de celular debe contener exactamente 8 dígitos."
       );
+
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert(
+    if (
+      password.length < 6
+    ) {
+      showMessage(
         "Contraseña muy corta",
         "La contraseña debe tener al menos 6 caracteres."
       );
+
+      return;
+    }
+
+    if (
+      password !==
+      confirmPassword
+    ) {
+      showMessage(
+        "Las contraseñas no coinciden",
+        "Verifica que ambas contraseñas sean iguales."
+      );
+
       return;
     }
 
     try {
-      setLoading(true);
+      setSubmitting(true);
 
-      await registerUser({
-        firstName:
-          nombreLimpio,
-        lastName:
-          apellidoLimpio,
-        phone:
-          celularLimpio,
-        password,
-      });
+      const user =
+        await signUp({
+          firstName:
+            cleanFirstName,
 
-      Alert.alert(
+          lastName:
+            cleanLastName,
+
+          phone:
+            cleanPhone,
+
+          password,
+
+          rememberMe,
+        });
+
+      showMessage(
         "Cuenta creada",
-        "Tu cuenta fue creada correctamente. Ya puedes iniciar sesión."
+        "Tu cuenta fue creada correctamente."
       );
 
+      if (
+        user.role ===
+        "ADMIN"
+      ) {
+        router.replace(
+          "/admin"
+        );
+
+        return;
+      }
+
       router.replace(
-        "/auth/login"
+        "/client"
       );
     } catch (error) {
       const message =
@@ -109,12 +174,12 @@ export default function RegisterScreen() {
           ? error.message
           : "No se pudo crear la cuenta.";
 
-      Alert.alert(
+      showMessage(
         "No se pudo crear la cuenta",
         message
       );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -128,383 +193,568 @@ export default function RegisterScreen() {
         false
       }
     >
-      <View style={styles.brandBlock}>
-        <View style={styles.brandIcon}>
-          <Text
-            style={
-              styles.brandIconText
-            }
-          >
-            ✂
-          </Text>
-        </View>
-
-        <Text style={styles.brand}>
-          Barbería Cale
+      <View
+        style={
+          styles.content
+        }
+      >
+        <Text
+          style={
+            styles.eyebrow
+          }
+        >
+          BARBERÍA CALE
         </Text>
 
         <Text
           style={
-            styles.brandSubtitle
+            styles.title
           }
         >
-          Crea tu cuenta para reservar
-          y administrar tus citas.
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>
-          NUEVA CUENTA
-        </Text>
-
-        <Text style={styles.title}>
           Crear cuenta
         </Text>
 
-        <Text style={styles.subtitle}>
-          Completa tus datos para comenzar.
+        <Text
+          style={
+            styles.subtitle
+          }
+        >
+          Regístrate para reservar y administrar tus citas.
         </Text>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
+        <View
+          style={
+            styles.form
+          }
+        >
+          <Text
+            style={
+              styles.label
+            }
+          >
             Nombre
           </Text>
 
           <TextInput
-            style={styles.input}
-            placeholder="Ej. Carlos"
+            style={
+              styles.input
+            }
+            value={
+              firstName
+            }
+            onChangeText={
+              setFirstName
+            }
+            placeholder="Tu nombre"
             placeholderTextColor={
               COLORS.textMuted
             }
-            value={nombre}
-            onChangeText={
-              setNombre
-            }
             autoCapitalize="words"
           />
-        </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
+          <Text
+            style={
+              styles.label
+            }
+          >
             Apellido
           </Text>
 
           <TextInput
-            style={styles.input}
-            placeholder="Ej. Pérez"
+            style={
+              styles.input
+            }
+            value={
+              lastName
+            }
+            onChangeText={
+              setLastName
+            }
+            placeholder="Tu apellido"
             placeholderTextColor={
               COLORS.textMuted
             }
-            value={apellido}
-            onChangeText={
-              setApellido
-            }
             autoCapitalize="words"
           />
-        </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
+          <Text
+            style={
+              styles.label
+            }
+          >
             Número de celular
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={
+              styles.input
+            }
+            value={
+              phone
+            }
+            onChangeText={
+              setPhone
+            }
             placeholder="88888888"
             placeholderTextColor={
               COLORS.textMuted
             }
             keyboardType="phone-pad"
             maxLength={8}
-            value={celular}
-            onChangeText={
-              setCelular
-            }
           />
 
-          <Text style={styles.helperText}>
-            Usaremos este número para iniciar sesión y recibir confirmaciones.
-          </Text>
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
+          <Text
+            style={
+              styles.label
+            }
+          >
             Contraseña
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={
+              styles.input
+            }
+            value={
+              password
+            }
+            onChangeText={
+              setPassword
+            }
             placeholder="Mínimo 6 caracteres"
             placeholderTextColor={
               COLORS.textMuted
             }
             secureTextEntry
-            value={password}
-            onChangeText={
-              setPassword
-            }
+            autoCapitalize="none"
           />
 
-          <Text style={styles.helperText}>
-            Usa al menos 6 caracteres.
+          <Text
+            style={
+              styles.label
+            }
+          >
+            Confirmar contraseña
           </Text>
+
+          <TextInput
+            style={[
+              styles.input,
+
+              confirmPassword.length >
+                0 &&
+              password !==
+                confirmPassword &&
+              styles.inputError,
+            ]}
+            value={
+              confirmPassword
+            }
+            onChangeText={
+              setConfirmPassword
+            }
+            placeholder="Escribe la contraseña nuevamente"
+            placeholderTextColor={
+              COLORS.textMuted
+            }
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          {confirmPassword.length >
+            0 &&
+            password !==
+              confirmPassword && (
+              <Text
+                style={
+                  styles.passwordError
+                }
+              >
+                Las contraseñas no coinciden.
+              </Text>
+            )}
+
+          <Pressable
+            style={
+              styles.rememberRow
+            }
+            onPress={() =>
+              setRememberMe(
+                (current) =>
+                  !current
+              )
+            }
+          >
+            <View
+              style={[
+                styles.checkbox,
+
+                rememberMe &&
+                  styles.checkboxSelected,
+              ]}
+            >
+              {rememberMe && (
+                <Text
+                  style={
+                    styles.checkmark
+                  }
+                >
+                  ✓
+                </Text>
+              )}
+            </View>
+
+            <View
+              style={
+                styles.rememberContent
+              }
+            >
+              <Text
+                style={
+                  styles.rememberTitle
+                }
+              >
+                Mantener mi sesión iniciada
+              </Text>
+
+              <Text
+                style={
+                  styles.rememberDescription
+                }
+              >
+                No tendrás que iniciar sesión cada vez que abras la aplicación.
+              </Text>
+            </View>
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.primaryButton,
+
+              submitting &&
+                styles.disabledButton,
+            ]}
+            disabled={
+              submitting
+            }
+            onPress={
+              handleRegister
+            }
+          >
+            <Text
+              style={
+                styles.primaryButtonText
+              }
+            >
+              {submitting
+                ? "Creando cuenta..."
+                : "Crear cuenta"}
+            </Text>
+          </Pressable>
+
+          <View
+            style={
+              styles.loginRow
+            }
+          >
+            <Text
+              style={
+                styles.loginText
+              }
+            >
+              ¿Ya tienes una cuenta?
+            </Text>
+
+            <Pressable
+              onPress={() =>
+                router.push(
+                  "/auth/login"
+                )
+              }
+            >
+              <Text
+                style={
+                  styles.loginLink
+                }
+              >
+                Iniciar sesión
+              </Text>
+            </Pressable>
+          </View>
+
+          <BackButton />
         </View>
-
-        <Pressable
-          style={[
-            styles.primaryButton,
-            loading &&
-              styles.disabledButton,
-          ]}
-          onPress={
-            handleRegister
-          }
-          disabled={loading}
-        >
-          <Text
-            style={
-              styles.primaryButtonText
-            }
-          >
-            {loading
-              ? "Creando cuenta..."
-              : "Crear cuenta"}
-          </Text>
-        </Pressable>
-
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-
-          <Text
-            style={
-              styles.dividerText
-            }
-          >
-            o
-          </Text>
-
-          <View style={styles.divider} />
-        </View>
-
-        <Pressable
-          style={
-            styles.loginButton
-          }
-          onPress={() =>
-            router.push(
-              "/auth/login"
-            )
-          }
-        >
-          <Text
-            style={
-              styles.loginButtonText
-            }
-          >
-            Ya tengo una cuenta
-          </Text>
-        </Pressable>
       </View>
-
-      <BackButton />
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    backgroundColor:
-      COLORS.background,
-    paddingHorizontal:
-      SPACING.lg,
-    paddingVertical:
-      SPACING.xxl,
-  },
+const styles =
+  StyleSheet.create({
+    container: {
+      flexGrow: 1,
 
-  brandBlock: {
-    alignItems: "center",
-    marginBottom:
-      SPACING.xl,
-  },
+      backgroundColor:
+        COLORS.background,
 
-  brandIcon: {
-    width: 64,
-    height: 64,
-    borderRadius:
-      RADIUS.pill,
-    backgroundColor:
-      COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom:
-      SPACING.md,
-  },
+      paddingHorizontal:
+        SPACING.lg,
 
-  brandIconText: {
-    fontSize: 28,
-  },
+      paddingVertical:
+        SPACING.xl,
+    },
 
-  brand: {
-    fontSize:
-      FONT.heading,
-    fontWeight: "800",
-    color: COLORS.text,
-    marginBottom:
-      SPACING.xs,
-  },
+    content: {
+      width: "100%",
 
-  brandSubtitle: {
-    fontSize:
-      FONT.small,
-    lineHeight: 20,
-    color:
-      COLORS.textSecondary,
-    textAlign: "center",
-    maxWidth: 320,
-  },
+      maxWidth: 440,
 
-  card: {
-    width: "100%",
-    maxWidth: 460,
-    alignSelf: "center",
-    backgroundColor:
-      COLORS.surface,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
-    borderRadius:
-      RADIUS.xl,
-    padding:
-      SPACING.lg,
-  },
+      alignSelf: "center",
+    },
 
-  eyebrow: {
-    fontSize:
-      FONT.caption,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    color:
-      COLORS.textSecondary,
-    marginBottom:
-      SPACING.xs,
-  },
+    eyebrow: {
+      fontSize:
+        FONT.caption,
 
-  title: {
-    fontSize: FONT.title,
-    fontWeight: "800",
-    color: COLORS.text,
-    marginBottom:
-      SPACING.sm,
-  },
+      fontWeight: "700",
 
-  subtitle: {
-    fontSize: FONT.body,
-    lineHeight: 23,
-    color:
-      COLORS.textSecondary,
-    marginBottom:
-      SPACING.lg,
-  },
+      letterSpacing: 1.2,
 
-  formGroup: {
-    marginBottom:
-      SPACING.md,
-  },
+      color:
+        COLORS.textSecondary,
 
-  label: {
-    fontSize: FONT.small,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom:
-      SPACING.sm,
-  },
+      marginBottom:
+        SPACING.sm,
+    },
 
-  input: {
-    backgroundColor:
-      COLORS.background,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
-    borderRadius:
-      RADIUS.md,
-    paddingHorizontal:
-      SPACING.md,
-    paddingVertical: 14,
-    fontSize: FONT.body,
-    color: COLORS.text,
-  },
+    title: {
+      fontSize:
+        FONT.title,
 
-  helperText: {
-    fontSize:
-      FONT.caption,
-    lineHeight: 18,
-    color:
-      COLORS.textSecondary,
-    marginTop:
-      SPACING.xs,
-  },
+      fontWeight: "800",
 
-  primaryButton: {
-    backgroundColor:
-      COLORS.primary,
-    borderRadius:
-      RADIUS.md,
-    paddingVertical: 15,
-    alignItems: "center",
-    marginTop:
-      SPACING.sm,
-  },
+      color:
+        COLORS.text,
 
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: FONT.body,
-    fontWeight: "700",
-  },
+      marginBottom:
+        SPACING.sm,
+    },
 
-  disabledButton: {
-    opacity: 0.55,
-  },
+    subtitle: {
+      fontSize:
+        FONT.body,
 
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical:
-      SPACING.lg,
-  },
+      lineHeight: 24,
 
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor:
-      COLORS.border,
-  },
+      color:
+        COLORS.textSecondary,
 
-  dividerText: {
-    marginHorizontal:
-      SPACING.md,
-    fontSize: FONT.small,
-    color:
-      COLORS.textSecondary,
-  },
+      marginBottom:
+        SPACING.xl,
+    },
 
-  loginButton: {
-    borderWidth: 1,
-    borderColor:
-      COLORS.primary,
-    borderRadius:
-      RADIUS.md,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
+    form: {
+      width: "100%",
+    },
 
-  loginButtonText: {
-    color: COLORS.text,
-    fontSize: FONT.body,
-    fontWeight: "700",
-  },
+    label: {
+      fontSize:
+        FONT.small,
 
- 
-});
+      fontWeight: "700",
+
+      color:
+        COLORS.text,
+
+      marginBottom:
+        SPACING.xs,
+
+      marginTop:
+        SPACING.sm,
+    },
+
+    input: {
+      width: "100%",
+
+      backgroundColor:
+        COLORS.surface,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      borderRadius:
+        RADIUS.md,
+
+      paddingHorizontal:
+        SPACING.md,
+
+      paddingVertical: 14,
+
+      fontSize:
+        FONT.body,
+
+      color:
+        COLORS.text,
+    },
+
+    inputError: {
+      borderColor:
+        COLORS.danger,
+    },
+
+    passwordError: {
+      fontSize:
+        FONT.caption,
+
+      color:
+        COLORS.danger,
+
+      marginTop:
+        SPACING.xs,
+    },
+
+    rememberRow: {
+      flexDirection: "row",
+
+      alignItems:
+        "flex-start",
+
+      marginTop:
+        SPACING.lg,
+
+      marginBottom:
+        SPACING.lg,
+    },
+
+    checkbox: {
+      width: 22,
+
+      height: 22,
+
+      borderRadius: 6,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      backgroundColor:
+        COLORS.surface,
+
+      justifyContent:
+        "center",
+
+      alignItems:
+        "center",
+
+      marginRight:
+        SPACING.sm,
+
+      marginTop: 1,
+    },
+
+    checkboxSelected: {
+      backgroundColor:
+        COLORS.primary,
+
+      borderColor:
+        COLORS.primary,
+    },
+
+    checkmark: {
+      color: "#FFFFFF",
+
+      fontSize: 14,
+
+      fontWeight: "800",
+    },
+
+    rememberContent: {
+      flex: 1,
+    },
+
+    rememberTitle: {
+      fontSize:
+        FONT.small,
+
+      fontWeight: "700",
+
+      color:
+        COLORS.text,
+
+      marginBottom: 2,
+    },
+
+    rememberDescription: {
+      fontSize:
+        FONT.caption,
+
+      lineHeight: 18,
+
+      color:
+        COLORS.textSecondary,
+    },
+
+    primaryButton: {
+      backgroundColor:
+        COLORS.primary,
+
+      borderRadius:
+        RADIUS.md,
+
+      paddingVertical: 15,
+
+      alignItems:
+        "center",
+    },
+
+    primaryButtonText: {
+      color: "#FFFFFF",
+
+      fontSize:
+        FONT.body,
+
+      fontWeight: "700",
+    },
+
+    disabledButton: {
+      opacity: 0.55,
+    },
+
+    loginRow: {
+      flexDirection: "row",
+
+      justifyContent:
+        "center",
+
+      alignItems:
+        "center",
+
+      flexWrap: "wrap",
+
+      gap: 5,
+
+      marginTop:
+        SPACING.lg,
+    },
+
+    loginText: {
+      fontSize:
+        FONT.small,
+
+      color:
+        COLORS.textSecondary,
+    },
+
+    loginLink: {
+      fontSize:
+        FONT.small,
+
+      fontWeight: "700",
+
+      color:
+        COLORS.text,
+    },
+  });

@@ -1,53 +1,112 @@
-const API_URL = "http://192.168.0.13:4000/api";
+const API_URL =
+  "http://localhost:4000/api";
 
-export type RegisterData = {
+export type AuthUser = {
+  id: number;
+
   firstName: string;
+
   lastName: string;
+
   phone: string;
-  password: string;
+
+  role:
+    | "CLIENT"
+    | "ADMIN";
 };
 
-export async function registerUser(data: RegisterData) {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: "POST",
+export type AuthResponse = {
+  success: boolean;
 
-    headers: {
-      "Content-Type": "application/json",
-    },
+  message: string;
 
-    body: JSON.stringify(data),
-  });
+  token: string;
 
-  const result = await response.json();
+  user: AuthUser;
+};
+
+type LoginData = {
+  phone: string;
+
+  password: string;
+
+  rememberMe: boolean;
+};
+
+type RegisterData = {
+  firstName: string;
+
+  lastName: string;
+
+  phone: string;
+
+  password: string;
+
+  rememberMe: boolean;
+};
+
+export async function loginUser(
+  data: LoginData
+): Promise<AuthResponse> {
+  const response =
+    await fetch(
+      `${API_URL}/auth/login`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify(
+            data
+          ),
+      }
+    );
+
+  const result =
+    await response.json();
 
   if (!response.ok) {
     throw new Error(
-      result.message || "No se pudo crear la cuenta."
+      result.message ||
+        "No se pudo iniciar sesión."
     );
   }
 
   return result;
 }
 
-export type LoginData = {
-  phone: string;
-  password: string;
-};
+export async function registerUser(
+  data: RegisterData
+): Promise<AuthResponse> {
+  const response =
+    await fetch(
+      `${API_URL}/auth/register`,
+      {
+        method: "POST",
 
-export async function loginUser(data: LoginData) {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
 
-  const result = await response.json();
+        body:
+          JSON.stringify(
+            data
+          ),
+      }
+    );
+
+  const result =
+    await response.json();
 
   if (!response.ok) {
     throw new Error(
-      result.message || "No se pudo iniciar sesión."
+      result.message ||
+        "No se pudo crear la cuenta."
     );
   }
 

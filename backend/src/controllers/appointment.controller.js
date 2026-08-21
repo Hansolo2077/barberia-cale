@@ -7,9 +7,14 @@ function isValidDateFormat(date) {
 
 function getTomorrowDate() {
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const year = tomorrow.getFullYear();
+  tomorrow.setDate(
+    tomorrow.getDate() + 1
+  );
+
+  const year =
+    tomorrow.getFullYear();
+
   const month = String(
     tomorrow.getMonth() + 1
   ).padStart(2, "0");
@@ -21,11 +26,17 @@ function getTomorrowDate() {
   return `${year}-${month}-${day}`;
 }
 
-function availability(req, res) {
+async function availability(
+  req,
+  res
+) {
   try {
     const { date } = req.query;
 
-    if (!date || !isValidDateFormat(date)) {
+    if (
+      !date ||
+      !isValidDateFormat(date)
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -33,7 +44,8 @@ function availability(req, res) {
       });
     }
 
-    const minimumDate = getTomorrowDate();
+    const minimumDate =
+      getTomorrowDate();
 
     if (date < minimumDate) {
       return res.status(400).json({
@@ -44,7 +56,8 @@ function availability(req, res) {
     }
 
     const times =
-      appointmentService.getAvailability(date);
+      await appointmentService
+        .getAvailability(date);
 
     return res.json({
       success: true,
@@ -52,7 +65,10 @@ function availability(req, res) {
       times,
     });
   } catch (error) {
-    console.error(error);
+    console.error(
+      "ERROR CONSULTANDO DISPONIBILIDAD:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -62,7 +78,10 @@ function availability(req, res) {
   }
 }
 
-function create(req, res) {
+async function create(
+  req,
+  res
+) {
   try {
     const {
       service,
@@ -70,7 +89,11 @@ function create(req, res) {
       time,
     } = req.body;
 
-    if (!service || !date || !time) {
+    if (
+      !service ||
+      !date ||
+      !time
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -78,14 +101,18 @@ function create(req, res) {
       });
     }
 
-    if (!isValidDateFormat(date)) {
+    if (
+      !isValidDateFormat(date)
+    ) {
       return res.status(400).json({
         success: false,
-        message: "La fecha no es válida.",
+        message:
+          "La fecha no es válida.",
       });
     }
 
-    const minimumDate = getTomorrowDate();
+    const minimumDate =
+      getTomorrowDate();
 
     if (date < minimumDate) {
       return res.status(400).json({
@@ -96,24 +123,33 @@ function create(req, res) {
     }
 
     const appointment =
-      appointmentService.createAppointment({
-        userId: req.user.userId,
-        service,
-        date,
-        time,
-      });
-
-    return res.status(201).json({
-      success: true,
-      message:
-        "Cita solicitada correctamente.",
-      appointment,
-    });
-  } catch (error) {
-    console.error(error);
+      await appointmentService
+        .createAppointment({
+          userId:
+            req.user.userId,
+          service,
+          date,
+          time,
+        });
 
     return res
-      .status(error.statusCode || 500)
+      .status(201)
+      .json({
+        success: true,
+        message:
+          "Cita solicitada correctamente.",
+        appointment,
+      });
+  } catch (error) {
+    console.error(
+      "ERROR CREANDO CITA:",
+      error
+    );
+
+    return res
+      .status(
+        error.statusCode || 500
+      )
       .json({
         success: false,
         message:
@@ -123,19 +159,26 @@ function create(req, res) {
   }
 }
 
-function myAppointments(req, res) {
+async function myAppointments(
+  req,
+  res
+) {
   try {
     const appointments =
-      appointmentService.getUserAppointments(
-        req.user.userId
-      );
+      await appointmentService
+        .getUserAppointments(
+          req.user.userId
+        );
 
     return res.json({
       success: true,
       appointments,
     });
   } catch (error) {
-    console.error(error);
+    console.error(
+      "ERROR CONSULTANDO CITAS DEL USUARIO:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -145,37 +188,50 @@ function myAppointments(req, res) {
   }
 }
 
-function cancel(req, res) {
+async function cancel(
+  req,
+  res
+) {
   try {
     const appointmentId =
       Number(req.params.id);
 
     if (
-      !Number.isInteger(appointmentId) ||
+      !Number.isInteger(
+        appointmentId
+      ) ||
       appointmentId <= 0
     ) {
       return res.status(400).json({
         success: false,
-        message: "Identificador de cita inválido.",
+        message:
+          "Identificador de cita inválido.",
       });
     }
 
     const appointment =
-      appointmentService.cancelAppointment(
-        req.user.userId,
-        appointmentId
-      );
+      await appointmentService
+        .cancelAppointment(
+          req.user.userId,
+          appointmentId
+        );
 
     return res.json({
       success: true,
-      message: "La cita fue cancelada correctamente.",
+      message:
+        "La cita fue cancelada correctamente.",
       appointment,
     });
   } catch (error) {
-    console.error("ERROR AL CANCELAR CITA:", error);
+    console.error(
+      "ERROR AL CANCELAR CITA:",
+      error
+    );
 
     return res
-      .status(error.statusCode || 500)
+      .status(
+        error.statusCode || 500
+      )
       .json({
         success: false,
         message:

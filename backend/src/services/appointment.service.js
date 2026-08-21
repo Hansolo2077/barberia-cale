@@ -13,19 +13,34 @@ const AVAILABLE_TIMES = [
   "17:00",
 ];
 
-function getAvailability(date) {
-  const occupied = db
-    .prepare(`
-      SELECT appointment_time
+/*
+ * Devuelve los horarios disponibles
+ * para una fecha.
+ */
+async function getAvailability(date) {
+  const result = await db.query(
+    `
+      SELECT
+        TO_CHAR(
+          appointment_time,
+          'HH24:MI'
+        ) AS time
+
       FROM appointments
-      WHERE appointment_date = ?
-        AND status IN ('PENDING', 'ACCEPTED')
-    `)
-    .all(date);
+
+      WHERE appointment_date = $1
+
+        AND status IN (
+          'PENDING',
+          'ACCEPTED'
+        )
+    `,
+    [date]
+  );
 
   const occupiedTimes = new Set(
-    occupied.map(
-      (item) => item.appointment_time
+    result.rows.map(
+      (item) => item.time
     )
   );
 
@@ -38,12 +53,26 @@ function getAvailability(date) {
   );
 }
 
-function createAppointment({
+/*
+ * Crea una nueva cita.
+ *
+ * Reglas:
+ * - Máximo 1 cita activa por día.
+ * - Máximo 2 citas activas dentro
+ *   de un período móvil de 7 días.
+ * - Solo PENDING y ACCEPTED
+ *   cuentan como citas activas.
+ */
+async function createAppointment({
   userId,
   service,
   date,
   time,
 }) {
+  /*
+   * Validar que la hora esté dentro
+   * de los horarios permitidos.
+   */
   if (
     !AVAILABLE_TIMES.includes(time)
   ) {
@@ -52,95 +81,294 @@ function createAppointment({
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  const existingAppointment = db
-    .prepare(`
-      SELECT id
-      FROM appointments
-      WHERE appointment_date = ?
-        AND appointment_time = ?
-        AND status IN ('PENDING', 'ACCEPTED')
-    `)
-    .get(
-      date,
-      time
+  /*
+   * Máximo 1 cita activa
+   * por día.
+   */
+  const dailyResult =
+    await db.query(
+      `
+        SELECT
+          COUNT(*)::int AS count
+
+        FROM appointments
+
+        WHERE user_id = $1
+
+          AND appointment_date = $2
+
+          AND status IN (
+            'PENDING',
+            'ACCEPTED'
+          )
+      `,
+      [
+        userId,
+        date,
+      ]
     );
 
-  if (existingAppointment) {
+  const dailyCount =
+    dailyResult.rows[0].count;
+
+  if (dailyCount >= 1) {
+    const error = new Error(
+      "Solo puedes tener una cita activa por día."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
+  /*
+   * Máximo 2 citas activas
+   * dentro de una ventana móvil
+   * de 7 días.
+   *
+   * Ejemplo:
+   * Si la nueva cita es para el día 21,
+   * se revisan los días 15 al 21,
+   * ambos incluidos.
+   */
+  const sevenDayResult =
+    await db.query(
+      `
+        SELECT
+          COUNT(*)::int AS count
+
+        FROM appointments
+
+        WHERE user_id = $1
+
+          AND status IN (
+            'PENDING',
+            'ACCEPTED'
+          )
+
+          AND appointment_date
+            BETWEEN
+              (
+                $2::date
+                - INTERVAL '6 days'
+              )
+              AND
+              $2::date
+      `,
+      [
+        userId,
+        date,
+      ]
+    );
+
+  const sevenDayCount =
+    sevenDayResult.rows[0].count;
+
+  if (sevenDayCount >= 2) {
+    const error = new Error(
+      "Solo puedes tener un máximo de dos citas activas dentro de un período de 7 días."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
+  /*
+   * Verificar que el horario
+   * siga disponible.
+   */
+  const existingResult =
+    await db.query(
+      `
+        SELECT id
+
+        FROM appointments
+
+        WHERE appointment_date = $1
+
+          AND appointment_time = $2
+
+          AND status IN (
+            'PENDING',
+            'ACCEPTED'
+          )
+
+        LIMIT 1
+      `,
+      [
+        date,
+        time,
+      ]
+    );
+
+  if (
+    existingResult.rows.length > 0
+  ) {
     const error = new Error(
       "Este horario ya no está disponible."
     );
 
     error.statusCode = 409;
+
     throw error;
   }
 
-  const result = db
-    .prepare(`
-      INSERT INTO appointments (
+  try {
+    const result =
+      await db.query(
+        `
+          INSERT INTO appointments (
+            user_id,
+            service,
+            appointment_date,
+            appointment_time,
+            status
+          )
+
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            'PENDING'
+          )
+
+          RETURNING
+            id,
+
+            user_id AS "userId",
+
+            service,
+
+            TO_CHAR(
+              appointment_date,
+              'YYYY-MM-DD'
+            ) AS date,
+
+            TO_CHAR(
+              appointment_time,
+              'HH24:MI'
+            ) AS time,
+
+            status,
+
+            created_at AS "createdAt"
+        `,
+        [
+          userId,
+          service,
+          date,
+          time,
+        ]
+      );
+
+    return result.rows[0];
+  } catch (error) {
+    /*
+     * El índice único parcial
+     * protege contra dos solicitudes
+     * simultáneas para el mismo horario.
+     */
+    if (error.code === "23505") {
+      const conflictError =
+        new Error(
+          "Este horario ya no está disponible."
+        );
+
+      conflictError.statusCode =
+        409;
+
+      throw conflictError;
+    }
+
+    throw error;
+  }
+}
+
+/*
+ * Devuelve todas las citas
+ * de un cliente.
+ */
+async function getUserAppointments(
+  userId
+) {
+  const result = await db.query(
+    `
+      SELECT
+        id,
+
+        service,
+
+        TO_CHAR(
+          appointment_date,
+          'YYYY-MM-DD'
+        ) AS date,
+
+        TO_CHAR(
+          appointment_time,
+          'HH24:MI'
+        ) AS time,
+
+        status,
+
+        created_at AS "createdAt"
+
+      FROM appointments
+
+      WHERE user_id = $1
+
+      ORDER BY
+        appointment_date DESC,
+        appointment_time DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
+}
+
+/*
+ * Cancelación realizada
+ * por el cliente.
+ *
+ * El cliente solo dispone de una hora
+ * desde que creó la cita.
+ */
+async function cancelAppointment(
+  userId,
+  appointmentId
+) {
+  const result = await db.query(
+    `
+      SELECT
+        id,
         user_id,
         service,
         appointment_date,
         appointment_time,
-        status
-      )
-      VALUES (?, ?, ?, ?, 'PENDING')
-    `)
-    .run(
-      userId,
-      service,
-      date,
-      time
-    );
-
-  return {
-    id: result.lastInsertRowid,
-    userId,
-    service,
-    date,
-    time,
-    status: "PENDING",
-  };
-}
-
-function getUserAppointments(
-  userId
-) {
-  return db
-    .prepare(`
-      SELECT
-        id,
-        service,
-        appointment_date AS date,
-        appointment_time AS time,
         status,
-        created_at AS createdAt
-      FROM appointments
-      WHERE user_id = ?
-      ORDER BY
-        appointment_date DESC,
-        appointment_time DESC
-    `)
-    .all(userId);
-}
+        created_at
 
-function cancelAppointment(
-  userId,
-  appointmentId
-) {
-  const appointment = db
-    .prepare(`
-      SELECT *
       FROM appointments
-      WHERE id = ?
-        AND user_id = ?
-    `)
-    .get(
+
+      WHERE id = $1
+        AND user_id = $2
+
+      LIMIT 1
+    `,
+    [
       appointmentId,
-      userId
-    );
+      userId,
+    ]
+  );
+
+  const appointment =
+    result.rows[0];
 
   if (!appointment) {
     const error = new Error(
@@ -148,6 +376,7 @@ function cancelAppointment(
     );
 
     error.statusCode = 404;
+
     throw error;
   }
 
@@ -164,14 +393,17 @@ function cancelAppointment(
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  const createdAt = new Date(
-    appointment.created_at + " UTC"
-  );
+  const createdAt =
+    new Date(
+      appointment.created_at
+    );
 
-  const now = new Date();
+  const now =
+    new Date();
 
   const elapsedMilliseconds =
     now.getTime() -
@@ -181,42 +413,90 @@ function cancelAppointment(
     60 * 60 * 1000;
 
   if (
-    elapsedMilliseconds > oneHour
+    elapsedMilliseconds >
+    oneHour
   ) {
     const error = new Error(
       "El plazo de una hora para cancelar esta cita ha finalizado."
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  db.prepare(`
-    UPDATE appointments
-    SET status = 'CANCELLED'
-    WHERE id = ?
-  `).run(appointmentId);
+  const updateResult =
+    await db.query(
+      `
+        UPDATE appointments
 
-  return {
-    ...appointment,
-    status: "CANCELLED",
-  };
+        SET status = 'CANCELLED'
+
+        WHERE id = $1
+
+        RETURNING
+          id,
+
+          user_id AS "userId",
+
+          service,
+
+          TO_CHAR(
+            appointment_date,
+            'YYYY-MM-DD'
+          ) AS date,
+
+          TO_CHAR(
+            appointment_time,
+            'HH24:MI'
+          ) AS time,
+
+          status,
+
+          created_at AS "createdAt"
+      `,
+      [appointmentId]
+    );
+
+  return updateResult.rows[0];
 }
 
-function getAllAppointments() {
-  return db
-    .prepare(`
+/*
+ * Devuelve todas las citas
+ * para administración.
+ */
+async function getAllAppointments() {
+  const result = await db.query(
+    `
       SELECT
         a.id,
-        a.service,
-        a.appointment_date AS date,
-        a.appointment_time AS time,
-        a.status,
-        a.created_at AS createdAt,
 
-        u.id AS userId,
-        u.first_name AS firstName,
-        u.last_name AS lastName,
+        a.service,
+
+        TO_CHAR(
+          a.appointment_date,
+          'YYYY-MM-DD'
+        ) AS date,
+
+        TO_CHAR(
+          a.appointment_time,
+          'HH24:MI'
+        ) AS time,
+
+        a.status,
+
+        a.created_at
+          AS "createdAt",
+
+        u.id
+          AS "userId",
+
+        u.first_name
+          AS "firstName",
+
+        u.last_name
+          AS "lastName",
+
         u.phone
 
       FROM appointments a
@@ -227,20 +507,35 @@ function getAllAppointments() {
       ORDER BY
         a.appointment_date DESC,
         a.appointment_time DESC
-    `)
-    .all();
+    `
+  );
+
+  return result.rows;
 }
 
-function acceptAppointment(
+/*
+ * Acepta una cita pendiente.
+ */
+async function acceptAppointment(
   appointmentId
 ) {
-  const appointment = db
-    .prepare(`
-      SELECT *
+  const result = await db.query(
+    `
+      SELECT
+        id,
+        status
+
       FROM appointments
-      WHERE id = ?
-    `)
-    .get(appointmentId);
+
+      WHERE id = $1
+
+      LIMIT 1
+    `,
+    [appointmentId]
+  );
+
+  const appointment =
+    result.rows[0];
 
   if (!appointment) {
     const error = new Error(
@@ -248,42 +543,95 @@ function acceptAppointment(
     );
 
     error.statusCode = 404;
+
     throw error;
   }
 
   if (
-    appointment.status !== "PENDING"
+    appointment.status !==
+    "PENDING"
   ) {
     const error = new Error(
       "Solo las citas pendientes pueden aceptarse."
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  db.prepare(`
-    UPDATE appointments
-    SET status = 'ACCEPTED'
-    WHERE id = ?
-  `).run(appointmentId);
+  const updateResult =
+    await db.query(
+      `
+        UPDATE appointments
 
-  return {
-    ...appointment,
-    status: "ACCEPTED",
-  };
+        SET status = 'ACCEPTED'
+
+        WHERE id = $1
+          AND status = 'PENDING'
+
+        RETURNING
+          id,
+
+          user_id AS "userId",
+
+          service,
+
+          TO_CHAR(
+            appointment_date,
+            'YYYY-MM-DD'
+          ) AS date,
+
+          TO_CHAR(
+            appointment_time,
+            'HH24:MI'
+          ) AS time,
+
+          status,
+
+          created_at AS "createdAt"
+      `,
+      [appointmentId]
+    );
+
+  if (
+    updateResult.rows.length === 0
+  ) {
+    const error = new Error(
+      "La cita ya fue procesada."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
+  return updateResult.rows[0];
 }
 
-function rejectAppointment(
+/*
+ * Rechaza una cita pendiente.
+ */
+async function rejectAppointment(
   appointmentId
 ) {
-  const appointment = db
-    .prepare(`
-      SELECT *
+  const result = await db.query(
+    `
+      SELECT
+        id,
+        status
+
       FROM appointments
-      WHERE id = ?
-    `)
-    .get(appointmentId);
+
+      WHERE id = $1
+
+      LIMIT 1
+    `,
+    [appointmentId]
+  );
+
+  const appointment =
+    result.rows[0];
 
   if (!appointment) {
     const error = new Error(
@@ -291,49 +639,111 @@ function rejectAppointment(
     );
 
     error.statusCode = 404;
+
     throw error;
   }
 
   if (
-    appointment.status !== "PENDING"
+    appointment.status !==
+    "PENDING"
   ) {
     const error = new Error(
       "Solo las citas pendientes pueden rechazarse."
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  db.prepare(`
-    UPDATE appointments
-    SET status = 'REJECTED'
-    WHERE id = ?
-  `).run(appointmentId);
+  const updateResult =
+    await db.query(
+      `
+        UPDATE appointments
 
-  return {
-    ...appointment,
-    status: "REJECTED",
-  };
+        SET status = 'REJECTED'
+
+        WHERE id = $1
+          AND status = 'PENDING'
+
+        RETURNING
+          id,
+
+          user_id AS "userId",
+
+          service,
+
+          TO_CHAR(
+            appointment_date,
+            'YYYY-MM-DD'
+          ) AS date,
+
+          TO_CHAR(
+            appointment_time,
+            'HH24:MI'
+          ) AS time,
+
+          status,
+
+          created_at AS "createdAt"
+      `,
+      [appointmentId]
+    );
+
+  if (
+    updateResult.rows.length === 0
+  ) {
+    const error = new Error(
+      "La cita ya fue procesada."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
+  return updateResult.rows[0];
 }
 
-function getAppointmentsByDateRange(
+/*
+ * Consulta la agenda
+ * por rango de fechas.
+ */
+async function getAppointmentsByDateRange(
   startDate,
   endDate
 ) {
-  return db
-    .prepare(`
+  const result = await db.query(
+    `
       SELECT
         a.id,
-        a.service,
-        a.appointment_date AS date,
-        a.appointment_time AS time,
-        a.status,
-        a.created_at AS createdAt,
 
-        u.id AS userId,
-        u.first_name AS firstName,
-        u.last_name AS lastName,
+        a.service,
+
+        TO_CHAR(
+          a.appointment_date,
+          'YYYY-MM-DD'
+        ) AS date,
+
+        TO_CHAR(
+          a.appointment_time,
+          'HH24:MI'
+        ) AS time,
+
+        a.status,
+
+        a.created_at
+          AS "createdAt",
+
+        u.id
+          AS "userId",
+
+        u.first_name
+          AS "firstName",
+
+        u.last_name
+          AS "lastName",
+
         u.phone
 
       FROM appointments a
@@ -342,28 +752,60 @@ function getAppointmentsByDateRange(
         ON a.user_id = u.id
 
       WHERE a.appointment_date
-        BETWEEN ? AND ?
+        BETWEEN $1 AND $2
 
       ORDER BY
         a.appointment_date ASC,
         a.appointment_time ASC
-    `)
-    .all(
+    `,
+    [
       startDate,
-      endDate
-    );
+      endDate,
+    ]
+  );
+
+  return result.rows;
 }
 
-function cancelAppointmentByAdmin(
+/*
+ * Cancelación administrativa.
+ *
+ * Solo se permite cancelar una cita
+ * ACCEPTED cuya hora todavía
+ * no haya llegado.
+ */
+async function cancelAppointmentByAdmin(
   appointmentId
 ) {
-  const appointment = db
-    .prepare(`
-      SELECT *
+  const result = await db.query(
+    `
+      SELECT
+        id,
+
+        status,
+
+        (
+          appointment_date +
+          appointment_time
+        ) >
+        (
+          NOW()
+          AT TIME ZONE
+          'America/Managua'
+        )
+        AS "isFuture"
+
       FROM appointments
-      WHERE id = ?
-    `)
-    .get(appointmentId);
+
+      WHERE id = $1
+
+      LIMIT 1
+    `,
+    [appointmentId]
+  );
+
+  const appointment =
+    result.rows[0];
 
   if (!appointment) {
     const error = new Error(
@@ -371,6 +813,7 @@ function cancelAppointmentByAdmin(
     );
 
     error.statusCode = 404;
+
     throw error;
   }
 
@@ -383,72 +826,119 @@ function cancelAppointmentByAdmin(
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  const [
-    year,
-    month,
-    day,
-  ] =
-    appointment.appointment_date
-      .split("-")
-      .map(Number);
-
-  const [
-    hour,
-    minute,
-  ] =
-    appointment.appointment_time
-      .split(":")
-      .map(Number);
-
-  const appointmentDateTime =
-    new Date(
-      year,
-      month - 1,
-      day,
-      hour,
-      minute,
-      0
-    );
-
-  const now = new Date();
-
-  if (
-    appointmentDateTime.getTime() <=
-    now.getTime()
-  ) {
+  if (!appointment.isFuture) {
     const error = new Error(
       "No se puede cancelar administrativamente una cita cuya hora ya pasó."
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  db.prepare(`
-    UPDATE appointments
-    SET status = 'CANCELLED'
-    WHERE id = ?
-  `).run(appointmentId);
+  const updateResult =
+    await db.query(
+      `
+        UPDATE appointments
 
-  return {
-    ...appointment,
-    status: "CANCELLED",
-  };
+        SET status = 'CANCELLED'
+
+        WHERE id = $1
+
+          AND status = 'ACCEPTED'
+
+          AND (
+            appointment_date +
+            appointment_time
+          ) >
+          (
+            NOW()
+            AT TIME ZONE
+            'America/Managua'
+          )
+
+        RETURNING
+          id,
+
+          user_id AS "userId",
+
+          service,
+
+          TO_CHAR(
+            appointment_date,
+            'YYYY-MM-DD'
+          ) AS date,
+
+          TO_CHAR(
+            appointment_time,
+            'HH24:MI'
+          ) AS time,
+
+          status,
+
+          created_at AS "createdAt"
+      `,
+      [appointmentId]
+    );
+
+  if (
+    updateResult.rows.length === 0
+  ) {
+    const error = new Error(
+      "La cita cambió de estado o su hora ya pasó."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
+  return updateResult.rows[0];
 }
 
-function completeAppointment(
+/*
+ * Marca una cita como completada.
+ *
+ * Solo puede completarse si:
+ * - está ACCEPTED;
+ * - su fecha/hora ya llegó o pasó.
+ */
+async function completeAppointment(
   appointmentId
 ) {
-  const appointment = db
-    .prepare(`
-      SELECT *
+  const result = await db.query(
+    `
+      SELECT
+        id,
+
+        status,
+
+        (
+          appointment_date +
+          appointment_time
+        ) <=
+        (
+          NOW()
+          AT TIME ZONE
+          'America/Managua'
+        )
+        AS "canComplete"
+
       FROM appointments
-      WHERE id = ?
-    `)
-    .get(appointmentId);
+
+      WHERE id = $1
+
+      LIMIT 1
+    `,
+    [appointmentId]
+  );
+
+  const appointment =
+    result.rows[0];
 
   if (!appointment) {
     const error = new Error(
@@ -456,6 +946,7 @@ function completeAppointment(
     );
 
     error.statusCode = 404;
+
     throw error;
   }
 
@@ -468,60 +959,80 @@ function completeAppointment(
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  const [
-    year,
-    month,
-    day,
-  ] =
-    appointment.appointment_date
-      .split("-")
-      .map(Number);
-
-  const [
-    hour,
-    minute,
-  ] =
-    appointment.appointment_time
-      .split(":")
-      .map(Number);
-
-  const appointmentDateTime =
-    new Date(
-      year,
-      month - 1,
-      day,
-      hour,
-      minute,
-      0
-    );
-
-  const now = new Date();
-
   if (
-    appointmentDateTime.getTime() >
-    now.getTime()
+    !appointment.canComplete
   ) {
     const error = new Error(
       "No puedes completar una cita antes de su hora programada."
     );
 
     error.statusCode = 400;
+
     throw error;
   }
 
-  db.prepare(`
-    UPDATE appointments
-    SET status = 'COMPLETED'
-    WHERE id = ?
-  `).run(appointmentId);
+  const updateResult =
+    await db.query(
+      `
+        UPDATE appointments
 
-  return {
-    ...appointment,
-    status: "COMPLETED",
-  };
+        SET status = 'COMPLETED'
+
+        WHERE id = $1
+
+          AND status = 'ACCEPTED'
+
+          AND (
+            appointment_date +
+            appointment_time
+          ) <=
+          (
+            NOW()
+            AT TIME ZONE
+            'America/Managua'
+          )
+
+        RETURNING
+          id,
+
+          user_id AS "userId",
+
+          service,
+
+          TO_CHAR(
+            appointment_date,
+            'YYYY-MM-DD'
+          ) AS date,
+
+          TO_CHAR(
+            appointment_time,
+            'HH24:MI'
+          ) AS time,
+
+          status,
+
+          created_at AS "createdAt"
+      `,
+      [appointmentId]
+    );
+
+  if (
+    updateResult.rows.length === 0
+  ) {
+    const error = new Error(
+      "La cita cambió de estado y no pudo completarse."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
+  return updateResult.rows[0];
 }
 
 module.exports = {

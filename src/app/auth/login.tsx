@@ -1,7 +1,11 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+
 import {
-    Alert,
+    useState,
+} from "react";
+
+import {
+    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -10,8 +14,11 @@ import {
     View,
 } from "react-native";
 
-import { loginUser } from "../../api/auth.api";
+import BackButton from "../../components/BackButton";
+
 import { useAuth } from "../../context/AuthContext";
+
+import { showMessage } from "../../utils/show-message";
 
 import {
     COLORS,
@@ -21,85 +28,101 @@ import {
 } from "../../constants/app-theme";
 
 export default function LoginScreen() {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const { signIn } = useAuth();
+  const {
+    signIn,
+  } = useAuth();
 
-  const [celular, setCelular] =
-    useState("");
+  const [
+    phone,
+    setPhone,
+  ] = useState("");
 
-  const [password, setPassword] =
-    useState("");
+  const [
+    password,
+    setPassword,
+  ] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [
+    rememberMe,
+    setRememberMe,
+  ] = useState(true);
+
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
 
   async function handleLogin() {
-    const celularLimpio =
-      celular.trim();
+    const cleanPhone =
+      phone.trim();
 
     if (
-      !celularLimpio ||
+      !cleanPhone ||
       !password
     ) {
-      Alert.alert(
+      showMessage(
         "Datos incompletos",
         "Ingresa tu número de celular y contraseña."
       );
+
       return;
     }
 
     if (
       !/^\d{8}$/.test(
-        celularLimpio
+        cleanPhone
       )
     ) {
-      Alert.alert(
+      showMessage(
         "Número inválido",
-        "El número de celular debe contener 8 dígitos."
+        "El número de celular debe contener exactamente 8 dígitos."
       );
+
       return;
     }
 
     try {
-      setLoading(true);
+      setSubmitting(true);
 
-      const result =
-        await loginUser({
+      const user =
+        await signIn({
           phone:
-            celularLimpio,
+            cleanPhone,
+
           password,
+
+          rememberMe,
         });
 
-      await signIn(
-        result.token,
-        result.user
-      );
-
       if (
-        result.user.role ===
+        user.role ===
         "ADMIN"
       ) {
         router.replace(
           "/admin"
         );
-      } else {
-        router.replace(
-          "/client"
-        );
+
+        return;
       }
+
+      router.replace(
+        "/client"
+      );
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "No se pudo iniciar sesión.";
 
-      Alert.alert(
+      showMessage(
         "No se pudo iniciar sesión",
         message
       );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -113,322 +136,451 @@ export default function LoginScreen() {
         false
       }
     >
-      <View style={styles.brandBlock}>
-        <View style={styles.brandIcon}>
+      <View
+        style={
+          styles.content
+        }
+      >
+        <View
+          style={
+            styles.logoContainer
+          }
+        >
+          <Image
+            source={require(
+              "../../../assets/images/logo-cale.png"
+            )}
+            style={
+              styles.logo
+            }
+            resizeMode="contain"
+          />
+        </View>
+
+        <Text
+          style={
+            styles.eyebrow
+          }
+        >
+          BARBERÍA CALE
+        </Text>
+
+        <Text
+          style={
+            styles.title
+          }
+        >
+          Bienvenido
+        </Text>
+
+        <Text
+          style={
+            styles.subtitle
+          }
+        >
+          Inicia sesión para gestionar tus reservas.
+        </Text>
+
+        <Text
+          style={
+            styles.label
+          }
+        >
+          Número de celular
+        </Text>
+
+        <TextInput
+          style={
+            styles.input
+          }
+          value={
+            phone
+          }
+          onChangeText={
+            setPhone
+          }
+          placeholder="88888888"
+          placeholderTextColor={
+            COLORS.textMuted
+          }
+          keyboardType="phone-pad"
+          maxLength={8}
+        />
+
+        <Text
+          style={
+            styles.label
+          }
+        >
+          Contraseña
+        </Text>
+
+        <TextInput
+          style={
+            styles.input
+          }
+          value={
+            password
+          }
+          onChangeText={
+            setPassword
+          }
+          placeholder="Tu contraseña"
+          placeholderTextColor={
+            COLORS.textMuted
+          }
+          secureTextEntry
+          autoCapitalize="none"
+        />
+
+        <Pressable
+          style={
+            styles.rememberRow
+          }
+          onPress={() =>
+            setRememberMe(
+              (current) =>
+                !current
+            )
+          }
+        >
+          <View
+            style={[
+              styles.checkbox,
+
+              rememberMe &&
+                styles.checkboxSelected,
+            ]}
+          >
+            {rememberMe && (
+              <Text
+                style={
+                  styles.checkmark
+                }
+              >
+                ✓
+              </Text>
+            )}
+          </View>
+
           <Text
             style={
-              styles.brandIconText
+              styles.rememberText
             }
           >
-            ✂
+            Mantener mi sesión iniciada
           </Text>
-        </View>
-
-        <Text style={styles.brand}>
-          Barbería Cale
-        </Text>
-
-        <Text style={styles.brandSubtitle}>
-          Reserva tu próximo corte
-          de forma rápida y sencilla.
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>
-          BIENVENIDO
-        </Text>
-
-        <Text style={styles.title}>
-          Iniciar sesión
-        </Text>
-
-        <Text style={styles.subtitle}>
-          Accede para administrar tus
-          citas y reservas.
-        </Text>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
-            Número de celular
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="88888888"
-            placeholderTextColor={
-              COLORS.textMuted
-            }
-            keyboardType="phone-pad"
-            maxLength={8}
-            value={celular}
-            onChangeText={
-              setCelular
-            }
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>
-            Contraseña
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Ingresa tu contraseña"
-            placeholderTextColor={
-              COLORS.textMuted
-            }
-            secureTextEntry
-            value={password}
-            onChangeText={
-              setPassword
-            }
-          />
-        </View>
+        </Pressable>
 
         <Pressable
           style={[
             styles.primaryButton,
-            loading &&
+
+            submitting &&
               styles.disabledButton,
           ]}
+          disabled={
+            submitting
+          }
           onPress={
             handleLogin
           }
-          disabled={loading}
         >
           <Text
             style={
               styles.primaryButtonText
             }
           >
-            {loading
-              ? "Iniciando sesión..."
+            {submitting
+              ? "Ingresando..."
               : "Iniciar sesión"}
           </Text>
         </Pressable>
 
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-
-          <Text
-            style={
-              styles.dividerText
-            }
-          >
-            o
-          </Text>
-
-          <View style={styles.divider} />
-        </View>
-
-        <Pressable
+        <View
           style={
-            styles.registerButton
-          }
-          onPress={() =>
-            router.push(
-              "/auth/register"
-            )
+            styles.registerRow
           }
         >
           <Text
             style={
-              styles.registerButtonText
+              styles.registerText
             }
           >
-            Crear una cuenta
+            ¿No tienes una cuenta?
           </Text>
-        </Pressable>
-      </View>
 
-     
+          <Pressable
+            onPress={() =>
+              router.push(
+                "/auth/register"
+              )
+            }
+          >
+            <Text
+              style={
+                styles.registerLink
+              }
+            >
+              Crear cuenta
+            </Text>
+          </Pressable>
+        </View>
+
+        <BackButton />
+      </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    backgroundColor:
-      COLORS.background,
-    paddingHorizontal:
-      SPACING.lg,
-    paddingVertical:
-      SPACING.xxl,
-  },
+const styles =
+  StyleSheet.create({
+    container: {
+      flexGrow: 1,
 
-  brandBlock: {
-    alignItems: "center",
-    marginBottom: SPACING.xl,
-  },
+      backgroundColor:
+        COLORS.background,
 
-  brandIcon: {
-    width: 64,
-    height: 64,
-    borderRadius:
-      RADIUS.pill,
-    backgroundColor:
-      COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom:
-      SPACING.md,
-  },
+      paddingHorizontal:
+        SPACING.lg,
 
-  brandIconText: {
-    fontSize: 28,
-  },
+      paddingVertical:
+        SPACING.xl,
 
-  brand: {
-    fontSize: FONT.heading,
-    fontWeight: "800",
-    color: COLORS.text,
-    marginBottom:
-      SPACING.xs,
-  },
+      justifyContent:
+        "center",
+    },
 
-  brandSubtitle: {
-    fontSize: FONT.small,
-    lineHeight: 20,
-    color:
-      COLORS.textSecondary,
-    textAlign: "center",
-    maxWidth: 320,
-  },
+    content: {
+      width: "100%",
 
-  card: {
-    width: "100%",
-    maxWidth: 460,
-    alignSelf: "center",
-    backgroundColor:
-      COLORS.surface,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
-    borderRadius:
-      RADIUS.xl,
-    padding:
-      SPACING.lg,
-  },
+      maxWidth: 440,
 
-  eyebrow: {
-    fontSize: FONT.caption,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    color:
-      COLORS.textSecondary,
-    marginBottom:
-      SPACING.xs,
-  },
+      alignSelf: "center",
+    },
 
-  title: {
-    fontSize: FONT.title,
-    fontWeight: "800",
-    color: COLORS.text,
-    marginBottom:
-      SPACING.sm,
-  },
+    logoContainer: {
+      alignItems: "center",
+      
 
-  subtitle: {
-    fontSize: FONT.body,
-    lineHeight: 23,
-    color:
-      COLORS.textSecondary,
-    marginBottom:
-      SPACING.lg,
-  },
+      justifyContent:
+        "center",
 
-  formGroup: {
-    marginBottom:
-      SPACING.md,
-  },
+      marginBottom:
+        SPACING.lg,
+    },
 
-  label: {
-    fontSize: FONT.small,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom:
-      SPACING.sm,
-  },
+    logo: {
+  width: 82,
+  height: 82,
+  borderRadius: 41,
+},
 
-  input: {
-    backgroundColor:
-      COLORS.background,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
-    borderRadius:
-      RADIUS.md,
-    paddingHorizontal:
-      SPACING.md,
-    paddingVertical: 14,
-    fontSize: FONT.body,
-    color: COLORS.text,
-  },
+    eyebrow: {
+      fontSize:
+        FONT.caption,
 
-  primaryButton: {
-    backgroundColor:
-      COLORS.primary,
-    borderRadius:
-      RADIUS.md,
-    paddingVertical: 15,
-    alignItems: "center",
-    marginTop:
-      SPACING.sm,
-  },
+      fontWeight: "700",
 
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: FONT.body,
-    fontWeight: "700",
-  },
+      letterSpacing: 1.2,
 
-  disabledButton: {
-    opacity: 0.55,
-  },
+      color:
+        COLORS.textSecondary,
 
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical:
-      SPACING.lg,
-  },
+      marginBottom:
+        SPACING.sm,
 
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor:
-      COLORS.border,
-  },
+      textAlign: "center",
+    },
 
-  dividerText: {
-    marginHorizontal:
-      SPACING.md,
-    fontSize: FONT.small,
-    color:
-      COLORS.textSecondary,
-  },
+    title: {
+      fontSize:
+        FONT.title,
 
-  registerButton: {
-    borderWidth: 1,
-    borderColor:
-      COLORS.primary,
-    borderRadius:
-      RADIUS.md,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
+      fontWeight: "800",
 
-  registerButtonText: {
-    color: COLORS.text,
-    fontSize: FONT.body,
-    fontWeight: "700",
-  },
+      color:
+        COLORS.text,
 
-  
+      marginBottom:
+        SPACING.sm,
 
-  
-});
+      textAlign: "center",
+    },
+
+    subtitle: {
+      fontSize:
+        FONT.body,
+
+      lineHeight: 24,
+
+      color:
+        COLORS.textSecondary,
+
+      marginBottom:
+        SPACING.xl,
+
+      textAlign: "center",
+    },
+
+    label: {
+      fontSize:
+        FONT.small,
+
+      fontWeight: "700",
+
+      color:
+        COLORS.text,
+
+      marginBottom:
+        SPACING.xs,
+
+      marginTop:
+        SPACING.sm,
+    },
+
+    input: {
+      width: "100%",
+
+      backgroundColor:
+        COLORS.surface,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      borderRadius:
+        RADIUS.md,
+
+      paddingHorizontal:
+        SPACING.md,
+
+      paddingVertical: 14,
+
+      fontSize:
+        FONT.body,
+
+      color:
+        COLORS.text,
+    },
+
+    rememberRow: {
+      flexDirection: "row",
+
+      alignItems: "center",
+
+      marginTop:
+        SPACING.lg,
+
+      marginBottom:
+        SPACING.lg,
+    },
+
+    checkbox: {
+      width: 22,
+
+      height: 22,
+
+      borderRadius: 6,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      backgroundColor:
+        COLORS.surface,
+
+      justifyContent:
+        "center",
+
+      alignItems:
+        "center",
+
+      marginRight:
+        SPACING.sm,
+    },
+
+    checkboxSelected: {
+      backgroundColor:
+        COLORS.primary,
+
+      borderColor:
+        COLORS.primary,
+    },
+
+    checkmark: {
+      color: "#FFFFFF",
+
+      fontSize: 14,
+
+      fontWeight: "800",
+    },
+
+    rememberText: {
+      fontSize:
+        FONT.small,
+
+      color:
+        COLORS.text,
+    },
+
+    primaryButton: {
+      backgroundColor:
+        COLORS.primary,
+
+      borderRadius:
+        RADIUS.md,
+
+      paddingVertical: 15,
+
+      alignItems:
+        "center",
+    },
+
+    primaryButtonText: {
+      color: "#FFFFFF",
+
+      fontSize:
+        FONT.body,
+
+      fontWeight: "700",
+    },
+
+    disabledButton: {
+      opacity: 0.55,
+    },
+
+    registerRow: {
+      flexDirection: "row",
+
+      justifyContent:
+        "center",
+
+      flexWrap: "wrap",
+
+      gap: 5,
+
+      marginTop:
+        SPACING.lg,
+    },
+
+    registerText: {
+      fontSize:
+        FONT.small,
+
+      color:
+        COLORS.textSecondary,
+    },
+
+    registerLink: {
+      fontSize:
+        FONT.small,
+
+      fontWeight: "700",
+
+      color:
+        COLORS.text,
+    },
+  });

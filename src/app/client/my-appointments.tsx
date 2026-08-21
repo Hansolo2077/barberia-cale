@@ -1,5 +1,11 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import {
+    useFocusEffect,
+    useRouter,
+} from "expo-router";
+import {
+    useCallback,
+    useState,
+} from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -11,6 +17,8 @@ import {
 } from "react-native";
 
 import { showMessage } from "../../utils/show-message";
+
+
 
 import {
     cancelAppointment,
@@ -79,11 +87,13 @@ export default function MyAppointmentsScreen() {
   ] =
     useState<number | null>(null);
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     if (token) {
       loadAppointments();
     }
-  }, [token]);
+  }, [token])
+);
 
   async function loadAppointments() {
     if (!token) {
