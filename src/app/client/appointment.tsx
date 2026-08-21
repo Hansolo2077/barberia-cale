@@ -4,6 +4,7 @@ import {
     Alert,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -12,12 +13,21 @@ import {
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
+import BackButton from "../../components/BackButton";
+
 import {
     createAppointment,
     getAvailability,
 } from "../../api/appointments.api";
 
 import { useAuth } from "../../context/AuthContext";
+
+import {
+    COLORS,
+    FONT,
+    RADIUS,
+    SPACING,
+} from "../../constants/app-theme";
 
 type TimeSlot = {
   time: string;
@@ -210,105 +220,145 @@ export default function AppointmentScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        Agendar cita
-      </Text>
-
-      <View style={styles.serviceCard}>
-        <Text style={styles.service}>
-          Corte de cabello
+    <ScrollView
+      contentContainerStyle={
+        styles.container
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
+    >
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>
+          NUEVA RESERVA
         </Text>
 
-        <Text style={styles.description}>
-          Duración aproximada:
-          50 minutos
+        <Text style={styles.title}>
+          Agendar cita
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Elige una fecha y selecciona un horario disponible.
         </Text>
       </View>
 
-      <Text style={styles.label}>
-        Fecha
-      </Text>
-
-      {Platform.OS === "web" ? (
-        <>
-          <TextInput
-            style={styles.input}
-            value={dateText}
-            onChangeText={setDateText}
-            placeholder="AAAA-MM-DD"
-            maxLength={10}
-          />
-
-          <Text style={styles.helperText}>
-            Formato: AAAA-MM-DD
+      <View style={styles.serviceCard}>
+        <View style={styles.serviceIcon}>
+          <Text style={styles.serviceIconText}>
+            ✂
           </Text>
-        </>
-      ) : (
-        <>
-          <Pressable
-            style={styles.dateButton}
-            onPress={() =>
-              setShowDatePicker(true)
-            }
-          >
-            <Text style={styles.dateButtonText}>
-              {dateText}
-            </Text>
-          </Pressable>
+        </View>
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="default"
-              minimumDate={
-                getTomorrowDate()
-              }
-              onChange={
-                handleDateChange
-              }
-            />
-          )}
-        </>
-      )}
+        <View style={styles.serviceInfo}>
+          <Text style={styles.serviceName}>
+            Corte de cabello
+          </Text>
 
-      <Text style={styles.helperText}>
-        Las citas deben reservarse
-        al menos con un día de
-        anticipación.
-      </Text>
+          <Text style={styles.serviceMeta}>
+            50 min · Reserva por bloques de 1 hora
+          </Text>
+        </View>
+      </View>
 
-      <Pressable
-        style={[
-          styles.searchButton,
-          loading &&
-            styles.disabledButton,
-        ]}
-        onPress={() =>
-          handleSearch()
-        }
-        disabled={loading}
-      >
-        <Text style={styles.searchButtonText}>
-          {loading
-            ? "Consultando..."
-            : "Ver horarios disponibles"}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          1. Elige la fecha
         </Text>
-      </Pressable>
+
+        {Platform.OS === "web" ? (
+          <>
+            <TextInput
+              style={styles.input}
+              value={dateText}
+              onChangeText={
+                setDateText
+              }
+              placeholder="AAAA-MM-DD"
+              maxLength={10}
+            />
+
+            <Text style={styles.helperText}>
+              Debes reservar al menos con un día de anticipación.
+            </Text>
+          </>
+        ) : (
+          <>
+            <Pressable
+              style={styles.dateButton}
+              onPress={() =>
+                setShowDatePicker(true)
+              }
+            >
+              <View>
+                <Text style={styles.dateLabel}>
+                  Fecha seleccionada
+                </Text>
+
+                <Text style={styles.dateValue}>
+                  {dateText}
+                </Text>
+              </View>
+
+              <Text style={styles.dateChevron}>
+                ›
+              </Text>
+            </Pressable>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="default"
+                minimumDate={
+                  getTomorrowDate()
+                }
+                onChange={
+                  handleDateChange
+                }
+              />
+            )}
+
+            <Text style={styles.helperText}>
+              Debes reservar al menos con un día de anticipación.
+            </Text>
+          </>
+        )}
+
+        <Pressable
+          style={[
+            styles.searchButton,
+            loading &&
+              styles.disabledButton,
+          ]}
+          onPress={() =>
+            handleSearch()
+          }
+          disabled={loading}
+        >
+          <Text style={styles.searchButtonText}>
+            {loading
+              ? "Consultando..."
+              : "Ver horarios disponibles"}
+          </Text>
+        </Pressable>
+      </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" />
 
           <Text style={styles.loadingText}>
-            Consultando horarios...
+            Buscando horarios...
           </Text>
         </View>
       ) : times.length > 0 ? (
-        <>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            Horarios disponibles
+            2. Elige la hora
+          </Text>
+
+          <Text style={styles.sectionSubtitle}>
+            Los horarios ocupados no se pueden seleccionar.
           </Text>
 
           <View style={styles.timesContainer}>
@@ -365,26 +415,56 @@ export default function AppointmentScreen() {
               );
             })}
           </View>
-        </>
+        </View>
       ) : null}
 
       {selectedTime && (
-        <View style={styles.confirmation}>
-          <Text style={styles.summaryTitle}>
-            Resumen
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryEyebrow}>
+            RESUMEN DE LA RESERVA
           </Text>
 
-          <Text style={styles.summary}>
-            Fecha: {dateText}
-          </Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              Servicio
+            </Text>
 
-          <Text style={styles.summary}>
-            Hora: {selectedTime}
-          </Text>
+            <Text style={styles.summaryValue}>
+              Corte de cabello
+            </Text>
+          </View>
 
-          <Text style={styles.summary}>
-            Servicio: Corte de cabello
-          </Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              Fecha
+            </Text>
+
+            <Text style={styles.summaryValue}>
+              {dateText}
+            </Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              Hora
+            </Text>
+
+            <Text style={styles.summaryValue}>
+              {selectedTime}
+            </Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              Estado inicial
+            </Text>
+
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>
+                Pendiente
+              </Text>
+            </View>
+          </View>
 
           <Pressable
             style={[
@@ -401,193 +481,345 @@ export default function AppointmentScreen() {
                 : "Confirmar cita"}
             </Text>
           </Pressable>
+
+          <Text style={styles.confirmationNote}>
+            La barbería deberá aceptar la solicitud antes de que quede confirmada.
+          </Text>
         </View>
       )}
-    </View>
+
+      <BackButton />
+    </ScrollView>
+
+    
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 24,
-    backgroundColor: "#f5f5f5",
+    flexGrow: 1,
+    backgroundColor:
+      COLORS.background,
+    paddingHorizontal:
+      SPACING.lg,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.xxl,
+  },
+
+  header: {
+    marginBottom: SPACING.xl,
+  },
+
+  eyebrow: {
+    fontSize: FONT.caption,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    color:
+      COLORS.textSecondary,
+    marginBottom: SPACING.xs,
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 22,
+    fontSize: FONT.title,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+
+  subtitle: {
+    fontSize: FONT.body,
+    lineHeight: 24,
+    color:
+      COLORS.textSecondary,
   },
 
   serviceCard: {
-    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    borderColor:
+      COLORS.border,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.xl,
   },
 
-  service: {
-    fontSize: 20,
-    fontWeight: "600",
+  serviceIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: RADIUS.md,
+    backgroundColor:
+      COLORS.primarySoft,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: SPACING.md,
   },
 
-  description: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
+  serviceIconText: {
+    fontSize: 24,
   },
 
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 6,
+  serviceInfo: {
+    flex: 1,
+  },
+
+  serviceName: {
+    fontSize: FONT.subheading,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 4,
+  },
+
+  serviceMeta: {
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
+  },
+
+  section: {
+    marginBottom: SPACING.xl,
+  },
+
+  sectionTitle: {
+    fontSize: FONT.subheading,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+
+  sectionSubtitle: {
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
+    marginBottom: SPACING.md,
   },
 
   input: {
-    backgroundColor: "#fff",
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderColor:
+      COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal:
+      SPACING.md,
+    paddingVertical: 14,
+    fontSize: FONT.body,
+    color: COLORS.text,
   },
 
   dateButton: {
-    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderColor:
+      COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal:
+      SPACING.md,
     paddingVertical: 14,
   },
 
-  dateButtonText: {
-    fontSize: 16,
+  dateLabel: {
+    fontSize: FONT.caption,
+    color:
+      COLORS.textSecondary,
+    marginBottom: 3,
+  },
+
+  dateValue: {
+    fontSize: FONT.body,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+
+  dateChevron: {
+    fontSize: 28,
+    color:
+      COLORS.textMuted,
   },
 
   helperText: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 7,
-    lineHeight: 18,
+    fontSize: FONT.small,
+    lineHeight: 20,
+    color:
+      COLORS.textSecondary,
+    marginTop: SPACING.sm,
   },
 
   searchButton: {
-    backgroundColor: "#111",
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor:
+      COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 15,
     alignItems: "center",
-    marginTop: 18,
+    marginTop: SPACING.md,
   },
 
   searchButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 15,
+    color: "#FFFFFF",
+    fontSize: FONT.body,
+    fontWeight: "700",
   },
 
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
 
   loadingContainer: {
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical:
+      SPACING.xxl,
   },
 
   loadingText: {
-    marginTop: 10,
-    color: "#666",
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 28,
-    marginBottom: 12,
+    marginTop: SPACING.sm,
+    color:
+      COLORS.textSecondary,
   },
 
   timesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: SPACING.sm,
   },
 
   timeButton: {
-    width: 90,
-    minHeight: 58,
-    justifyContent: "center",
+    width: "30%",
+    minWidth: 92,
+    minHeight: 64,
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 8,
+    borderColor:
+      COLORS.border,
+    borderRadius: RADIUS.md,
+    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
   },
 
   selectedTime: {
-    backgroundColor: "#111",
+    backgroundColor:
+      COLORS.primary,
+    borderColor:
+      COLORS.primary,
   },
 
   selectedTimeText: {
-    color: "#fff",
+    color: "#FFFFFF",
   },
 
   unavailableTime: {
-    backgroundColor: "#e5e5e5",
-    borderColor: "#ccc",
+    backgroundColor:
+      COLORS.primarySoft,
+    borderColor:
+      COLORS.border,
+    opacity: 0.7,
   },
 
   timeText: {
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: FONT.body,
+    fontWeight: "700",
+    color: COLORS.text,
   },
 
   unavailableText: {
-    color: "#999",
+    color:
+      COLORS.textMuted,
   },
 
   unavailableLabel: {
-    fontSize: 10,
-    color: "#888",
-    marginTop: 2,
+    marginTop: 3,
+    fontSize: FONT.caption,
+    color:
+      COLORS.textMuted,
   },
 
-  confirmation: {
-    backgroundColor: "#fff",
+  summaryCard: {
+    backgroundColor:
+      COLORS.surface,
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 18,
-    marginTop: 28,
+    borderColor:
+      COLORS.border,
+    padding: SPACING.lg,
   },
 
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 10,
+  summaryEyebrow: {
+    fontSize: FONT.caption,
+    fontWeight: "700",
+    letterSpacing: 1,
+    color:
+      COLORS.textSecondary,
+    marginBottom: SPACING.md,
   },
 
-  summary: {
-    fontSize: 15,
-    marginBottom: 5,
-    color: "#444",
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor:
+      COLORS.border,
+  },
+
+  summaryLabel: {
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
+  },
+
+  summaryValue: {
+    fontSize: FONT.body,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+
+  pendingBadge: {
+    backgroundColor:
+      COLORS.warningBackground,
+    paddingHorizontal:
+      SPACING.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+  },
+
+  pendingBadgeText: {
+    color:
+      COLORS.warning,
+    fontSize: FONT.caption,
+    fontWeight: "700",
   },
 
   confirmButton: {
-    backgroundColor: "#111",
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor:
+      COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 15,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: SPACING.lg,
   },
 
   confirmButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 15,
+    color: "#FFFFFF",
+    fontSize: FONT.body,
+    fontWeight: "700",
+  },
+
+  confirmationNote: {
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    color:
+      COLORS.textSecondary,
+    textAlign: "center",
+    marginTop: SPACING.sm,
   },
 });

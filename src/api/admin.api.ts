@@ -8,10 +8,11 @@ export type AdminAppointment = {
   time: string;
 
   status:
-    | "PENDING"
-    | "ACCEPTED"
-    | "REJECTED"
-    | "CANCELLED";
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "COMPLETED";
 
   createdAt: string;
 
@@ -20,6 +21,33 @@ export type AdminAppointment = {
   lastName: string;
   phone: string;
 };
+
+export async function completeAdminAppointment(
+  token: string,
+  appointmentId: number
+) {
+  const response = await fetch(
+    `${API_URL}/admin/appointments/${appointmentId}/complete`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const result =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ||
+        "No se pudo completar la cita."
+    );
+  }
+
+  return result;
+}
 
 export async function getAdminAppointments(
   token: string
@@ -123,6 +151,33 @@ export async function rejectAdminAppointment(
     throw new Error(
       result.message ||
         "No se pudo rechazar la cita."
+    );
+  }
+
+  return result;
+}
+
+export async function cancelAdminAppointment(
+  token: string,
+  appointmentId: number
+) {
+  const response = await fetch(
+    `${API_URL}/admin/appointments/${appointmentId}/cancel`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const result =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ||
+        "No se pudo cancelar la cita."
     );
   }
 

@@ -17,6 +17,15 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
+import BackButton from "../../components/BackButton";
+
+import {
+    COLORS,
+    FONT,
+    RADIUS,
+    SPACING,
+} from "../../constants/app-theme";
+
 type Appointment = {
   id: number;
   service: string;
@@ -26,7 +35,8 @@ type Appointment = {
     | "PENDING"
     | "ACCEPTED"
     | "REJECTED"
-    | "CANCELLED";
+    | "CANCELLED"
+    | "COMPLETED";
   createdAt: string;
 };
 
@@ -36,6 +46,9 @@ export default function MyAppointmentsScreen() {
 
   const [appointments, setAppointments] =
     useState<Appointment[]>([]);
+
+const [showHistory, setShowHistory] =
+  useState(true);
 
   const [loading, setLoading] =
     useState(true);
@@ -86,7 +99,10 @@ export default function MyAppointmentsScreen() {
         return "Pendiente";
 
       case "ACCEPTED":
-        return "Aceptada";
+        return "Confirmada";
+
+        case "COMPLETED":
+  return "Completada";
 
       case "REJECTED":
         return "Rechazada";
@@ -96,6 +112,53 @@ export default function MyAppointmentsScreen() {
 
       default:
         return status;
+    }
+  }
+
+  function getStatusStyle(
+    status: Appointment["status"]
+  ) {
+    switch (status) {
+      case "ACCEPTED":
+        return {
+          background:
+            COLORS.successBackground,
+          text:
+            COLORS.success,
+        };
+
+        case "COMPLETED":
+  return {
+    background:
+      COLORS.primarySoft,
+    text:
+      COLORS.text,
+  };
+
+      case "PENDING":
+        return {
+          background:
+            COLORS.warningBackground,
+          text:
+            COLORS.warning,
+        };
+
+      case "REJECTED":
+      case "CANCELLED":
+        return {
+          background:
+            COLORS.dangerBackground,
+          text:
+            COLORS.danger,
+        };
+
+      default:
+        return {
+          background:
+            COLORS.primarySoft,
+          text:
+            COLORS.textSecondary,
+        };
     }
   }
 
@@ -177,6 +240,15 @@ export default function MyAppointmentsScreen() {
     }
   }
 
+  const visibleAppointments =
+  showHistory
+    ? appointments
+    : appointments.filter(
+        (appointment) =>
+          appointment.status === "PENDING" ||
+          appointment.status === "ACCEPTED"
+      );
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -194,18 +266,30 @@ export default function MyAppointmentsScreen() {
       contentContainerStyle={
         styles.container
       }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <Text style={styles.title}>
-        Mis citas
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>
+          TU AGENDA
+        </Text>
 
-      <Text style={styles.subtitle}>
-        Consulta tus próximas
-        solicitudes y su estado.
-      </Text>
+        <Text style={styles.title}>
+          Mis citas
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Revisa tus próximas reservas y el estado de cada solicitud.
+        </Text>
+      </View>
 
       {error ? (
-        <View style={styles.messageBox}>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>
+            No pudimos cargar tus citas
+          </Text>
+
           <Text style={styles.messageText}>
             {error}
           </Text>
@@ -220,14 +304,19 @@ export default function MyAppointmentsScreen() {
           </Pressable>
         </View>
       ) : appointments.length === 0 ? (
-        <View style={styles.messageBox}>
+        <View style={styles.emptyCard}>
+          <View style={styles.emptyIcon}>
+            <Text style={styles.emptyIconText}>
+              ✂
+            </Text>
+          </View>
+
           <Text style={styles.emptyTitle}>
             Aún no tienes citas
           </Text>
 
-          <Text style={styles.messageText}>
-            Cuando solicites una cita
-            aparecerá aquí.
+          <Text style={styles.emptyText}>
+            Cuando reserves tu próximo corte, aparecerá aquí.
           </Text>
 
           <Pressable
@@ -244,79 +333,233 @@ export default function MyAppointmentsScreen() {
           </Pressable>
         </View>
       ) : (
-        appointments.map(
-          (appointment) => (
-            <View
-              key={appointment.id}
-              style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.service}>
-                  {appointment.service}
-                </Text>
+        <>
+          <Text style={styles.sectionTitle}>
+            Reservas
+          </Text>
 
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>
-                    {getStatusText(
-                      appointment.status
-                    )}
-                  </Text>
-                </View>
-              </View>
+          <Pressable
+  style={styles.historyButton}
+  onPress={() =>
+    setShowHistory(
+      (current) => !current
+    )
+  }
+>
+  <Text style={styles.historyButtonText}>
+    {showHistory
+      ? "Ocultar historial"
+      : "Mostrar historial"}
+  </Text>
+</Pressable>
 
-              <Text style={styles.date}>
-                {appointment.date}
-              </Text>
+          {visibleAppointments.map(
+            (appointment) => {
+              const statusStyle =
+                getStatusStyle(
+                  appointment.status
+                );
 
-              <Text style={styles.time}>
-                {appointment.time}
-              </Text>
-
-              {(appointment.status ===
-                "PENDING" ||
+              const canCancel =
                 appointment.status ===
-                  "ACCEPTED") && (
-                <Pressable
-                  style={[
-                    styles.cancelButton,
+                  "PENDING" ||
+                appointment.status ===
+                  "ACCEPTED";
 
-                    cancellingId ===
-                      appointment.id &&
-                      styles.disabledButton,
-                  ]}
-                  disabled={
-                    cancellingId ===
+              const isCancelling =
+                cancellingId ===
+                appointment.id;
+
+              return (
+                <View
+                  key={
                     appointment.id
                   }
-                  onPress={() =>
-                    confirmCancel(
-                      appointment.id
-                    )
+                  style={
+                    styles.appointmentCard
                   }
                 >
-                  <Text style={styles.cancelButtonText}>
-                    {cancellingId ===
-                    appointment.id
-                      ? "Cancelando..."
-                      : "Cancelar cita"}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )
-        )
+                  <View
+                    style={
+                      styles.cardTopRow
+                    }
+                  >
+                    <View>
+                      <Text
+                        style={
+                          styles.serviceName
+                        }
+                      >
+                        {
+                          appointment.service
+                        }
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.serviceMeta
+                        }
+                      >
+                        50 min
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor:
+                            statusStyle.background,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusText,
+                          {
+                            color:
+                              statusStyle.text,
+                          },
+                        ]}
+                      >
+                        {getStatusText(
+                          appointment.status
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={
+                      styles.divider
+                    }
+                  />
+
+                  <View
+                    style={
+                      styles.bookingInfoRow
+                    }
+                  >
+                    <View
+                      style={
+                        styles.bookingInfoBlock
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.infoLabel
+                        }
+                      >
+                        Fecha
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.infoValue
+                        }
+                      >
+                        {
+                          appointment.date
+                        }
+                      </Text>
+                    </View>
+
+                    <View
+                      style={
+                        styles.bookingInfoBlock
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.infoLabel
+                        }
+                      >
+                        Hora
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.infoValue
+                        }
+                      >
+                        {
+                          appointment.time
+                        }
+                      </Text>
+                    </View>
+                  </View>
+
+                  {appointment.status ===
+                    "PENDING" && (
+                    <View
+                      style={
+                        styles.infoNotice
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.infoNoticeText
+                        }
+                      >
+                        La barbería todavía debe aceptar esta solicitud.
+                      </Text>
+                    </View>
+                  )}
+
+                  {canCancel && (
+                    <Pressable
+                      style={[
+                        styles.cancelButton,
+                        isCancelling &&
+                          styles.disabledButton,
+                      ]}
+                      disabled={
+                        isCancelling
+                      }
+                      onPress={() =>
+                        confirmCancel(
+                          appointment.id
+                        )
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.cancelButtonText
+                        }
+                      >
+                        {isCancelling
+                          ? "Cancelando..."
+                          : "Cancelar cita"}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              );
+            }
+          )}
+
+          <Pressable
+            style={
+              styles.newBookingButton
+            }
+            onPress={() =>
+              router.push(
+                "/client/appointment"
+              )
+            }
+          >
+            <Text
+              style={
+                styles.newBookingButtonText
+              }
+            >
+              Agendar otra cita
+            </Text>
+          </Pressable>
+        </>
       )}
 
-      <Pressable
-        style={styles.backButton}
-        onPress={() =>
-          router.back()
-        }
-      >
-        <Text style={styles.backButtonText}>
-          Volver
-        </Text>
-      </Pressable>
+      <BackButton />
     </ScrollView>
   );
 }
@@ -324,142 +567,341 @@ export default function MyAppointmentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#f5f5f5",
+    backgroundColor:
+      COLORS.background,
+    paddingHorizontal:
+      SPACING.lg,
+    paddingTop: SPACING.xl,
+    paddingBottom:
+      SPACING.xxl,
   },
 
   centerContainer: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent:
+      "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor:
+      COLORS.background,
   },
 
   loadingText: {
-    marginTop: 12,
-    color: "#666",
+    marginTop: SPACING.sm,
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
+  },
+
+  header: {
+    marginBottom:
+      SPACING.xl,
+  },
+
+  eyebrow: {
+    fontSize: FONT.caption,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    color:
+      COLORS.textSecondary,
+    marginBottom:
+      SPACING.xs,
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontSize: FONT.title,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 28,
+    fontSize: FONT.body,
+    lineHeight: 24,
+    color:
+      COLORS.textSecondary,
   },
 
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 14,
+  sectionTitle: {
+    fontSize:
+      FONT.subheading,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.md,
+  },
+
+  appointmentCard: {
+    backgroundColor:
+      COLORS.surface,
+    borderRadius:
+      RADIUS.lg,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor:
+      COLORS.border,
+    padding:
+      SPACING.lg,
+    marginBottom:
+      SPACING.md,
   },
 
-  cardHeader: {
+  cardTopRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
+    justifyContent:
+      "space-between",
+    alignItems:
+      "flex-start",
   },
 
-  service: {
-    fontSize: 18,
-    fontWeight: "600",
+  serviceName: {
+    fontSize:
+      FONT.subheading,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 3,
   },
+
+  serviceMeta: {
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
+  },
+
+  historyButton: {
+  alignSelf: "flex-start",
+  backgroundColor:
+    COLORS.primarySoft,
+  paddingHorizontal:
+    SPACING.md,
+  paddingVertical:
+    SPACING.sm,
+  borderRadius:
+    RADIUS.pill,
+  marginBottom:
+    SPACING.md,
+},
+
+historyButtonText: {
+  color: COLORS.text,
+  fontSize: FONT.small,
+  fontWeight: "700",
+},
 
   statusBadge: {
-    backgroundColor: "#eeeeee",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius:
+      RADIUS.pill,
+    paddingHorizontal:
+      SPACING.md,
+    paddingVertical: 7,
   },
 
   statusText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize:
+      FONT.caption,
+    fontWeight: "700",
   },
 
-  date: {
-    fontSize: 16,
-    marginBottom: 4,
+  divider: {
+    height: 1,
+    backgroundColor:
+      COLORS.border,
+    marginVertical:
+      SPACING.md,
   },
 
-  time: {
-    fontSize: 22,
-    fontWeight: "bold",
+  bookingInfoRow: {
+    flexDirection: "row",
+    gap: SPACING.lg,
+  },
+
+  bookingInfoBlock: {
+    flex: 1,
+  },
+
+  infoLabel: {
+    fontSize:
+      FONT.caption,
+    color:
+      COLORS.textSecondary,
+    marginBottom: 5,
+  },
+
+  infoValue: {
+    fontSize: FONT.body,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+
+  infoNotice: {
+    backgroundColor:
+      COLORS.warningBackground,
+    borderRadius:
+      RADIUS.md,
+    padding:
+      SPACING.md,
+    marginTop:
+      SPACING.md,
+  },
+
+  infoNoticeText: {
+    color:
+      COLORS.warning,
+    fontSize: FONT.small,
+    lineHeight: 20,
+     textAlign: "center",
   },
 
   cancelButton: {
-    marginTop: 18,
     borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderColor:
+      COLORS.border,
+    borderRadius:
+      RADIUS.md,
+    paddingVertical: 13,
     alignItems: "center",
+    marginTop:
+      SPACING.md,
+    backgroundColor:
+      COLORS.surface,
   },
 
   cancelButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
+    color:
+      COLORS.danger,
+    fontSize: FONT.small,
+    fontWeight: "700",
   },
 
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
 
-  messageBox: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
+  newBookingButton: {
+    backgroundColor:
+      COLORS.primary,
+    borderRadius:
+      RADIUS.md,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginTop:
+      SPACING.sm,
+  },
+
+  newBookingButtonText: {
+    color: "#FFFFFF",
+    fontSize: FONT.body,
+    fontWeight: "700",
+  },
+
+  messageCard: {
+    backgroundColor:
+      COLORS.surface,
+    borderRadius:
+      RADIUS.lg,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor:
+      COLORS.border,
+    padding:
+      SPACING.lg,
   },
 
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 6,
+  messageTitle: {
+    fontSize:
+      FONT.subheading,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   messageText: {
-    color: "#666",
+    fontSize: FONT.small,
     lineHeight: 20,
-  },
-
-  primaryButton: {
-    backgroundColor: "#111",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 18,
-  },
-
-  primaryButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color:
+      COLORS.textSecondary,
   },
 
   retryButton: {
-    marginTop: 16,
+    backgroundColor:
+      COLORS.primary,
+    borderRadius:
+      RADIUS.md,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop:
+      SPACING.lg,
   },
 
   retryButtonText: {
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontSize: FONT.small,
+    fontWeight: "700",
   },
 
-  backButton: {
+  emptyCard: {
+    backgroundColor:
+      COLORS.surface,
+    borderRadius:
+      RADIUS.xl,
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+    padding:
+      SPACING.xl,
     alignItems: "center",
-    padding: 14,
-    marginTop: 10,
   },
 
-  backButtonText: {
-    color: "#555",
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.primarySoft,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom:
+      SPACING.md,
   },
+
+  emptyIconText: {
+    fontSize: 28,
+  },
+
+  emptyTitle: {
+    fontSize:
+      FONT.heading,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.sm,
+  },
+
+  emptyText: {
+    fontSize: FONT.body,
+    lineHeight: 23,
+    color:
+      COLORS.textSecondary,
+    textAlign: "center",
+    marginBottom:
+      SPACING.lg,
+  },
+
+  primaryButton: {
+    width: "100%",
+    backgroundColor:
+      COLORS.primary,
+    borderRadius:
+      RADIUS.md,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: FONT.body,
+    fontWeight: "700",
+  },
+
+  
 });

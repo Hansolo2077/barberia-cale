@@ -18,7 +18,24 @@ import {
     getAdminSchedule,
 } from "../../api/admin.api";
 
+import BackButton from "../../components/BackButton";
+
+import {
+    COLORS,
+    FONT,
+    RADIUS,
+    SPACING,
+} from "../../constants/app-theme";
+
 import { useAuth } from "../../context/AuthContext";
+
+type StatusFilter =
+  | "ALL"
+  | "PENDING"
+  | "ACCEPTED"
+  | "COMPLETED"
+  | "REJECTED"
+  | "CANCELLED";
 
 function formatDate(date: Date) {
   const year = date.getFullYear();
@@ -93,6 +110,12 @@ export default function AdminScheduleScreen() {
     setAppointments,
   ] =
     useState<AdminAppointment[]>([]);
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] =
+    useState<StatusFilter>("ALL");
 
   const [loading, setLoading] =
     useState(true);
@@ -184,9 +207,27 @@ export default function AdminScheduleScreen() {
 
     setSelectedStartDate(date);
 
+    const formattedDate =
+      formatDate(date);
+
     setStartDateText(
-      formatDate(date)
+      formattedDate
     );
+
+    /*
+     * Si la nueva fecha inicial queda
+     * después de la fecha final,
+     * ajustamos también la fecha final.
+     */
+    if (
+      formattedDate >
+      endDateText
+    ) {
+      setSelectedEndDate(date);
+      setEndDateText(
+        formattedDate
+      );
+    }
   }
 
   function handleEndDateChange(
@@ -214,7 +255,10 @@ export default function AdminScheduleScreen() {
         return "Pendiente";
 
       case "ACCEPTED":
-        return "Aceptada";
+        return "Confirmada";
+
+      case "COMPLETED":
+        return "Completada";
 
       case "REJECTED":
         return "Rechazada";
@@ -227,440 +271,1174 @@ export default function AdminScheduleScreen() {
     }
   }
 
+  function getStatusStyle(
+    status: AdminAppointment["status"]
+  ) {
+    switch (status) {
+      case "PENDING":
+        return {
+          background:
+            COLORS.warningBackground,
+          text:
+            COLORS.warning,
+        };
+
+      case "ACCEPTED":
+        return {
+          background:
+            COLORS.successBackground,
+          text:
+            COLORS.success,
+        };
+
+      case "COMPLETED":
+        return {
+          background:
+            COLORS.primarySoft,
+          text:
+            COLORS.text,
+        };
+
+      case "REJECTED":
+      case "CANCELLED":
+        return {
+          background:
+            COLORS.dangerBackground,
+          text:
+            COLORS.danger,
+        };
+
+      default:
+        return {
+          background:
+            COLORS.primarySoft,
+          text:
+            COLORS.textSecondary,
+        };
+    }
+  }
+
+  const filters: {
+    value: StatusFilter;
+    label: string;
+  }[] = [
+    {
+      value: "ALL",
+      label: "Todas",
+    },
+    {
+      value: "PENDING",
+      label: "Pendientes",
+    },
+    {
+      value: "ACCEPTED",
+      label: "Confirmadas",
+    },
+    {
+      value: "COMPLETED",
+      label: "Completadas",
+    },
+    {
+      value: "REJECTED",
+      label: "Rechazadas",
+    },
+    {
+      value: "CANCELLED",
+      label: "Canceladas",
+    },
+  ];
+
+  const filteredAppointments =
+    statusFilter === "ALL"
+      ? appointments
+      : appointments.filter(
+          (appointment) =>
+            appointment.status ===
+            statusFilter
+        );
+
+  const pendingCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        "PENDING"
+    ).length;
+
+  const acceptedCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        "ACCEPTED"
+    ).length;
+
   return (
     <ScrollView
       contentContainerStyle={
         styles.container
       }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <Text style={styles.title}>
-        Agenda
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>
+          CALENDARIO
+        </Text>
 
-      <Text style={styles.subtitle}>
-        Consulta las citas dentro de
-        un rango de fechas.
-      </Text>
+        <Text style={styles.title}>
+          Agenda
+        </Text>
 
-      <Text style={styles.label}>
-        Fecha inicial
-      </Text>
+        <Text style={styles.subtitle}>
+          Consulta las citas dentro de
+          un rango de fechas y filtra
+          los resultados por estado.
+        </Text>
+      </View>
 
-      {Platform.OS === "web" ? (
-        <>
-          <TextInput
-            style={styles.input}
-            value={startDateText}
-            onChangeText={
-              setStartDateText
-            }
-            placeholder="AAAA-MM-DD"
-            maxLength={10}
-          />
-
-          <Text style={styles.helperText}>
-            Formato: AAAA-MM-DD
-          </Text>
-        </>
-      ) : (
-        <>
-          <Pressable
-            style={styles.dateButton}
-            onPress={() =>
-              setShowStartPicker(true)
-            }
-          >
-            <Text style={styles.dateButtonText}>
-              {startDateText}
-            </Text>
-          </Pressable>
-
-          {showStartPicker && (
-            <DateTimePicker
-              value={
-                selectedStartDate
-              }
-              mode="date"
-              display="default"
-              onChange={
-                handleStartDateChange
-              }
-            />
-          )}
-        </>
-      )}
-
-      <Text
-        style={[
-          styles.label,
-          styles.endDateLabel,
-        ]}
-      >
-        Fecha final
-      </Text>
-
-      {Platform.OS === "web" ? (
-        <>
-          <TextInput
-            style={styles.input}
-            value={endDateText}
-            onChangeText={
-              setEndDateText
-            }
-            placeholder="AAAA-MM-DD"
-            maxLength={10}
-          />
-
-          <Text style={styles.helperText}>
-            Formato: AAAA-MM-DD
-          </Text>
-        </>
-      ) : (
-        <>
-          <Pressable
-            style={styles.dateButton}
-            onPress={() =>
-              setShowEndPicker(true)
-            }
-          >
-            <Text style={styles.dateButtonText}>
-              {endDateText}
-            </Text>
-          </Pressable>
-
-          {showEndPicker && (
-            <DateTimePicker
-              value={
-                selectedEndDate
-              }
-              mode="date"
-              display="default"
-              minimumDate={
-                selectedStartDate
-              }
-              onChange={
-                handleEndDateChange
-              }
-            />
-          )}
-        </>
-      )}
-
-      <Text style={styles.helperText}>
-        Puedes consultar un solo día
-        usando la misma fecha inicial
-        y final.
-      </Text>
-
-      <Pressable
-        style={[
-          styles.searchButton,
-          loading &&
-            styles.disabledButton,
-        ]}
-        disabled={loading}
-        onPress={() =>
-          loadSchedule()
+      <View
+        style={
+          styles.dateSection
         }
       >
-        <Text style={styles.searchButtonText}>
-          {loading
-            ? "Consultando..."
-            : "Consultar agenda"}
+        <Text
+          style={
+            styles.sectionTitle
+          }
+        >
+          Período
         </Text>
-      </Pressable>
+
+        <Text style={styles.label}>
+          Fecha inicial
+        </Text>
+
+        {Platform.OS ===
+        "web" ? (
+          <>
+            <TextInput
+              style={styles.input}
+              value={
+                startDateText
+              }
+              onChangeText={
+                setStartDateText
+              }
+              placeholder="AAAA-MM-DD"
+              maxLength={10}
+            />
+
+            <Text
+              style={
+                styles.helperText
+              }
+            >
+              Formato: AAAA-MM-DD
+            </Text>
+          </>
+        ) : (
+          <>
+            <Pressable
+              style={
+                styles.dateButton
+              }
+              onPress={() =>
+                setShowStartPicker(
+                  true
+                )
+              }
+            >
+              <Text
+                style={
+                  styles.dateButtonText
+                }
+              >
+                {startDateText}
+              </Text>
+            </Pressable>
+
+            {showStartPicker && (
+              <DateTimePicker
+                value={
+                  selectedStartDate
+                }
+                mode="date"
+                display="default"
+                onChange={
+                  handleStartDateChange
+                }
+              />
+            )}
+          </>
+        )}
+
+        <Text
+          style={[
+            styles.label,
+            styles.endDateLabel,
+          ]}
+        >
+          Fecha final
+        </Text>
+
+        {Platform.OS ===
+        "web" ? (
+          <>
+            <TextInput
+              style={styles.input}
+              value={endDateText}
+              onChangeText={
+                setEndDateText
+              }
+              placeholder="AAAA-MM-DD"
+              maxLength={10}
+            />
+
+            <Text
+              style={
+                styles.helperText
+              }
+            >
+              Formato: AAAA-MM-DD
+            </Text>
+          </>
+        ) : (
+          <>
+            <Pressable
+              style={
+                styles.dateButton
+              }
+              onPress={() =>
+                setShowEndPicker(
+                  true
+                )
+              }
+            >
+              <Text
+                style={
+                  styles.dateButtonText
+                }
+              >
+                {endDateText}
+              </Text>
+            </Pressable>
+
+            {showEndPicker && (
+              <DateTimePicker
+                value={
+                  selectedEndDate
+                }
+                mode="date"
+                display="default"
+                minimumDate={
+                  selectedStartDate
+                }
+                onChange={
+                  handleEndDateChange
+                }
+              />
+            )}
+          </>
+        )}
+
+        <Text
+          style={
+            styles.rangeHelper
+          }
+        >
+          Para consultar un solo día,
+          utiliza la misma fecha inicial
+          y final.
+        </Text>
+
+        <Pressable
+          style={[
+            styles.searchButton,
+            loading &&
+              styles.disabledButton,
+          ]}
+          disabled={loading}
+          onPress={() =>
+            loadSchedule()
+          }
+        >
+          <Text
+            style={
+              styles.searchButtonText
+            }
+          >
+            {loading
+              ? "Consultando..."
+              : "Consultar agenda"}
+          </Text>
+        </Pressable>
+      </View>
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
+        <View
+          style={
+            styles.loadingContainer
+          }
+        >
+          <ActivityIndicator
+            size="large"
+          />
 
-          <Text style={styles.loadingText}>
+          <Text
+            style={
+              styles.loadingText
+            }
+          >
             Cargando agenda...
           </Text>
         </View>
       ) : error ? (
-        <View style={styles.messageBox}>
-          <Text style={styles.errorText}>
+        <View
+          style={
+            styles.messageBox
+          }
+        >
+          <Text
+            style={
+              styles.errorTitle
+            }
+          >
+            No pudimos consultar
+            la agenda
+          </Text>
+
+          <Text
+            style={
+              styles.errorText
+            }
+          >
             {error}
           </Text>
         </View>
       ) : (
         <>
-          <View style={styles.periodBox}>
-            <Text style={styles.periodTitle}>
-              Período consultado
+          <View
+            style={
+              styles.periodBox
+            }
+          >
+            <Text
+              style={
+                styles.periodLabel
+              }
+            >
+              PERÍODO CONSULTADO
             </Text>
 
-            <Text style={styles.periodText}>
+            <Text
+              style={
+                styles.periodText
+              }
+            >
               {startDateText}
-              {" — "}
+              {"  —  "}
               {endDateText}
             </Text>
           </View>
 
-          {appointments.length === 0 ? (
-            <View style={styles.messageBox}>
-              <Text style={styles.emptyTitle}>
+          <View
+            style={
+              styles.summaryRow
+            }
+          >
+            <View
+              style={
+                styles.summaryCard
+              }
+            >
+              <Text
+                style={
+                  styles.summaryNumber
+                }
+              >
+                {
+                  appointments.length
+                }
+              </Text>
+
+              <Text
+                style={
+                  styles.summaryText
+                }
+              >
+                Total
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.summaryCard
+              }
+            >
+              <Text
+                style={
+                  styles.summaryNumber
+                }
+              >
+                {pendingCount}
+              </Text>
+
+              <Text
+                style={
+                  styles.summaryText
+                }
+              >
+                Pendientes
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.summaryCard
+              }
+            >
+              <Text
+                style={
+                  styles.summaryNumber
+                }
+              >
+                {acceptedCount}
+              </Text>
+
+              <Text
+                style={
+                  styles.summaryText
+                }
+              >
+                Confirmadas
+              </Text>
+            </View>
+          </View>
+
+          <Text
+            style={
+              styles.filterLabel
+            }
+          >
+            Filtrar por estado
+          </Text>
+
+          <View
+            style={
+              styles.filterContainer
+            }
+          >
+            {filters.map(
+              (filter) => {
+                const active =
+                  statusFilter ===
+                  filter.value;
+
+                return (
+                  <Pressable
+                    key={
+                      filter.value
+                    }
+                    style={[
+                      styles.filterButton,
+                      active &&
+                        styles.activeFilterButton,
+                    ]}
+                    onPress={() =>
+                      setStatusFilter(
+                        filter.value
+                      )
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.filterButtonText,
+                        active &&
+                          styles.activeFilterButtonText,
+                      ]}
+                    >
+                      {
+                        filter.label
+                      }
+                    </Text>
+                  </Pressable>
+                );
+              }
+            )}
+          </View>
+
+          <View
+            style={
+              styles.resultsHeader
+            }
+          >
+            <Text
+              style={
+                styles.resultsTitle
+              }
+            >
+              Citas
+            </Text>
+
+            <Text
+              style={
+                styles.resultsCount
+              }
+            >
+              {
+                filteredAppointments.length
+              }{" "}
+              {filteredAppointments.length ===
+              1
+                ? "resultado"
+                : "resultados"}
+            </Text>
+          </View>
+
+          {filteredAppointments
+            .length === 0 ? (
+            <View
+              style={
+                styles.emptyCard
+              }
+            >
+              <View
+                style={
+                  styles.emptyIcon
+                }
+              >
+                <Text
+                  style={
+                    styles.emptyIconText
+                  }
+                >
+                  ✓
+                </Text>
+              </View>
+
+              <Text
+                style={
+                  styles.emptyTitle
+                }
+              >
                 No hay citas
               </Text>
 
-              <Text style={styles.messageText}>
-                No existen citas
-                registradas para este
-                período.
+              <Text
+                style={
+                  styles.messageText
+                }
+              >
+                No existen citas que
+                coincidan con este
+                período y estado.
               </Text>
             </View>
           ) : (
-            appointments.map(
-              (appointment) => (
-                <View
-                  key={appointment.id}
-                  style={styles.card}
-                >
-                  <View style={styles.cardHeader}>
-                    <View>
-                      <Text style={styles.time}>
-                        {appointment.time}
-                      </Text>
+            filteredAppointments.map(
+              (appointment) => {
+                const statusStyle =
+                  getStatusStyle(
+                    appointment.status
+                  );
 
-                      <Text style={styles.date}>
-                        {appointment.date}
-                      </Text>
+                return (
+                  <View
+                    key={
+                      appointment.id
+                    }
+                    style={
+                      styles.card
+                    }
+                  >
+                    <View
+                      style={
+                        styles.cardHeader
+                      }
+                    >
+                      <View
+                        style={
+                          styles.dateTimeContainer
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.time
+                          }
+                        >
+                          {
+                            appointment.time
+                          }
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.date
+                          }
+                        >
+                          {
+                            appointment.date
+                          }
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor:
+                              statusStyle.background,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusText,
+                            {
+                              color:
+                                statusStyle.text,
+                            },
+                          ]}
+                        >
+                          {getStatusText(
+                            appointment.status
+                          )}
+                        </Text>
+                      </View>
                     </View>
 
-                    <View style={styles.statusBadge}>
-                      <Text style={styles.statusText}>
-                        {getStatusText(
-                          appointment.status
-                        )}
-                      </Text>
-                    </View>
+                    <View
+                      style={
+                        styles.divider
+                      }
+                    />
+
+                    <Text
+                      style={
+                        styles.clientName
+                      }
+                    >
+                      {
+                        appointment.firstName
+                      }{" "}
+                      {
+                        appointment.lastName
+                      }
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.service
+                      }
+                    >
+                      {
+                        appointment.service
+                      }
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.phone
+                      }
+                    >
+                      {
+                        appointment.phone
+                      }
+                    </Text>
                   </View>
-
-                  <View style={styles.divider} />
-
-                  <Text style={styles.clientName}>
-                    {appointment.firstName}{" "}
-                    {appointment.lastName}
-                  </Text>
-
-                  <Text style={styles.service}>
-                    {appointment.service}
-                  </Text>
-
-                  <Text style={styles.phone}>
-                    {appointment.phone}
-                  </Text>
-                </View>
-              )
+                );
+              }
             )
           )}
         </>
       )}
 
-      <Pressable
-        style={styles.backButton}
-        onPress={() =>
-          router.back()
-        }
-      >
-        <Text style={styles.backText}>
-          Volver
-        </Text>
-      </Pressable>
+      <BackButton />
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#f5f5f5",
-  },
+const styles =
+  StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      paddingHorizontal:
+        SPACING.lg,
+      paddingTop:
+        SPACING.xl,
+      paddingBottom:
+        SPACING.xxl,
+      backgroundColor:
+        COLORS.background,
+    },
 
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
+    header: {
+      marginBottom:
+        SPACING.xl,
+    },
 
-  subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 26,
-  },
+    eyebrow: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "700",
+      letterSpacing: 1.2,
+      color:
+        COLORS.textSecondary,
+      marginBottom:
+        SPACING.xs,
+    },
 
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 6,
-  },
+    title: {
+      fontSize:
+        FONT.title,
+      fontWeight: "800",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
 
-  endDateLabel: {
-    marginTop: 20,
-  },
+    subtitle: {
+      fontSize:
+        FONT.body,
+      color:
+        COLORS.textSecondary,
+      lineHeight: 24,
+    },
 
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
+    dateSection: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+      marginBottom:
+        SPACING.xl,
+    },
 
-  dateButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
+    sectionTitle: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.lg,
+    },
 
-  dateButtonText: {
-    fontSize: 16,
-  },
+    label: {
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
 
-  helperText: {
-    fontSize: 13,
-    color: "#666",
-    lineHeight: 18,
-    marginTop: 7,
-  },
+    endDateLabel: {
+      marginTop:
+        SPACING.lg,
+    },
 
-  searchButton: {
-    backgroundColor: "#111",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 22,
-    marginBottom: 24,
-  },
+    input: {
+      backgroundColor:
+        COLORS.background,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.md,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 13,
+      fontSize:
+        FONT.body,
+      color:
+        COLORS.text,
+    },
 
-  searchButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+    dateButton: {
+      backgroundColor:
+        COLORS.background,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.md,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 14,
+    },
 
-  disabledButton: {
-    opacity: 0.6,
-  },
+    dateButtonText: {
+      fontSize:
+        FONT.body,
+      fontWeight: "600",
+      color:
+        COLORS.text,
+    },
 
-  loadingContainer: {
-    alignItems: "center",
-    paddingVertical: 40,
-  },
+    helperText: {
+      fontSize:
+        FONT.caption,
+      color:
+        COLORS.textMuted,
+      lineHeight: 18,
+      marginTop:
+        SPACING.xs,
+    },
 
-  loadingText: {
-    color: "#666",
-    marginTop: 12,
-  },
+    rangeHelper: {
+      fontSize:
+        FONT.caption,
+      color:
+        COLORS.textSecondary,
+      lineHeight: 18,
+      marginTop:
+        SPACING.lg,
+    },
 
-  periodBox: {
-    marginBottom: 18,
-  },
+    searchButton: {
+      backgroundColor:
+        COLORS.primary,
+      paddingVertical: 14,
+      borderRadius:
+        RADIUS.md,
+      alignItems: "center",
+      marginTop:
+        SPACING.lg,
+    },
 
-  periodTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
+    searchButtonText: {
+      color: "#FFFFFF",
+      fontWeight: "700",
+      fontSize:
+        FONT.body,
+    },
 
-  periodText: {
-    color: "#666",
-  },
+    disabledButton: {
+      opacity: 0.6,
+    },
 
-  card: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 12,
-  },
+    loadingContainer: {
+      alignItems: "center",
+      paddingVertical: 50,
+    },
 
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
+    loadingText: {
+      color:
+        COLORS.textSecondary,
+      marginTop:
+        SPACING.sm,
+    },
 
-  time: {
-    fontSize: 22,
-    fontWeight: "bold",
-  },
+    periodBox: {
+      marginBottom:
+        SPACING.lg,
+    },
 
-  date: {
-    color: "#666",
-    marginTop: 3,
-  },
+    periodLabel: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "700",
+      letterSpacing: 0.8,
+      color:
+        COLORS.textMuted,
+      marginBottom:
+        SPACING.xs,
+    },
 
-  statusBadge: {
-    backgroundColor: "#eee",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
+    periodText: {
+      fontSize:
+        FONT.body,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+    },
 
-  statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
+    summaryRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      marginBottom:
+        SPACING.xl,
+    },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#eee",
-    marginVertical: 14,
-  },
+    summaryCard: {
+      flex: 1,
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.md,
+      padding:
+        SPACING.md,
+      alignItems: "center",
+    },
 
-  clientName: {
-    fontSize: 17,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
+    summaryNumber: {
+      fontSize: 24,
+      fontWeight: "800",
+      color:
+        COLORS.text,
+      marginBottom: 3,
+    },
 
-  service: {
-    fontSize: 15,
-    marginBottom: 4,
-  },
+    summaryText: {
+      fontSize:
+        FONT.caption,
+      color:
+        COLORS.textSecondary,
+      textAlign: "center",
+    },
 
-  phone: {
-    color: "#666",
-  },
+    filterLabel: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.md,
+    },
 
-  messageBox: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 20,
-  },
+    filterContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+      marginBottom:
+        SPACING.xl,
+    },
 
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 6,
-  },
+    filterButton: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.pill,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 9,
+    },
 
-  messageText: {
-    color: "#666",
-  },
+    activeFilterButton: {
+      backgroundColor:
+        COLORS.primary,
+      borderColor:
+        COLORS.primary,
+    },
 
-  errorText: {
-    color: "#555",
-  },
+    filterButtonText: {
+      color:
+        COLORS.textSecondary,
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
 
-  backButton: {
-    alignItems: "center",
-    padding: 14,
-    marginTop: 12,
-  },
+    activeFilterButtonText: {
+      color: "#FFFFFF",
+    },
 
-  backText: {
-    color: "#555",
-  },
-});
+    resultsHeader: {
+      flexDirection: "row",
+      justifyContent:
+        "space-between",
+      alignItems: "center",
+      marginBottom:
+        SPACING.md,
+    },
+
+    resultsTitle: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+    },
+
+    resultsCount: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+    },
+
+    card: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+      marginBottom:
+        SPACING.md,
+    },
+
+    cardHeader: {
+      flexDirection: "row",
+      justifyContent:
+        "space-between",
+      alignItems:
+        "flex-start",
+      gap: SPACING.md,
+    },
+
+    dateTimeContainer: {
+      flex: 1,
+    },
+
+    time: {
+      fontSize: 24,
+      fontWeight: "800",
+      color:
+        COLORS.text,
+    },
+
+    date: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+      marginTop: 3,
+    },
+
+    statusBadge: {
+      borderRadius:
+        RADIUS.pill,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 7,
+    },
+
+    statusText: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "700",
+    },
+
+    divider: {
+      height: 1,
+      backgroundColor:
+        COLORS.border,
+      marginVertical:
+        SPACING.md,
+    },
+
+    clientName: {
+      fontSize:
+        FONT.body,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom: 5,
+    },
+
+    service: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.text,
+      marginBottom: 5,
+    },
+
+    phone: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+    },
+
+    messageBox: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+    },
+
+    errorTitle: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    errorText: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+      lineHeight: 20,
+    },
+
+    emptyCard: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.xl,
+      padding:
+        SPACING.xl,
+      alignItems: "center",
+    },
+
+    emptyIcon: {
+      width: 60,
+      height: 60,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.successBackground,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom:
+        SPACING.md,
+    },
+
+    emptyIconText: {
+      fontSize: 25,
+      fontWeight: "800",
+      color:
+        COLORS.success,
+    },
+
+    emptyTitle: {
+      fontSize:
+        FONT.heading,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    messageText: {
+      fontSize:
+        FONT.body,
+      color:
+        COLORS.textSecondary,
+      lineHeight: 22,
+      textAlign: "center",
+    },
+  });

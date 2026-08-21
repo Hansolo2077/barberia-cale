@@ -1,7 +1,7 @@
-import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -12,18 +12,39 @@ import {
 import {
     acceptAdminAppointment,
     AdminAppointment,
+    cancelAdminAppointment,
+    completeAdminAppointment,
     getAdminAppointments,
     rejectAdminAppointment,
 } from "../../api/admin.api";
 
 import { useAuth } from "../../context/AuthContext";
 
+import BackButton from "../../components/BackButton";
+
+import {
+    COLORS,
+    FONT,
+    RADIUS,
+    SPACING,
+} from "../../constants/app-theme";
+
+type StatusFilter =
+  | "PENDING"
+  | "ACCEPTED"
+  | "COMPLETED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "ALL";
+
 export default function AdminAppointmentsScreen() {
-  const router = useRouter();
   const { token } = useAuth();
 
   const [appointments, setAppointments] =
     useState<AdminAppointment[]>([]);
+
+  const [statusFilter, setStatusFilter] =
+    useState<StatusFilter>("PENDING");
 
   const [loading, setLoading] =
     useState(true);
@@ -104,14 +125,52 @@ export default function AdminAppointmentsScreen() {
       return;
     }
 
-    const confirmed =
+    const message =
+      "¿Deseas rechazar esta solicitud?";
+
+    let confirmed = true;
+
+    if (
       typeof window !== "undefined"
-        ? window.confirm(
-            "¿Deseas rechazar esta cita?"
-          )
-        : true;
+    ) {
+      confirmed =
+        window.confirm(message);
+    } else {
+      Alert.alert(
+        "Rechazar cita",
+        message,
+        [
+          {
+            text: "Volver",
+            style: "cancel",
+          },
+          {
+            text: "Sí, rechazar",
+            style: "destructive",
+            onPress: () =>
+              executeReject(
+                appointmentId
+              ),
+          },
+        ]
+      );
+
+      return;
+    }
 
     if (!confirmed) {
+      return;
+    }
+
+    await executeReject(
+      appointmentId
+    );
+  }
+
+  async function executeReject(
+    appointmentId: number
+  ) {
+    if (!token) {
       return;
     }
 
@@ -129,10 +188,171 @@ export default function AdminAppointmentsScreen() {
 
       await loadAppointments();
     } catch (error) {
-      setError(
+      const message =
         error instanceof Error
           ? error.message
-          : "No se pudo rechazar la cita."
+          : "No se pudo rechazar la cita.";
+
+      Alert.alert(
+        "No se pudo rechazar",
+        message
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  async function handleComplete(
+    appointmentId: number
+  ) {
+    if (!token) {
+      return;
+    }
+
+    const message =
+      "¿Confirmas que esta cita ya fue atendida y completada?";
+
+    if (
+      typeof window !== "undefined"
+    ) {
+      const confirmed =
+        window.confirm(message);
+
+      if (!confirmed) {
+        return;
+      }
+
+      await executeComplete(
+        appointmentId
+      );
+
+      return;
+    }
+
+    Alert.alert(
+      "Completar cita",
+      message,
+      [
+        {
+          text: "Volver",
+          style: "cancel",
+        },
+        {
+          text: "Sí, completar",
+          onPress: () =>
+            executeComplete(
+              appointmentId
+            ),
+        },
+      ]
+    );
+  }
+
+  async function executeComplete(
+    appointmentId: number
+  ) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setProcessingId(
+        appointmentId
+      );
+
+      setError("");
+
+      await completeAdminAppointment(
+        token,
+        appointmentId
+      );
+
+      await loadAppointments();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo completar la cita.";
+
+      Alert.alert(
+        "No se pudo completar",
+        message
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  function confirmAdminCancel(
+    appointmentId: number
+  ) {
+    const message =
+      "¿Deseas cancelar esta cita confirmada? El horario volverá a quedar disponible para otros clientes.";
+
+    if (
+      typeof window !== "undefined"
+    ) {
+      const confirmed =
+        window.confirm(message);
+
+      if (confirmed) {
+        handleAdminCancel(
+          appointmentId
+        );
+      }
+
+      return;
+    }
+
+    Alert.alert(
+      "Cancelar cita",
+      message,
+      [
+        {
+          text: "Volver",
+          style: "cancel",
+        },
+        {
+          text: "Sí, cancelar",
+          style: "destructive",
+          onPress: () =>
+            handleAdminCancel(
+              appointmentId
+            ),
+        },
+      ]
+    );
+  }
+
+  async function handleAdminCancel(
+    appointmentId: number
+  ) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setProcessingId(
+        appointmentId
+      );
+
+      setError("");
+
+      await cancelAdminAppointment(
+        token,
+        appointmentId
+      );
+
+      await loadAppointments();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo cancelar la cita.";
+
+      Alert.alert(
+        "No se pudo cancelar",
+        message
       );
     } finally {
       setProcessingId(null);
@@ -147,7 +367,10 @@ export default function AdminAppointmentsScreen() {
         return "Pendiente";
 
       case "ACCEPTED":
-        return "Aceptada";
+        return "Confirmada";
+
+      case "COMPLETED":
+        return "Completada";
 
       case "REJECTED":
         return "Rechazada";
@@ -160,12 +383,137 @@ export default function AdminAppointmentsScreen() {
     }
   }
 
+  function getStatusStyle(
+    status: AdminAppointment["status"]
+  ) {
+    switch (status) {
+      case "ACCEPTED":
+        return {
+          background:
+            COLORS.successBackground,
+          text:
+            COLORS.success,
+        };
+
+      case "COMPLETED":
+        return {
+          background:
+            COLORS.primarySoft,
+          text:
+            COLORS.text,
+        };
+
+      case "PENDING":
+        return {
+          background:
+            COLORS.warningBackground,
+          text:
+            COLORS.warning,
+        };
+
+      case "REJECTED":
+      case "CANCELLED":
+        return {
+          background:
+            COLORS.dangerBackground,
+          text:
+            COLORS.danger,
+        };
+
+      default:
+        return {
+          background:
+            COLORS.primarySoft,
+          text:
+            COLORS.textSecondary,
+        };
+    }
+  }
+
+  const pendingCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        "PENDING"
+    ).length;
+
+  const filteredAppointments =
+    statusFilter === "ALL"
+      ? appointments
+      : appointments.filter(
+          (appointment) =>
+            appointment.status ===
+            statusFilter
+        );
+
+  const filters: {
+    value: StatusFilter;
+    label: string;
+  }[] = [
+    {
+      value: "PENDING",
+      label: "Pendientes",
+    },
+    {
+      value: "ACCEPTED",
+      label: "Confirmadas",
+    },
+    {
+      value: "COMPLETED",
+      label: "Completadas",
+    },
+    {
+      value: "REJECTED",
+      label: "Rechazadas",
+    },
+    {
+      value: "CANCELLED",
+      label: "Canceladas",
+    },
+    {
+      value: "ALL",
+      label: "Todas",
+    },
+  ];
+
+  function getSectionTitle() {
+    switch (statusFilter) {
+      case "PENDING":
+        return "Pendientes de gestión";
+
+      case "ACCEPTED":
+        return "Citas confirmadas";
+
+      case "COMPLETED":
+        return "Citas completadas";
+
+      case "REJECTED":
+        return "Citas rechazadas";
+
+      case "CANCELLED":
+        return "Citas canceladas";
+
+      case "ALL":
+        return "Todas las citas";
+    }
+  }
+
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
+      <View
+        style={
+          styles.centerContainer
+        }
+      >
+        <ActivityIndicator
+          size="large"
+        />
 
-        <Text style={styles.loadingText}>
+        <Text
+          style={
+            styles.loadingText
+          }
+        >
           Cargando citas...
         </Text>
       </View>
@@ -177,327 +525,1066 @@ export default function AdminAppointmentsScreen() {
       contentContainerStyle={
         styles.container
       }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <Text style={styles.title}>
-        Gestión de citas
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>
+          SOLICITUDES
+        </Text>
+
+        <Text style={styles.title}>
+          Gestión de citas
+        </Text>
+
+        <Text
+          style={
+            styles.subtitle
+          }
+        >
+          Gestiona las solicitudes
+          pendientes y consulta citas
+          por estado.
+        </Text>
+      </View>
+
+      <View
+        style={
+          styles.summaryCard
+        }
+      >
+        <View>
+          <Text
+            style={
+              styles.summaryLabel
+            }
+          >
+            Requieren atención
+          </Text>
+
+          <Text
+            style={
+              styles.summaryValue
+            }
+          >
+            {pendingCount}
+          </Text>
+
+          <Text
+            style={
+              styles.summaryHint
+            }
+          >
+            solicitudes pendientes
+          </Text>
+        </View>
+
+        <View
+          style={
+            styles.summaryIcon
+          }
+        >
+          <Text
+            style={
+              styles.summaryIconText
+            }
+          >
+            !
+          </Text>
+        </View>
+      </View>
+
+      <Text
+        style={
+          styles.filterLabel
+        }
+      >
+        Filtrar por estado
       </Text>
 
-      <Text style={styles.subtitle}>
-        Revisa las solicitudes de los
-        clientes y administra su estado.
-      </Text>
+      <View
+        style={
+          styles.filterContainer
+        }
+      >
+        {filters.map(
+          (filter) => {
+            const active =
+              statusFilter ===
+              filter.value;
+
+            return (
+              <Pressable
+                key={
+                  filter.value
+                }
+                style={[
+                  styles.filterButton,
+                  active &&
+                    styles.activeFilterButton,
+                ]}
+                onPress={() =>
+                  setStatusFilter(
+                    filter.value
+                  )
+                }
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    active &&
+                      styles.activeFilterButtonText,
+                  ]}
+                >
+                  {filter.label}
+                </Text>
+              </Pressable>
+            );
+          }
+        )}
+      </View>
 
       {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>
+        <View
+          style={
+            styles.messageCard
+          }
+        >
+          <Text
+            style={
+              styles.messageTitle
+            }
+          >
+            No pudimos cargar las citas
+          </Text>
+
+          <Text
+            style={
+              styles.messageText
+            }
+          >
             {error}
           </Text>
 
           <Pressable
-            style={styles.retryButton}
-            onPress={loadAppointments}
+            style={
+              styles.retryButton
+            }
+            onPress={
+              loadAppointments
+            }
           >
-            <Text style={styles.retryText}>
+            <Text
+              style={
+                styles.retryButtonText
+              }
+            >
               Intentar nuevamente
             </Text>
           </Pressable>
         </View>
-      ) : appointments.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyTitle}>
-            No hay citas
-          </Text>
-
-          <Text style={styles.emptyText}>
-            Las solicitudes de los
-            clientes aparecerán aquí.
-          </Text>
-        </View>
       ) : (
-        appointments.map(
-          (appointment) => {
-            const processing =
-              processingId ===
-              appointment.id;
+        <>
+          <Text
+            style={
+              styles.sectionTitle
+            }
+          >
+            {getSectionTitle()}
+          </Text>
 
-            return (
+          {filteredAppointments
+            .length === 0 ? (
+            <View
+              style={
+                styles.emptyCard
+              }
+            >
               <View
-                key={appointment.id}
-                style={styles.card}
+                style={
+                  styles.emptyIcon
+                }
               >
-                <View style={styles.cardHeader}>
-                  <View>
-                    <Text style={styles.clientName}>
-                      {appointment.firstName}{" "}
-                      {appointment.lastName}
-                    </Text>
-
-                    <Text style={styles.phone}>
-                      {appointment.phone}
-                    </Text>
-                  </View>
-
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusText}>
-                      {getStatusText(
-                        appointment.status
-                      )}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.divider} />
-
-                <Text style={styles.service}>
-                  {appointment.service}
+                <Text
+                  style={
+                    styles.emptyIconText
+                  }
+                >
+                  ✓
                 </Text>
-
-                <Text style={styles.date}>
-                  {appointment.date}
-                </Text>
-
-                <Text style={styles.time}>
-                  {appointment.time}
-                </Text>
-
-                {appointment.status ===
-                  "PENDING" && (
-                  <View style={styles.actionsContainer}>
-                    <Pressable
-                      style={[
-                        styles.acceptButton,
-                        processing &&
-                          styles.disabledButton,
-                      ]}
-                      disabled={processing}
-                      onPress={() =>
-                        handleAccept(
-                          appointment.id
-                        )
-                      }
-                    >
-                      <Text style={styles.acceptButtonText}>
-                        {processing
-                          ? "Procesando..."
-                          : "Aceptar"}
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={[
-                        styles.rejectButton,
-                        processing &&
-                          styles.disabledButton,
-                      ]}
-                      disabled={processing}
-                      onPress={() =>
-                        handleReject(
-                          appointment.id
-                        )
-                      }
-                    >
-                      <Text style={styles.rejectButtonText}>
-                        {processing
-                          ? "Procesando..."
-                          : "Rechazar"}
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
               </View>
-            );
-          }
-        )
+
+              <Text
+                style={
+                  styles.emptyTitle
+                }
+              >
+                Nada por aquí
+              </Text>
+
+              <Text
+                style={
+                  styles.emptyText
+                }
+              >
+                No hay citas con este
+                estado actualmente.
+              </Text>
+            </View>
+          ) : (
+            filteredAppointments.map(
+              (appointment) => {
+                const processing =
+                  processingId ===
+                  appointment.id;
+
+                const statusStyle =
+                  getStatusStyle(
+                    appointment.status
+                  );
+
+                return (
+                  <View
+                    key={
+                      appointment.id
+                    }
+                    style={
+                      styles.card
+                    }
+                  >
+                    <View
+                      style={
+                        styles.cardTopRow
+                      }
+                    >
+                      <View
+                        style={
+                          styles.clientInfo
+                        }
+                      >
+                        <View
+                          style={
+                            styles.avatar
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.avatarText
+                            }
+                          >
+                            {appointment.firstName
+                              ?.charAt(0)
+                              .toUpperCase()}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={
+                            styles.clientTextBlock
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.clientName
+                            }
+                          >
+                            {
+                              appointment.firstName
+                            }{" "}
+                            {
+                              appointment.lastName
+                            }
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.phone
+                            }
+                          >
+                            {
+                              appointment.phone
+                            }
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor:
+                              statusStyle.background,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusText,
+                            {
+                              color:
+                                statusStyle.text,
+                            },
+                          ]}
+                        >
+                          {getStatusText(
+                            appointment.status
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View
+                      style={
+                        styles.divider
+                      }
+                    />
+
+                    <Text
+                      style={
+                        styles.serviceLabel
+                      }
+                    >
+                      SERVICIO
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.service
+                      }
+                    >
+                      {
+                        appointment.service
+                      }
+                    </Text>
+
+                    <View
+                      style={
+                        styles.infoRow
+                      }
+                    >
+                      <View
+                        style={
+                          styles.infoBlock
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.infoLabel
+                          }
+                        >
+                          Fecha
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.infoValue
+                          }
+                        >
+                          {
+                            appointment.date
+                          }
+                        </Text>
+                      </View>
+
+                      <View
+                        style={
+                          styles.infoBlock
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.infoLabel
+                          }
+                        >
+                          Hora
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.infoValue
+                          }
+                        >
+                          {
+                            appointment.time
+                          }
+                        </Text>
+                      </View>
+                    </View>
+
+                    {appointment.status ===
+                      "PENDING" && (
+                      <View
+                        style={
+                          styles.actionsContainer
+                        }
+                      >
+                        <Pressable
+                          style={[
+                            styles.acceptButton,
+                            processing &&
+                              styles.disabledButton,
+                          ]}
+                          disabled={
+                            processing
+                          }
+                          onPress={() =>
+                            handleAccept(
+                              appointment.id
+                            )
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.acceptButtonText
+                            }
+                          >
+                            {processing
+                              ? "Procesando..."
+                              : "Aceptar"}
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          style={[
+                            styles.rejectButton,
+                            processing &&
+                              styles.disabledButton,
+                          ]}
+                          disabled={
+                            processing
+                          }
+                          onPress={() =>
+                            handleReject(
+                              appointment.id
+                            )
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.rejectButtonText
+                            }
+                          >
+                            Rechazar
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+
+                    {appointment.status ===
+                      "ACCEPTED" && (
+                      <View
+                        style={
+                          styles.acceptedActionsSection
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.acceptedActionsTitle
+                          }
+                        >
+                          Gestión de la cita
+                        </Text>
+
+                        <Pressable
+                          style={[
+                            styles.completeButton,
+                            processing &&
+                              styles.disabledButton,
+                          ]}
+                          disabled={
+                            processing
+                          }
+                          onPress={() =>
+                            handleComplete(
+                              appointment.id
+                            )
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.completeButtonText
+                            }
+                          >
+                            {processing
+                              ? "Procesando..."
+                              : "Marcar como completada"}
+                          </Text>
+                        </Pressable>
+
+                        <Text
+                          style={
+                            styles.adminCancelHint
+                          }
+                        >
+                          Si surge una situación de
+                          fuerza mayor antes de la cita,
+                          puedes cancelarla y liberar el
+                          horario.
+                        </Text>
+
+                        <Pressable
+                          style={[
+                            styles.adminCancelButton,
+                            processing &&
+                              styles.disabledButton,
+                          ]}
+                          disabled={
+                            processing
+                          }
+                          onPress={() =>
+                            confirmAdminCancel(
+                              appointment.id
+                            )
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.adminCancelButtonText
+                            }
+                          >
+                            {processing
+                              ? "Procesando..."
+                              : "Cancelar cita"}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                );
+              }
+            )
+          )}
+        </>
       )}
 
-      <Pressable
-        style={styles.backButton}
-        onPress={() =>
-          router.back()
-        }
-      >
-        <Text style={styles.backText}>
-          Volver
-        </Text>
-      </Pressable>
+      <BackButton />
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#f5f5f5",
-  },
+const styles =
+  StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      backgroundColor:
+        COLORS.background,
+      paddingHorizontal:
+        SPACING.lg,
+      paddingTop:
+        SPACING.xl,
+      paddingBottom:
+        SPACING.xxl,
+    },
 
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-  },
+    centerContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor:
+        COLORS.background,
+    },
 
-  loadingText: {
-    marginTop: 12,
-    color: "#666",
-  },
+    loadingText: {
+      marginTop:
+        SPACING.sm,
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+    },
 
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
+    header: {
+      marginBottom:
+        SPACING.xl,
+    },
 
-  subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 24,
-  },
+    eyebrow: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "700",
+      letterSpacing: 1.2,
+      color:
+        COLORS.textSecondary,
+      marginBottom:
+        SPACING.xs,
+    },
 
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
+    title: {
+      fontSize: FONT.title,
+      fontWeight: "800",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
 
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
+    subtitle: {
+      fontSize: FONT.body,
+      lineHeight: 24,
+      color:
+        COLORS.textSecondary,
+    },
 
-  clientName: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
+    summaryCard: {
+      flexDirection: "row",
+      justifyContent:
+        "space-between",
+      alignItems: "center",
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+      marginBottom:
+        SPACING.xl,
+    },
 
-  phone: {
-    color: "#666",
-    marginTop: 3,
-  },
+    summaryLabel: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+      marginBottom: 4,
+    },
 
-  statusBadge: {
-    backgroundColor: "#eee",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
+    summaryValue: {
+      fontSize: 34,
+      fontWeight: "800",
+      color: COLORS.text,
+    },
 
-  statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
+    summaryHint: {
+      fontSize:
+        FONT.caption,
+      color:
+        COLORS.textMuted,
+      marginTop: 2,
+    },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#eee",
-    marginVertical: 14,
-  },
+    summaryIcon: {
+      width: 48,
+      height: 48,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.warningBackground,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  service: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
+    summaryIconText: {
+      color:
+        COLORS.warning,
+      fontSize: 22,
+      fontWeight: "800",
+    },
 
-  date: {
-    fontSize: 15,
-    color: "#555",
-  },
+    filterLabel: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.md,
+    },
 
-  time: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 3,
-  },
+    filterContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+      marginBottom:
+        SPACING.xl,
+    },
 
-  actionsContainer: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 18,
-  },
+    filterButton: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.pill,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 9,
+    },
 
-  acceptButton: {
-    flex: 1,
-    backgroundColor: "#111",
-    paddingVertical: 12,
-    borderRadius: 9,
-    alignItems: "center",
-  },
+    activeFilterButton: {
+      backgroundColor:
+        COLORS.primary,
+      borderColor:
+        COLORS.primary,
+    },
 
-  acceptButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+    filterButtonText: {
+      color:
+        COLORS.textSecondary,
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
 
-  rejectButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#111",
-    paddingVertical: 12,
-    borderRadius: 9,
-    alignItems: "center",
-  },
+    activeFilterButtonText: {
+      color: "#FFFFFF",
+    },
 
-  rejectButtonText: {
-    color: "#111",
-    fontWeight: "600",
-  },
+    sectionTitle: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.md,
+    },
 
-  disabledButton: {
-    opacity: 0.5,
-  },
+    card: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+      marginBottom:
+        SPACING.md,
+    },
 
-  errorBox: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 18,
-  },
+    cardTopRow: {
+      flexDirection: "row",
+      justifyContent:
+        "space-between",
+      alignItems:
+        "flex-start",
+      gap: SPACING.md,
+    },
 
-  errorText: {
-    color: "#555",
-  },
+    clientInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
 
-  retryButton: {
-    marginTop: 10,
-  },
+    avatar: {
+      width: 44,
+      height: 44,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.primarySoft,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight:
+        SPACING.sm,
+    },
 
-  retryText: {
-    fontWeight: "600",
-  },
+    avatarText: {
+      fontSize:
+        FONT.body,
+      fontWeight: "800",
+      color: COLORS.text,
+    },
 
-  emptyBox: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 20,
-  },
+    clientTextBlock: {
+      flex: 1,
+    },
 
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
+    clientName: {
+      fontSize:
+        FONT.body,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom: 3,
+    },
 
-  emptyText: {
-    color: "#666",
-  },
+    phone: {
+      fontSize:
+        FONT.small,
+      color:
+        COLORS.textSecondary,
+    },
 
-  backButton: {
-    alignItems: "center",
-    padding: 14,
-    marginTop: 8,
-  },
+    statusBadge: {
+      borderRadius:
+        RADIUS.pill,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 7,
+    },
 
-  backText: {
-    color: "#555",
-  },
-});
+    statusText: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "700",
+    },
+
+    divider: {
+      height: 1,
+      backgroundColor:
+        COLORS.border,
+      marginVertical:
+        SPACING.md,
+    },
+
+    serviceLabel: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "700",
+      letterSpacing: 0.8,
+      color:
+        COLORS.textMuted,
+      marginBottom: 4,
+    },
+
+    service: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.md,
+    },
+
+    infoRow: {
+      flexDirection: "row",
+      gap: SPACING.lg,
+    },
+
+    infoBlock: {
+      flex: 1,
+    },
+
+    infoLabel: {
+      fontSize:
+        FONT.caption,
+      color:
+        COLORS.textSecondary,
+      marginBottom: 5,
+    },
+
+    infoValue: {
+      fontSize:
+        FONT.body,
+      fontWeight: "700",
+      color: COLORS.text,
+    },
+
+    actionsContainer: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      marginTop:
+        SPACING.lg,
+    },
+
+    acceptButton: {
+      flex: 1,
+      backgroundColor:
+        COLORS.primary,
+      borderRadius:
+        RADIUS.md,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+
+    acceptButtonText: {
+      color: "#FFFFFF",
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
+
+    rejectButton: {
+      flex: 1,
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.danger,
+      borderRadius:
+        RADIUS.md,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+
+    rejectButtonText: {
+      color:
+        COLORS.danger,
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
+
+    acceptedActionsSection: {
+      marginTop:
+        SPACING.lg,
+      paddingTop:
+        SPACING.md,
+      borderTopWidth: 1,
+      borderTopColor:
+        COLORS.border,
+    },
+
+    acceptedActionsTitle: {
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    completeButton: {
+      backgroundColor:
+        COLORS.primary,
+      borderRadius:
+        RADIUS.md,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginBottom:
+        SPACING.md,
+    },
+
+    completeButtonText: {
+      color: "#FFFFFF",
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
+
+    adminCancelHint: {
+      fontSize:
+        FONT.caption,
+      lineHeight: 18,
+      color:
+        COLORS.textSecondary,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    adminCancelButton: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.danger,
+      borderRadius:
+        RADIUS.md,
+      paddingVertical: 13,
+      alignItems: "center",
+    },
+
+    adminCancelButtonText: {
+      color:
+        COLORS.danger,
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
+
+    disabledButton: {
+      opacity: 0.5,
+    },
+
+    messageCard: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+    },
+
+    messageTitle: {
+      fontSize:
+        FONT.subheading,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    messageText: {
+      fontSize:
+        FONT.small,
+      lineHeight: 20,
+      color:
+        COLORS.textSecondary,
+    },
+
+    retryButton: {
+      backgroundColor:
+        COLORS.primary,
+      borderRadius:
+        RADIUS.md,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop:
+        SPACING.lg,
+    },
+
+    retryButtonText: {
+      color: "#FFFFFF",
+      fontSize:
+        FONT.small,
+      fontWeight: "700",
+    },
+
+    emptyCard: {
+      backgroundColor:
+        COLORS.surface,
+      borderWidth: 1,
+      borderColor:
+        COLORS.border,
+      borderRadius:
+        RADIUS.xl,
+      padding:
+        SPACING.xl,
+      alignItems: "center",
+    },
+
+    emptyIcon: {
+      width: 64,
+      height: 64,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.successBackground,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom:
+        SPACING.md,
+    },
+
+    emptyIconText: {
+      fontSize: 26,
+      color:
+        COLORS.success,
+      fontWeight: "800",
+    },
+
+    emptyTitle: {
+      fontSize:
+        FONT.heading,
+      fontWeight: "700",
+      color: COLORS.text,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    emptyText: {
+      fontSize:
+        FONT.body,
+      lineHeight: 23,
+      color:
+        COLORS.textSecondary,
+      textAlign: "center",
+    },
+  });

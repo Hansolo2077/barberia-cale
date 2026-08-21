@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
     Alert,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -12,203 +13,422 @@ import {
 import { loginUser } from "../../api/auth.api";
 import { useAuth } from "../../context/AuthContext";
 
+import {
+    COLORS,
+    FONT,
+    RADIUS,
+    SPACING,
+} from "../../constants/app-theme";
 
 export default function LoginScreen() {
   const router = useRouter();
+
   const { signIn } = useAuth();
 
-  const [celular, setCelular] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [celular, setCelular] =
+    useState("");
 
-  
-const handleLogin = async () => {
-  const celularLimpio = celular.trim();
+  const [password, setPassword] =
+    useState("");
 
-  if (!celularLimpio || !password) {
-    Alert.alert(
-      "Datos incompletos",
-      "Ingresa tu número de celular y contraseña."
-    );
-    return;
+  const [loading, setLoading] =
+    useState(false);
+
+  async function handleLogin() {
+    const celularLimpio =
+      celular.trim();
+
+    if (
+      !celularLimpio ||
+      !password
+    ) {
+      Alert.alert(
+        "Datos incompletos",
+        "Ingresa tu número de celular y contraseña."
+      );
+      return;
+    }
+
+    if (
+      !/^\d{8}$/.test(
+        celularLimpio
+      )
+    ) {
+      Alert.alert(
+        "Número inválido",
+        "El número de celular debe contener 8 dígitos."
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const result =
+        await loginUser({
+          phone:
+            celularLimpio,
+          password,
+        });
+
+      await signIn(
+        result.token,
+        result.user
+      );
+
+      if (
+        result.user.role ===
+        "ADMIN"
+      ) {
+        router.replace(
+          "/admin"
+        );
+      } else {
+        router.replace(
+          "/client"
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo iniciar sesión.";
+
+      Alert.alert(
+        "No se pudo iniciar sesión",
+        message
+      );
+    } finally {
+      setLoading(false);
+    }
   }
-
-  if (!/^\d{8}$/.test(celularLimpio)) {
-    Alert.alert(
-      "Número inválido",
-      "El número de celular debe contener 8 dígitos."
-    );
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const result = await loginUser({
-      phone: celularLimpio,
-      password,
-    });
-
-    await signIn(
-  result.token,
-  result.user
-);
-
-if (result.user.role === "ADMIN") {
-  router.replace("/admin");
-} else {
-  router.replace("/client");
-}
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo iniciar sesión.";
-
-    Alert.alert(
-      "No se pudo iniciar sesión",
-      message
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-  
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.title}>Bienvenido</Text>
+    <ScrollView
+      contentContainerStyle={
+        styles.container
+      }
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={
+        false
+      }
+    >
+      <View style={styles.brandBlock}>
+        <View style={styles.brandIcon}>
+          <Text
+            style={
+              styles.brandIconText
+            }
+          >
+            ✂
+          </Text>
+        </View>
 
-        <Text style={styles.subtitle}>
-          Inicia sesión para administrar tus citas.
+        <Text style={styles.brand}>
+          Barbería Cale
         </Text>
 
-        <Text style={styles.label}>Número de celular</Text>
+        <Text style={styles.brandSubtitle}>
+          Reserva tu próximo corte
+          de forma rápida y sencilla.
+        </Text>
+      </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="88888888"
-          keyboardType="phone-pad"
-          maxLength={8}
-          value={celular}
-          onChangeText={setCelular}
-        />
+      <View style={styles.card}>
+        <Text style={styles.eyebrow}>
+          BIENVENIDO
+        </Text>
 
-        <Text style={styles.label}>Contraseña</Text>
+        <Text style={styles.title}>
+          Iniciar sesión
+        </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Ingresa tu contraseña"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <Text style={styles.subtitle}>
+          Accede para administrar tus
+          citas y reservas.
+        </Text>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>
+            Número de celular
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="88888888"
+            placeholderTextColor={
+              COLORS.textMuted
+            }
+            keyboardType="phone-pad"
+            maxLength={8}
+            value={celular}
+            onChangeText={
+              setCelular
+            }
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>
+            Contraseña
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Ingresa tu contraseña"
+            placeholderTextColor={
+              COLORS.textMuted
+            }
+            secureTextEntry
+            value={password}
+            onChangeText={
+              setPassword
+            }
+          />
+        </View>
 
         <Pressable
-  style={[
-    styles.primaryButton,
-    loading && styles.disabledButton,
-  ]}
-  onPress={handleLogin}
-  disabled={loading}
->
-  <Text style={styles.primaryButtonText}>
-    {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-  </Text>
-</Pressable>
-
-        <Pressable
-          onPress={() => router.push("/auth/register")}
+          style={[
+            styles.primaryButton,
+            loading &&
+              styles.disabledButton,
+          ]}
+          onPress={
+            handleLogin
+          }
+          disabled={loading}
         >
-          <Text style={styles.secondaryAction}>
-            ¿No tienes cuenta? Crear cuenta
+          <Text
+            style={
+              styles.primaryButtonText
+            }
+          >
+            {loading
+              ? "Iniciando sesión..."
+              : "Iniciar sesión"}
           </Text>
         </Pressable>
 
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backAction}>
-            Volver
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+
+          <Text
+            style={
+              styles.dividerText
+            }
+          >
+            o
+          </Text>
+
+          <View style={styles.divider} />
+        </View>
+
+        <Pressable
+          style={
+            styles.registerButton
+          }
+          onPress={() =>
+            router.push(
+              "/auth/register"
+            )
+          }
+        >
+          <Text
+            style={
+              styles.registerButtonText
+            }
+          >
+            Crear una cuenta
           </Text>
         </Pressable>
       </View>
-    </View>
+
+     
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 24,
+    flexGrow: 1,
     justifyContent: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor:
+      COLORS.background,
+    paddingHorizontal:
+      SPACING.lg,
+    paddingVertical:
+      SPACING.xxl,
   },
 
-  disabledButton: {
-  opacity: 0.6,
-},
+  brandBlock: {
+    alignItems: "center",
+    marginBottom: SPACING.xl,
+  },
 
-  form: {
+  brandIcon: {
+    width: 64,
+    height: 64,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom:
+      SPACING.md,
+  },
+
+  brandIconText: {
+    fontSize: 28,
+  },
+
+  brand: {
+    fontSize: FONT.heading,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.xs,
+  },
+
+  brandSubtitle: {
+    fontSize: FONT.small,
+    lineHeight: 20,
+    color:
+      COLORS.textSecondary,
+    textAlign: "center",
+    maxWidth: 320,
+  },
+
+  card: {
     width: "100%",
-    maxWidth: 420,
+    maxWidth: 460,
     alignSelf: "center",
+    backgroundColor:
+      COLORS.surface,
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+    borderRadius:
+      RADIUS.xl,
+    padding:
+      SPACING.lg,
+  },
+
+  eyebrow: {
+    fontSize: FONT.caption,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    color:
+      COLORS.textSecondary,
+    marginBottom:
+      SPACING.xs,
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontSize: FONT.title,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 28,
+    fontSize: FONT.body,
+    lineHeight: 23,
+    color:
+      COLORS.textSecondary,
+    marginBottom:
+      SPACING.lg,
+  },
+
+  formGroup: {
+    marginBottom:
+      SPACING.md,
   },
 
   label: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 6,
-    marginTop: 14,
+    fontSize: FONT.small,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   input: {
-    backgroundColor: "#ffffff",
+    backgroundColor:
+      COLORS.background,
     borderWidth: 1,
-    borderColor: "#cccccc",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderColor:
+      COLORS.border,
+    borderRadius:
+      RADIUS.md,
+    paddingHorizontal:
+      SPACING.md,
+    paddingVertical: 14,
+    fontSize: FONT.body,
+    color: COLORS.text,
   },
 
   primaryButton: {
-    backgroundColor: "#111111",
-    paddingVertical: 14,
-    borderRadius: 10,
-    marginTop: 26,
+    backgroundColor:
+      COLORS.primary,
+    borderRadius:
+      RADIUS.md,
+    paddingVertical: 15,
     alignItems: "center",
+    marginTop:
+      SPACING.sm,
   },
 
   primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontSize: FONT.body,
+    fontWeight: "700",
   },
 
-  secondaryAction: {
-    textAlign: "center",
-    marginTop: 20,
-    fontSize: 15,
-    color: "#333333",
-    fontWeight: "600",
+  disabledButton: {
+    opacity: 0.55,
   },
 
-  backAction: {
-    textAlign: "center",
-    marginTop: 16,
-    fontSize: 14,
-    color: "#666666",
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical:
+      SPACING.lg,
   },
+
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor:
+      COLORS.border,
+  },
+
+  dividerText: {
+    marginHorizontal:
+      SPACING.md,
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
+  },
+
+  registerButton: {
+    borderWidth: 1,
+    borderColor:
+      COLORS.primary,
+    borderRadius:
+      RADIUS.md,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+
+  registerButtonText: {
+    color: COLORS.text,
+    fontSize: FONT.body,
+    fontWeight: "700",
+  },
+
+  
+
+  
 });

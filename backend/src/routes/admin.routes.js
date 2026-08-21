@@ -34,6 +34,20 @@ router.get(
   adminController.getAppointments
 );
 
+router.patch(
+  "/appointments/:id/cancel",
+  authenticateToken,
+  requireAdmin,
+  adminController.cancelAppointment
+);
+
+router.patch(
+  "/appointments/:id/complete",
+  authenticateToken,
+  requireAdmin,
+  adminController.completeAppointment
+);
+
 router.get(
   "/test",
   authenticateToken,

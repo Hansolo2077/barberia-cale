@@ -166,8 +166,108 @@ function rejectAppointment(req, res) {
   }
 }
 
+function cancelAppointment(req, res) {
+  try {
+    const appointmentId =
+      Number(req.params.id);
+
+    if (
+      !Number.isInteger(
+        appointmentId
+      ) ||
+      appointmentId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Identificador de cita inválido.",
+      });
+    }
+
+    const appointment =
+      appointmentService
+        .cancelAppointmentByAdmin(
+          appointmentId
+        );
+
+    return res.json({
+      success: true,
+      message:
+        "La cita fue cancelada administrativamente.",
+      appointment,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR CANCELANDO CITA ADMIN:",
+      error
+    );
+
+    return res
+      .status(
+        error.statusCode || 500
+      )
+      .json({
+        success: false,
+        message:
+          error.message ||
+          "No se pudo cancelar la cita.",
+      });
+  }
+}
+
+function completeAppointment(req, res) {
+  try {
+    const appointmentId =
+      Number(req.params.id);
+
+    if (
+      !Number.isInteger(
+        appointmentId
+      ) ||
+      appointmentId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Identificador de cita inválido.",
+      });
+    }
+
+    const appointment =
+      appointmentService
+        .completeAppointment(
+          appointmentId
+        );
+
+    return res.json({
+      success: true,
+      message:
+        "La cita fue marcada como completada.",
+      appointment,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR COMPLETANDO CITA:",
+      error
+    );
+
+    return res
+      .status(
+        error.statusCode || 500
+      )
+      .json({
+        success: false,
+        message:
+          error.message ||
+          "No se pudo completar la cita.",
+      });
+  }
+}
+
 module.exports = {
   getAppointments,
   acceptAppointment,
   rejectAppointment,
+  cancelAppointment,
+  completeAppointment,
 };
