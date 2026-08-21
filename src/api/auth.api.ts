@@ -1,5 +1,5 @@
 const API_URL =
-  "http://localhost:4000/api";
+    "https://barberia-cale.onrender.com/api";
 
 export type AuthUser = {
   id: number;
