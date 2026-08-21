@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
+
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,15 +25,23 @@ export default function HomeScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.brandBlock}>
-        <View style={styles.brandIcon}>
-          <Text style={styles.brandIconText}>
-            ✂
-          </Text>
-        </View>
+        <Image
+          source={require(
+            "../../assets/images/logo-cale.png"
+          )}
+          style={styles.brandLogo}
+          resizeMode="contain"
+        />
 
         <Text style={styles.brand}>
-          Barbería Cale
+          BARBERÍA
         </Text>
+
+        <Text style={styles.brandName}>
+          CALE
+        </Text>
+
+        <View style={styles.brandDivider} />
 
         <Text style={styles.brandSubtitle}>
           Tu próxima cita, sin llamadas y sin esperar.
@@ -44,8 +54,7 @@ export default function HomeScreen() {
         </Text>
 
         <Text style={styles.heroTitle}>
-          Tu corte,
-          cuando te convenga
+          Tu corte, cuando te convenga
         </Text>
 
         <Text style={styles.heroText}>
@@ -95,7 +104,8 @@ export default function HomeScreen() {
             </Text>
 
             <Text style={styles.featureText}>
-              Consulta los horarios disponibles para el día que prefieras.
+              Consulta los horarios disponibles para el
+              día que prefieras.
             </Text>
           </View>
         </View>
@@ -113,7 +123,8 @@ export default function HomeScreen() {
             </Text>
 
             <Text style={styles.featureText}>
-              Los horarios ocupados se muestran claramente y no pueden seleccionarse.
+              Los horarios ocupados se muestran claramente
+              y no pueden seleccionarse.
             </Text>
           </View>
         </View>
@@ -131,14 +142,15 @@ export default function HomeScreen() {
             </Text>
 
             <Text style={styles.featureText}>
-              Consulta si tu cita está pendiente, confirmada, rechazada o cancelada.
+              Consulta si tu cita está pendiente,
+              confirmada, rechazada o cancelada.
             </Text>
           </View>
         </View>
       </View>
 
       <Text style={styles.footer}>
-        Barbería Cale
+        BARBERÍA CALE
       </Text>
     </ScrollView>
   );
@@ -158,25 +170,37 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
   },
 
-  brandIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
+  brandLogo: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     marginBottom: SPACING.md,
   },
 
-  brandIconText: {
-    fontSize: 30,
+  brand: {
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 5,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
   },
 
-  brand: {
-    fontSize: FONT.heading,
+  brandName: {
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: "800",
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
+    letterSpacing: 7,
+    color: "#C9A227",
+    marginLeft: 7,
+  },
+
+  brandDivider: {
+    width: 42,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "#C9A227",
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
   },
 
   brandSubtitle: {
@@ -308,5 +332,6 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: FONT.caption,
     fontWeight: "600",
+    letterSpacing: 1.5,
   },
 });

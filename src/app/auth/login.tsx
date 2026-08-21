@@ -143,7 +143,7 @@ export default function LoginScreen() {
       >
         <View
           style={
-            styles.logoContainer
+            styles.brandBlock
           }
         >
           <Image
@@ -155,31 +155,45 @@ export default function LoginScreen() {
             }
             resizeMode="contain"
           />
+
+          <Text
+            style={
+              styles.brandEyebrow
+            }
+          >
+            BARBERÍA
+          </Text>
+
+          <Text
+            style={
+              styles.brandName
+            }
+          >
+            CALE
+          </Text>
+
+          <View
+            style={
+              styles.brandDivider
+            }
+          />
+
+          <Text
+            style={
+              styles.title
+            }
+          >
+            Bienvenido
+          </Text>
+
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
+            Inicia sesión para gestionar tus reservas.
+          </Text>
         </View>
-
-        <Text
-          style={
-            styles.eyebrow
-          }
-        >
-          BARBERÍA CALE
-        </Text>
-
-        <Text
-          style={
-            styles.title
-          }
-        >
-          Bienvenido
-        </Text>
-
-        <Text
-          style={
-            styles.subtitle
-          }
-        >
-          Inicia sesión para gestionar tus reservas.
-        </Text>
 
         <Text
           style={
@@ -359,38 +373,66 @@ const styles =
       alignSelf: "center",
     },
 
-    logoContainer: {
+    brandBlock: {
       alignItems: "center",
-      
-
-      justifyContent:
-        "center",
 
       marginBottom:
-        SPACING.lg,
+        SPACING.xl,
     },
 
     logo: {
-  width: 82,
-  height: 82,
-  borderRadius: 41,
-},
+      width: 82,
 
-    eyebrow: {
-      fontSize:
-        FONT.caption,
+      height: 82,
 
-      fontWeight: "700",
+      borderRadius: 41,
 
-      letterSpacing: 1.2,
+      marginBottom:
+        SPACING.sm,
+    },
+
+    brandEyebrow: {
+      fontSize: 13,
+
+      fontWeight: "600",
+
+      letterSpacing: 5,
 
       color:
         COLORS.textSecondary,
 
-      marginBottom:
+      marginBottom: 2,
+    },
+
+    brandName: {
+      fontSize: 32,
+
+      lineHeight: 38,
+
+      fontWeight: "800",
+
+      letterSpacing: 7,
+
+      color: "#C9A227",
+
+      marginLeft: 7,
+    },
+
+    brandDivider: {
+      width: 42,
+
+      height: 2,
+
+      borderRadius: 1,
+
+      backgroundColor:
+        "#C9A227",
+
+      marginTop:
         SPACING.sm,
 
-      textAlign: "center",
+      marginBottom:
+        SPACING.md,
     },
 
     title: {
@@ -417,10 +459,9 @@ const styles =
       color:
         COLORS.textSecondary,
 
-      marginBottom:
-        SPACING.xl,
-
       textAlign: "center",
+
+      maxWidth: 340,
     },
 
     label: {
