@@ -7,6 +7,8 @@ import {
     View,
 } from "react-native";
 
+import UserMenu from "../../components/UserMenu";
+
 import { useAuth } from "../../context/AuthContext";
 
 import {
@@ -59,13 +61,11 @@ export default function ClientHomeScreen() {
           </Text>
         </View>
 
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {user?.firstName
-              ?.charAt(0)
-              .toUpperCase()}
-          </Text>
-        </View>
+        <UserMenu
+          name={user?.firstName}
+          role="Cliente"
+          onLogout={handleLogout}
+        />
       </View>
 
       <View style={styles.hero}>
@@ -84,7 +84,11 @@ export default function ClientHomeScreen() {
         </Text>
 
         <Pressable
-          style={styles.heroButton}
+          style={({ pressed }) => [
+            styles.heroButton,
+            pressed &&
+              styles.primaryPressed,
+          ]}
           onPress={() =>
             router.push(
               "/client/appointment"
@@ -106,7 +110,11 @@ export default function ClientHomeScreen() {
       </Text>
 
       <Pressable
-        style={styles.serviceCard}
+        style={({ pressed }) => [
+          styles.serviceCard,
+          pressed &&
+            styles.cardPressed,
+        ]}
         onPress={() =>
           router.push(
             "/client/appointment"
@@ -151,14 +159,18 @@ export default function ClientHomeScreen() {
       </Text>
 
       <Pressable
-        style={styles.appointmentCard}
+        style={({ pressed }) => [
+          styles.appointmentCard,
+          pressed &&
+            styles.cardPressed,
+        ]}
         onPress={() =>
           router.push(
             "/client/my-appointments"
           )
         }
       >
-        <View>
+        <View style={styles.appointmentContent}>
           <Text
             style={
               styles.appointmentTitle
@@ -191,15 +203,6 @@ export default function ClientHomeScreen() {
           </Text>
         </View>
       </Pressable>
-
-      <Pressable
-        style={styles.logoutButton}
-        onPress={handleLogout}
-      >
-        <Text style={styles.logoutText}>
-          Cerrar sesión
-        </Text>
-      </Pressable>
     </ScrollView>
   );
 }
@@ -211,8 +214,10 @@ const styles = StyleSheet.create({
       COLORS.background,
     paddingHorizontal:
       SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.xxl,
+    paddingTop:
+      SPACING.xl,
+    paddingBottom:
+      SPACING.xxl,
   },
 
   header: {
@@ -220,11 +225,14 @@ const styles = StyleSheet.create({
     justifyContent:
       "space-between",
     alignItems: "center",
-    marginBottom: SPACING.xl,
+    marginBottom:
+      SPACING.xl,
+    zIndex: 20,
   },
 
   brand: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
     fontWeight: "600",
@@ -232,82 +240,87 @@ const styles = StyleSheet.create({
   },
 
   greeting: {
-    fontSize: FONT.heading,
+    fontSize:
+      FONT.heading,
     fontWeight: "700",
-    color: COLORS.text,
-  },
-
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: RADIUS.pill,
-    backgroundColor:
-      COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: FONT.body,
-    fontWeight: "700",
+    color:
+      COLORS.text,
   },
 
   hero: {
     backgroundColor:
       COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.xl,
+    borderRadius:
+      RADIUS.xl,
+    padding:
+      SPACING.lg,
+    marginBottom:
+      SPACING.xl,
     borderWidth: 1,
     borderColor:
       COLORS.border,
   },
 
   heroEyebrow: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
     letterSpacing: 1.2,
     color:
       COLORS.textSecondary,
-    marginBottom: SPACING.sm,
+    marginBottom:
+      SPACING.sm,
   },
 
   heroTitle: {
-    fontSize: FONT.title,
+    fontSize:
+      FONT.title,
     lineHeight: 38,
     fontWeight: "800",
-    color: COLORS.text,
-    marginBottom: SPACING.md,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.md,
   },
 
   heroDescription: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     lineHeight: 24,
     color:
       COLORS.textSecondary,
-    marginBottom: SPACING.lg,
+    marginBottom:
+      SPACING.lg,
   },
 
   heroButton: {
     backgroundColor:
       COLORS.primary,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     paddingVertical: 15,
     alignItems: "center",
   },
 
+  primaryPressed: {
+    opacity: 0.8,
+  },
+
   heroButtonText: {
     color: "#FFFFFF",
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
   },
 
   sectionTitle: {
-    fontSize: FONT.subheading,
+    fontSize:
+      FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: SPACING.md,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.md,
   },
 
   serviceCard: {
@@ -315,23 +328,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor:
       COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderRadius:
+      RADIUS.lg,
+    padding:
+      SPACING.md,
     borderWidth: 1,
     borderColor:
       COLORS.border,
-    marginBottom: SPACING.xl,
+    marginBottom:
+      SPACING.xl,
   },
 
   serviceIcon: {
     width: 52,
     height: 52,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     backgroundColor:
       COLORS.primarySoft,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: SPACING.md,
+    marginRight:
+      SPACING.md,
   },
 
   serviceIconText: {
@@ -343,14 +361,17 @@ const styles = StyleSheet.create({
   },
 
   serviceName: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom: 4,
   },
 
   serviceMeta: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
   },
@@ -368,25 +389,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor:
       COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    borderRadius:
+      RADIUS.lg,
+    padding:
+      SPACING.lg,
     borderWidth: 1,
     borderColor:
       COLORS.border,
   },
 
+  appointmentContent: {
+    flex: 1,
+    paddingRight:
+      SPACING.md,
+  },
+
   appointmentTitle: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom: 5,
   },
 
   appointmentText: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
-    maxWidth: 240,
     lineHeight: 20,
   },
 
@@ -397,26 +428,19 @@ const styles = StyleSheet.create({
       SPACING.md,
     paddingVertical:
       SPACING.sm,
-    borderRadius: RADIUS.pill,
+    borderRadius:
+      RADIUS.pill,
   },
 
   appointmentActionText: {
-    color: COLORS.text,
-    fontSize: FONT.small,
+    color:
+      COLORS.text,
+    fontSize:
+      FONT.small,
     fontWeight: "700",
   },
 
-  logoutButton: {
-    alignSelf: "center",
-    marginTop: SPACING.xl,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-  },
-
-  logoutText: {
-    color:
-      COLORS.textSecondary,
-    fontSize: FONT.small,
-    fontWeight: "600",
+  cardPressed: {
+    opacity: 0.75,
   },
 });

@@ -7,6 +7,7 @@ import {
     View,
 } from "react-native";
 
+import UserMenu from "../../components/UserMenu";
 import { useAuth } from "../../context/AuthContext";
 
 import {
@@ -19,15 +20,37 @@ import {
 export default function AdminHomeScreen() {
   const router = useRouter();
 
-  const { user } = useAuth();
+  const {
+    user,
+    signOut,
+  } = useAuth();
+
+  async function handleLogout() {
+    try {
+      await signOut();
+
+      router.replace(
+        "/auth/login"
+      );
+    } catch (error) {
+      console.error(
+        "Error cerrando sesión:",
+        error
+      );
+    }
+  }
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.container
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerContent}>
           <Text style={styles.eyebrow}>
             PANEL ADMINISTRATIVO
           </Text>
@@ -37,16 +60,17 @@ export default function AdminHomeScreen() {
           </Text>
 
           <Text style={styles.subtitle}>
-            Hola, {user?.firstName}. Administra las
-            solicitudes y la agenda de la barbería.
+            Hola, {user?.firstName}.
+            Administra las solicitudes y
+            la agenda de la barbería.
           </Text>
         </View>
 
-        <View style={styles.adminBadge}>
-          <Text style={styles.adminBadgeText}>
-            ADMIN
-          </Text>
-        </View>
+        <UserMenu
+          name={user?.firstName}
+          role="Administrador"
+          onLogout={handleLogout}
+        />
       </View>
 
       <View style={styles.heroCard}>
@@ -59,9 +83,10 @@ export default function AdminHomeScreen() {
         </Text>
 
         <Text style={styles.heroText}>
-          Revisa solicitudes pendientes, acepta o
-          rechaza citas y consulta la agenda por
-          rango de fechas.
+          Revisa solicitudes pendientes,
+          acepta o rechaza citas y
+          consulta la agenda por rango
+          de fechas.
         </Text>
       </View>
 
@@ -70,13 +95,23 @@ export default function AdminHomeScreen() {
       </Text>
 
       <Pressable
-        style={styles.actionCard}
+        style={({ pressed }) => [
+          styles.actionCard,
+          pressed &&
+            styles.cardPressed,
+        ]}
         onPress={() =>
-          router.push("/admin/appointments")
+          router.push(
+            "/admin/appointments"
+          )
         }
       >
         <View style={styles.actionIcon}>
-          <Text style={styles.actionIconText}>
+          <Text
+            style={
+              styles.actionIconText
+            }
+          >
             ✓
           </Text>
         </View>
@@ -87,7 +122,8 @@ export default function AdminHomeScreen() {
           </Text>
 
           <Text style={styles.actionText}>
-            Revisa solicitudes y cambia su estado.
+            Revisa solicitudes y cambia
+            su estado.
           </Text>
         </View>
 
@@ -97,13 +133,23 @@ export default function AdminHomeScreen() {
       </Pressable>
 
       <Pressable
-        style={styles.actionCard}
+        style={({ pressed }) => [
+          styles.actionCard,
+          pressed &&
+            styles.cardPressed,
+        ]}
         onPress={() =>
-          router.push("/admin/schedule")
+          router.push(
+            "/admin/schedule"
+          )
         }
       >
         <View style={styles.actionIcon}>
-          <Text style={styles.actionIconText}>
+          <Text
+            style={
+              styles.actionIconText
+            }
+          >
             ◷
           </Text>
         </View>
@@ -114,7 +160,8 @@ export default function AdminHomeScreen() {
           </Text>
 
           <Text style={styles.actionText}>
-            Consulta las citas por rango de fechas.
+            Consulta las citas por rango
+            de fechas.
           </Text>
         </View>
 
@@ -132,7 +179,8 @@ export default function AdminHomeScreen() {
           <View style={styles.infoDot} />
 
           <Text style={styles.infoText}>
-            Las nuevas solicitudes llegan como pendientes.
+            Las nuevas solicitudes llegan
+            como pendientes.
           </Text>
         </View>
 
@@ -140,7 +188,8 @@ export default function AdminHomeScreen() {
           <View style={styles.infoDot} />
 
           <Text style={styles.infoText}>
-            Al aceptar una cita, el horario queda reservado.
+            Al aceptar una cita, el
+            horario queda reservado.
           </Text>
         </View>
 
@@ -148,7 +197,8 @@ export default function AdminHomeScreen() {
           <View style={styles.infoDot} />
 
           <Text style={styles.infoText}>
-            Las citas rechazadas o canceladas liberan el horario.
+            Las citas rechazadas o
+            canceladas liberan el horario.
           </Text>
         </View>
       </View>
@@ -159,118 +209,154 @@ export default function AdminHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.xxl,
+    backgroundColor:
+      COLORS.background,
+    paddingHorizontal:
+      SPACING.lg,
+    paddingTop:
+      SPACING.xl,
+    paddingBottom:
+      SPACING.xxl,
   },
 
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    justifyContent:
+      "space-between",
+    alignItems:
+      "flex-start",
     gap: SPACING.md,
-    marginBottom: SPACING.xl,
+    marginBottom:
+      SPACING.xl,
+    zIndex: 20,
+  },
+
+  headerContent: {
+    flex: 1,
   },
 
   eyebrow: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
     letterSpacing: 1.2,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
+    color:
+      COLORS.textSecondary,
+    marginBottom:
+      SPACING.xs,
   },
 
   title: {
-    fontSize: FONT.title,
+    fontSize:
+      FONT.title,
     fontWeight: "800",
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   subtitle: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     lineHeight: 24,
-    color: COLORS.textSecondary,
+    color:
+      COLORS.textSecondary,
     maxWidth: 420,
   },
 
-  adminBadge: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-  },
-
-  adminBadgeText: {
-    color: "#FFFFFF",
-    fontSize: FONT.caption,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
-
   heroCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.xl,
+    borderColor:
+      COLORS.border,
+    borderRadius:
+      RADIUS.xl,
+    padding:
+      SPACING.lg,
+    marginBottom:
+      SPACING.xl,
   },
 
   heroEyebrow: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
     letterSpacing: 1.2,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
+    color:
+      COLORS.textSecondary,
+    marginBottom:
+      SPACING.sm,
   },
 
   heroTitle: {
-    fontSize: FONT.heading,
+    fontSize:
+      FONT.heading,
     fontWeight: "800",
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   heroText: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     lineHeight: 24,
-    color: COLORS.textSecondary,
+    color:
+      COLORS.textSecondary,
   },
 
   sectionTitle: {
-    fontSize: FONT.subheading,
+    fontSize:
+      FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: SPACING.md,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.md,
   },
 
   actionCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.surface,
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
+    borderColor:
+      COLORS.border,
+    borderRadius:
+      RADIUS.lg,
+    padding:
+      SPACING.md,
+    marginBottom:
+      SPACING.sm,
+  },
+
+  cardPressed: {
+    opacity: 0.75,
   },
 
   actionIcon: {
     width: 50,
     height: 50,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primarySoft,
-    justifyContent: "center",
+    borderRadius:
+      RADIUS.md,
+    backgroundColor:
+      COLORS.primarySoft,
+    justifyContent:
+      "center",
     alignItems: "center",
-    marginRight: SPACING.md,
+    marginRight:
+      SPACING.md,
   },
 
   actionIconText: {
     fontSize: 22,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
   },
 
   actionContent: {
@@ -278,58 +364,78 @@ const styles = StyleSheet.create({
   },
 
   actionTitle: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom: 4,
   },
 
   actionText: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     lineHeight: 20,
-    color: COLORS.textSecondary,
+    color:
+      COLORS.textSecondary,
   },
 
   chevron: {
     fontSize: 28,
-    color: COLORS.textMuted,
+    color:
+      COLORS.textMuted,
   },
 
   infoCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginTop: SPACING.lg,
+    borderColor:
+      COLORS.border,
+    borderRadius:
+      RADIUS.lg,
+    padding:
+      SPACING.lg,
+    marginTop:
+      SPACING.lg,
   },
 
   infoTitle: {
-    fontSize: FONT.subheading,
+    fontSize:
+      FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: SPACING.md,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.md,
   },
 
   infoRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: SPACING.sm,
+    alignItems:
+      "flex-start",
+    marginBottom:
+      SPACING.sm,
   },
 
   infoDot: {
     width: 8,
     height: 8,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.primary,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.primary,
     marginTop: 7,
-    marginRight: SPACING.sm,
+    marginRight:
+      SPACING.sm,
   },
 
   infoText: {
     flex: 1,
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     lineHeight: 20,
-    color: COLORS.textSecondary,
+    color:
+      COLORS.textSecondary,
   },
 });

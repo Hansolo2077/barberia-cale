@@ -39,6 +39,12 @@ export async function completeAdminAppointment(
   const result =
     await response.json();
 
+  console.log(
+    "COMPLETE RESPONSE:",
+    response.status,
+    result
+  );
+
   if (!response.ok) {
     throw new Error(
       result.message ||

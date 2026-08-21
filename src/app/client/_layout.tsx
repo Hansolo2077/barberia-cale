@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
     ActivityIndicator,
@@ -9,6 +9,11 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
+import {
+    COLORS,
+    FONT,
+} from "../../constants/app-theme";
+
 export default function ClientLayout() {
   const router = useRouter();
 
@@ -18,24 +23,24 @@ export default function ClientLayout() {
   } = useAuth();
 
   useEffect(() => {
-    // Wait until AuthContext finishes loading the session
     if (loading) {
       return;
     }
 
-    // No session -> login
     if (!user) {
       router.replace("/auth/login");
       return;
     }
 
-    // Admins should not access client routes
     if (user.role === "ADMIN") {
       router.replace("/admin");
     }
-  }, [loading, user, router]);
+  }, [
+    loading,
+    user,
+    router,
+  ]);
 
-  // AuthContext is still checking the stored session
   if (loading) {
     return (
       <View style={styles.container}>
@@ -48,18 +53,108 @@ export default function ClientLayout() {
     );
   }
 
-  // Don't render client content while redirecting
-  if (!user || user.role !== "CLIENT") {
+  if (
+    !user ||
+    user.role !== "CLIENT"
+  ) {
     return null;
   }
 
-  // User is authenticated and is a CLIENT
   return (
-    <Stack
+    <Tabs
       screenOptions={{
         headerShown: false,
+
+        tabBarActiveTintColor:
+          COLORS.text,
+
+        tabBarInactiveTintColor:
+          COLORS.textMuted,
+
+        tabBarStyle: {
+          backgroundColor:
+            COLORS.surface,
+
+          borderTopColor:
+            COLORS.border,
+
+          borderTopWidth: 1,
+
+          height: 68,
+
+          paddingTop: 8,
+
+          paddingBottom: 8,
+        },
+
+        tabBarLabelStyle: {
+          fontSize:
+            FONT.caption,
+
+          fontWeight: "700",
+        },
       }}
-    />
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Inicio",
+
+          tabBarIcon: ({
+            color,
+          }) => (
+            <Text
+              style={{
+                fontSize: 20,
+                color,
+              }}
+            >
+              ⌂
+            </Text>
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="appointment"
+        options={{
+          title: "Agendar",
+
+          tabBarIcon: ({
+            color,
+          }) => (
+            <Text
+              style={{
+                fontSize: 20,
+                color,
+              }}
+            >
+              +
+            </Text>
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="my-appointments"
+        options={{
+          title: "Mis citas",
+
+          tabBarIcon: ({
+            color,
+          }) => (
+            <Text
+              style={{
+                fontSize: 19,
+                color,
+              }}
+            >
+              ≡
+            </Text>
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
 
@@ -68,12 +163,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor:
+      COLORS.background,
   },
 
   text: {
     marginTop: 12,
-    fontSize: 16,
-    color: "#666",
+    fontSize: FONT.small,
+    color:
+      COLORS.textSecondary,
   },
 });

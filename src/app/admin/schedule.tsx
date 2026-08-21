@@ -11,6 +11,11 @@ import {
     View,
 } from "react-native";
 
+import {
+    formatDisplayDate,
+    formatDisplayTime,
+} from "../../utils/date-format";
+
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import {
@@ -115,7 +120,7 @@ export default function AdminScheduleScreen() {
     statusFilter,
     setStatusFilter,
   ] =
-    useState<StatusFilter>("ALL");
+    useState<StatusFilter>("PENDING");
 
   const [loading, setLoading] =
     useState(true);
@@ -635,9 +640,13 @@ export default function AdminScheduleScreen() {
                 styles.periodText
               }
             >
-              {startDateText}
-              {"  —  "}
-              {endDateText}
+              {formatDisplayDate(
+  startDateText
+)}
+{" — "}
+{formatDisplayDate(
+  endDateText
+)}
             </Text>
           </View>
 
@@ -867,7 +876,9 @@ export default function AdminScheduleScreen() {
                           }
                         >
                           {
-                            appointment.time
+                            formatDisplayTime(
+  appointment.time
+)
                           }
                         </Text>
 
@@ -877,7 +888,9 @@ export default function AdminScheduleScreen() {
                           }
                         >
                           {
-                            appointment.date
+                            formatDisplayDate(
+  appointment.date
+)
                           }
                         </Text>
                       </View>

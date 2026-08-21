@@ -10,6 +10,8 @@ import {
     View,
 } from "react-native";
 
+import { showMessage } from "../../utils/show-message";
+
 import {
     cancelAppointment,
     getMyAppointments,
@@ -17,7 +19,10 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
-import BackButton from "../../components/BackButton";
+import {
+    formatDisplayDate,
+    formatDisplayTime,
+} from "../../utils/date-format";
 
 import {
     COLORS,
@@ -40,15 +45,27 @@ type Appointment = {
   createdAt: string;
 };
 
+type AppointmentView =
+  | "UPCOMING"
+  | "HISTORY";
+
 export default function MyAppointmentsScreen() {
   const router = useRouter();
   const { token } = useAuth();
 
-  const [appointments, setAppointments] =
+  const [
+    appointments,
+    setAppointments,
+  ] =
     useState<Appointment[]>([]);
 
-const [showHistory, setShowHistory] =
-  useState(true);
+  const [
+    selectedView,
+    setSelectedView,
+  ] =
+    useState<AppointmentView>(
+      "UPCOMING"
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -56,7 +73,10 @@ const [showHistory, setShowHistory] =
   const [error, setError] =
     useState("");
 
-  const [cancellingId, setCancellingId] =
+  const [
+    cancellingId,
+    setCancellingId,
+  ] =
     useState<number | null>(null);
 
   useEffect(() => {
@@ -75,7 +95,9 @@ const [showHistory, setShowHistory] =
       setError("");
 
       const result =
-        await getMyAppointments(token);
+        await getMyAppointments(
+          token
+        );
 
       setAppointments(
         result.appointments
@@ -101,8 +123,8 @@ const [showHistory, setShowHistory] =
       case "ACCEPTED":
         return "Confirmada";
 
-        case "COMPLETED":
-  return "Completada";
+      case "COMPLETED":
+        return "Completada";
 
       case "REJECTED":
         return "Rechazada";
@@ -127,20 +149,20 @@ const [showHistory, setShowHistory] =
             COLORS.success,
         };
 
-        case "COMPLETED":
-  return {
-    background:
-      COLORS.primarySoft,
-    text:
-      COLORS.text,
-  };
-
       case "PENDING":
         return {
           background:
             COLORS.warningBackground,
           text:
             COLORS.warning,
+        };
+
+      case "COMPLETED":
+        return {
+          background:
+            COLORS.primarySoft,
+          text:
+            COLORS.text,
         };
 
       case "REJECTED":
@@ -165,11 +187,14 @@ const [showHistory, setShowHistory] =
   function confirmCancel(
     appointmentId: number
   ) {
-    if (typeof window !== "undefined") {
+    const message =
+      "¿Estás seguro de que deseas cancelar esta cita? El horario quedará disponible para otro cliente.";
+
+    if (
+      typeof window !== "undefined"
+    ) {
       const confirmed =
-        window.confirm(
-          "¿Estás seguro de que deseas cancelar esta cita? El horario quedará disponible para otro cliente."
-        );
+        window.confirm(message);
 
       if (confirmed) {
         handleCancel(
@@ -182,7 +207,7 @@ const [showHistory, setShowHistory] =
 
     Alert.alert(
       "Cancelar cita",
-      "¿Estás seguro de que deseas cancelar esta cita? El horario quedará disponible para otro cliente.",
+      message,
       [
         {
           text: "Volver",
@@ -201,60 +226,86 @@ const [showHistory, setShowHistory] =
   }
 
   async function handleCancel(
-    appointmentId: number
-  ) {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setCancellingId(
-        appointmentId
-      );
-
-      setError("");
-
-      await cancelAppointment(
-        token,
-        appointmentId
-      );
-
-      await loadAppointments();
-
-      Alert.alert(
-        "Cita cancelada",
-        "La cita fue cancelada correctamente."
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo cancelar la cita.";
-
-      Alert.alert(
-        "No se pudo cancelar",
-        message
-      );
-    } finally {
-      setCancellingId(null);
-    }
+  appointmentId: number
+) {
+  if (!token) {
+    return;
   }
 
+  try {
+    setCancellingId(
+      appointmentId
+    );
+
+    setError("");
+
+    await cancelAppointment(
+      token,
+      appointmentId
+    );
+
+    await loadAppointments();
+
+    showMessage(
+      "Cita cancelada",
+      "La cita fue cancelada correctamente."
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo cancelar la cita.";
+
+    showMessage(
+      "No se pudo cancelar",
+      message
+    );
+  } finally {
+    setCancellingId(null);
+  }
+}
+
+  const upcomingAppointments =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+          "PENDING" ||
+        appointment.status ===
+          "ACCEPTED"
+    );
+
+  const historyAppointments =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+          "COMPLETED" ||
+        appointment.status ===
+          "REJECTED" ||
+        appointment.status ===
+          "CANCELLED"
+    );
+
   const visibleAppointments =
-  showHistory
-    ? appointments
-    : appointments.filter(
-        (appointment) =>
-          appointment.status === "PENDING" ||
-          appointment.status === "ACCEPTED"
-      );
+    selectedView === "UPCOMING"
+      ? upcomingAppointments
+      : historyAppointments;
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
+      <View
+        style={
+          styles.centerContainer
+        }
+      >
+        <ActivityIndicator
+          size="large"
+        />
 
-        <Text style={styles.loadingText}>
+        <Text
+          style={
+            styles.loadingText
+          }
+        >
           Cargando tus citas...
         </Text>
       </View>
@@ -279,79 +330,220 @@ const [showHistory, setShowHistory] =
           Mis citas
         </Text>
 
-        <Text style={styles.subtitle}>
-          Revisa tus próximas reservas y el estado de cada solicitud.
+        <Text
+          style={
+            styles.subtitle
+          }
+        >
+          Consulta tus próximas
+          reservas y el historial de
+          citas anteriores.
         </Text>
       </View>
 
+      <View
+        style={
+          styles.tabsContainer
+        }
+      >
+        <Pressable
+          style={[
+            styles.tabButton,
+
+            selectedView ===
+              "UPCOMING" &&
+              styles.activeTabButton,
+          ]}
+          onPress={() =>
+            setSelectedView(
+              "UPCOMING"
+            )
+          }
+        >
+          <Text
+            style={[
+              styles.tabText,
+
+              selectedView ===
+                "UPCOMING" &&
+                styles.activeTabText,
+            ]}
+          >
+            Próximas
+          </Text>
+
+          {upcomingAppointments.length >
+            0 && (
+            <View
+              style={[
+                styles.countBadge,
+
+                selectedView ===
+                  "UPCOMING" &&
+                  styles.activeCountBadge,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.countBadgeText,
+
+                  selectedView ===
+                    "UPCOMING" &&
+                    styles.activeCountBadgeText,
+                ]}
+              >
+                {
+                  upcomingAppointments.length
+                }
+              </Text>
+            </View>
+          )}
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.tabButton,
+
+            selectedView ===
+              "HISTORY" &&
+              styles.activeTabButton,
+          ]}
+          onPress={() =>
+            setSelectedView(
+              "HISTORY"
+            )
+          }
+        >
+          <Text
+            style={[
+              styles.tabText,
+
+              selectedView ===
+                "HISTORY" &&
+                styles.activeTabText,
+            ]}
+          >
+            Historial
+          </Text>
+        </Pressable>
+      </View>
+
       {error ? (
-        <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>
+        <View
+          style={
+            styles.messageCard
+          }
+        >
+          <Text
+            style={
+              styles.messageTitle
+            }
+          >
             No pudimos cargar tus citas
           </Text>
 
-          <Text style={styles.messageText}>
+          <Text
+            style={
+              styles.messageText
+            }
+          >
             {error}
           </Text>
 
           <Pressable
-            style={styles.retryButton}
-            onPress={loadAppointments}
+            style={
+              styles.retryButton
+            }
+            onPress={
+              loadAppointments
+            }
           >
-            <Text style={styles.retryButtonText}>
+            <Text
+              style={
+                styles.retryButtonText
+              }
+            >
               Intentar nuevamente
             </Text>
           </Pressable>
         </View>
-      ) : appointments.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <View style={styles.emptyIcon}>
-            <Text style={styles.emptyIconText}>
+      ) : visibleAppointments.length ===
+        0 ? (
+        <View
+          style={
+            styles.emptyCard
+          }
+        >
+          <View
+            style={
+              styles.emptyIcon
+            }
+          >
+            <Text
+              style={
+                styles.emptyIconText
+              }
+            >
               ✂
             </Text>
           </View>
 
-          <Text style={styles.emptyTitle}>
-            Aún no tienes citas
-          </Text>
-
-          <Text style={styles.emptyText}>
-            Cuando reserves tu próximo corte, aparecerá aquí.
-          </Text>
-
-          <Pressable
-            style={styles.primaryButton}
-            onPress={() =>
-              router.push(
-                "/client/appointment"
-              )
+          <Text
+            style={
+              styles.emptyTitle
             }
           >
-            <Text style={styles.primaryButtonText}>
-              Agendar una cita
-            </Text>
-          </Pressable>
+            {selectedView ===
+            "UPCOMING"
+              ? "No tienes próximas citas"
+              : "Tu historial está vacío"}
+          </Text>
+
+          <Text
+            style={
+              styles.emptyText
+            }
+          >
+            {selectedView ===
+            "UPCOMING"
+              ? "Cuando reserves tu próximo corte, aparecerá aquí."
+              : "Las citas completadas, rechazadas o canceladas aparecerán aquí."}
+          </Text>
+
+          {selectedView ===
+            "UPCOMING" && (
+            <Pressable
+              style={
+                styles.primaryButton
+              }
+              onPress={() =>
+                router.push(
+                  "/client/appointment"
+                )
+              }
+            >
+              <Text
+                style={
+                  styles.primaryButtonText
+                }
+              >
+                Agendar una cita
+              </Text>
+            </Pressable>
+          )}
         </View>
       ) : (
         <>
-          <Text style={styles.sectionTitle}>
-            Reservas
+          <Text
+            style={
+              styles.sectionTitle
+            }
+          >
+            {selectedView ===
+            "UPCOMING"
+              ? "Próximas reservas"
+              : "Historial"}
           </Text>
-
-          <Pressable
-  style={styles.historyButton}
-  onPress={() =>
-    setShowHistory(
-      (current) => !current
-    )
-  }
->
-  <Text style={styles.historyButtonText}>
-    {showHistory
-      ? "Ocultar historial"
-      : "Mostrar historial"}
-  </Text>
-</Pressable>
 
           {visibleAppointments.map(
             (appointment) => {
@@ -458,9 +650,9 @@ const [showHistory, setShowHistory] =
                           styles.infoValue
                         }
                       >
-                        {
+                        {formatDisplayDate(
                           appointment.date
-                        }
+                        )}
                       </Text>
                     </View>
 
@@ -482,9 +674,9 @@ const [showHistory, setShowHistory] =
                           styles.infoValue
                         }
                       >
-                        {
+                        {formatDisplayTime(
                           appointment.time
-                        }
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -506,10 +698,28 @@ const [showHistory, setShowHistory] =
                     </View>
                   )}
 
+                  {appointment.status ===
+                    "ACCEPTED" && (
+                    <View
+                      style={
+                        styles.confirmedNotice
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.confirmedNoticeText
+                        }
+                      >
+                        Tu cita está confirmada.
+                      </Text>
+                    </View>
+                  )}
+
                   {canCancel && (
                     <Pressable
                       style={[
                         styles.cancelButton,
+
                         isCancelling &&
                           styles.disabledButton,
                       ]}
@@ -538,28 +748,29 @@ const [showHistory, setShowHistory] =
             }
           )}
 
-          <Pressable
-            style={
-              styles.newBookingButton
-            }
-            onPress={() =>
-              router.push(
-                "/client/appointment"
-              )
-            }
-          >
-            <Text
+          {selectedView ===
+            "UPCOMING" && (
+            <Pressable
               style={
-                styles.newBookingButtonText
+                styles.newBookingButton
+              }
+              onPress={() =>
+                router.push(
+                  "/client/appointment"
+                )
               }
             >
-              Agendar otra cita
-            </Text>
-          </Pressable>
+              <Text
+                style={
+                  styles.newBookingButtonText
+                }
+              >
+                Agendar otra cita
+              </Text>
+            </Pressable>
+          )}
         </>
       )}
-
-      <BackButton />
     </ScrollView>
   );
 }
@@ -571,7 +782,8 @@ const styles = StyleSheet.create({
       COLORS.background,
     paddingHorizontal:
       SPACING.lg,
-    paddingTop: SPACING.xl,
+    paddingTop:
+      SPACING.xl,
     paddingBottom:
       SPACING.xxl,
   },
@@ -586,19 +798,22 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    marginTop: SPACING.sm,
-    fontSize: FONT.small,
+    marginTop:
+      SPACING.sm,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
   },
 
   header: {
     marginBottom:
-      SPACING.xl,
+      SPACING.lg,
   },
 
   eyebrow: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
     letterSpacing: 1.2,
     color:
@@ -608,25 +823,103 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: FONT.title,
+    fontSize:
+      FONT.title,
     fontWeight: "800",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom:
       SPACING.sm,
   },
 
   subtitle: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     lineHeight: 24,
     color:
       COLORS.textSecondary,
+  },
+
+  tabsContainer: {
+    flexDirection: "row",
+    backgroundColor:
+      COLORS.primarySoft,
+    borderRadius:
+      RADIUS.pill,
+    padding: 4,
+    marginBottom:
+      SPACING.xl,
+  },
+
+  tabButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius:
+      RADIUS.pill,
+    flexDirection: "row",
+    justifyContent:
+      "center",
+    alignItems: "center",
+    gap: SPACING.xs,
+  },
+
+  activeTabButton: {
+    backgroundColor:
+      COLORS.surface,
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+  },
+
+  tabText: {
+    fontSize:
+      FONT.small,
+    fontWeight: "700",
+    color:
+      COLORS.textSecondary,
+  },
+
+  activeTabText: {
+    color:
+      COLORS.text,
+  },
+
+  countBadge: {
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.border,
+    justifyContent:
+      "center",
+    alignItems: "center",
+  },
+
+  activeCountBadge: {
+    backgroundColor:
+      COLORS.primary,
+  },
+
+  countBadgeText: {
+    fontSize:
+      FONT.caption,
+    fontWeight: "700",
+    color:
+      COLORS.textSecondary,
+  },
+
+  activeCountBadgeText: {
+    color: "#FFFFFF",
   },
 
   sectionTitle: {
     fontSize:
       FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom:
       SPACING.md,
   },
@@ -651,41 +944,24 @@ const styles = StyleSheet.create({
       "space-between",
     alignItems:
       "flex-start",
+    gap: SPACING.md,
   },
 
   serviceName: {
     fontSize:
       FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom: 3,
   },
 
   serviceMeta: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
   },
-
-  historyButton: {
-  alignSelf: "flex-start",
-  backgroundColor:
-    COLORS.primarySoft,
-  paddingHorizontal:
-    SPACING.md,
-  paddingVertical:
-    SPACING.sm,
-  borderRadius:
-    RADIUS.pill,
-  marginBottom:
-    SPACING.md,
-},
-
-historyButtonText: {
-  color: COLORS.text,
-  fontSize: FONT.small,
-  fontWeight: "700",
-},
 
   statusBadge: {
     borderRadius:
@@ -711,7 +987,8 @@ historyButtonText: {
 
   bookingInfoRow: {
     flexDirection: "row",
-    gap: SPACING.lg,
+    gap:
+      SPACING.lg,
   },
 
   bookingInfoBlock: {
@@ -727,9 +1004,11 @@ historyButtonText: {
   },
 
   infoValue: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
   },
 
   infoNotice: {
@@ -741,20 +1020,46 @@ historyButtonText: {
       SPACING.md,
     marginTop:
       SPACING.md,
+    alignItems: "center",
+    justifyContent:
+      "center",
   },
 
   infoNoticeText: {
     color:
       COLORS.warning,
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     lineHeight: 20,
-     textAlign: "center",
+    textAlign: "center",
+  },
+
+  confirmedNotice: {
+    backgroundColor:
+      COLORS.successBackground,
+    borderRadius:
+      RADIUS.md,
+    padding:
+      SPACING.md,
+    marginTop:
+      SPACING.md,
+    alignItems: "center",
+  },
+
+  confirmedNoticeText: {
+    color:
+      COLORS.success,
+    fontSize:
+      FONT.small,
+    lineHeight: 20,
+    fontWeight: "600",
+    textAlign: "center",
   },
 
   cancelButton: {
     borderWidth: 1,
     borderColor:
-      COLORS.border,
+      COLORS.danger,
     borderRadius:
       RADIUS.md,
     paddingVertical: 13,
@@ -768,7 +1073,8 @@ historyButtonText: {
   cancelButtonText: {
     color:
       COLORS.danger,
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     fontWeight: "700",
   },
 
@@ -789,7 +1095,8 @@ historyButtonText: {
 
   newBookingButtonText: {
     color: "#FFFFFF",
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
   },
 
@@ -809,16 +1116,19 @@ historyButtonText: {
     fontSize:
       FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom:
       SPACING.sm,
   },
 
   messageText: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     lineHeight: 20,
     color:
       COLORS.textSecondary,
+    textAlign: "center",
   },
 
   retryButton: {
@@ -834,7 +1144,8 @@ historyButtonText: {
 
   retryButtonText: {
     color: "#FFFFFF",
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     fontWeight: "700",
   },
 
@@ -858,7 +1169,8 @@ historyButtonText: {
       RADIUS.pill,
     backgroundColor:
       COLORS.primarySoft,
-    justifyContent: "center",
+    justifyContent:
+      "center",
     alignItems: "center",
     marginBottom:
       SPACING.md,
@@ -872,13 +1184,16 @@ historyButtonText: {
     fontSize:
       FONT.heading,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom:
       SPACING.sm,
+    textAlign: "center",
   },
 
   emptyText: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     lineHeight: 23,
     color:
       COLORS.textSecondary,
@@ -899,9 +1214,8 @@ historyButtonText: {
 
   primaryButtonText: {
     color: "#FFFFFF",
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
   },
-
-  
 });

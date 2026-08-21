@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     Platform,
     Pressable,
     ScrollView,
@@ -21,6 +20,13 @@ import {
 } from "../../api/appointments.api";
 
 import { useAuth } from "../../context/AuthContext";
+
+import {
+    formatDisplayDate,
+    formatDisplayTime,
+} from "../../utils/date-format";
+
+import { showMessage } from "../../utils/show-message";
 
 import {
     COLORS,
@@ -100,6 +106,11 @@ export default function AppointmentScreen() {
     customDate?: string
   ) {
     if (!token) {
+      showMessage(
+        "Sesión no disponible",
+        "Debes iniciar sesión para consultar horarios."
+      );
+
       return;
     }
 
@@ -111,10 +122,11 @@ export default function AppointmentScreen() {
         date
       )
     ) {
-      Alert.alert(
+      showMessage(
         "Fecha inválida",
-        "Ingresa una fecha válida."
+        "Ingresa una fecha válida en formato AAAA-MM-DD."
       );
+
       return;
     }
 
@@ -135,7 +147,7 @@ export default function AppointmentScreen() {
           ? error.message
           : "No se pudo consultar la disponibilidad.";
 
-      Alert.alert(
+      showMessage(
         "No se pudo consultar",
         message
       );
@@ -145,7 +157,7 @@ export default function AppointmentScreen() {
   }
 
   function handleDateChange(
-    event: any,
+    event: unknown,
     date?: Date
   ) {
     setShowDatePicker(false);
@@ -166,14 +178,20 @@ export default function AppointmentScreen() {
 
   async function handleBook() {
     if (!token) {
+      showMessage(
+        "Sesión no disponible",
+        "Debes iniciar sesión para agendar una cita."
+      );
+
       return;
     }
 
     if (!selectedTime) {
-      Alert.alert(
+      showMessage(
         "Selecciona una hora",
         "Debes seleccionar un horario disponible."
       );
+
       return;
     }
 
@@ -190,9 +208,13 @@ export default function AppointmentScreen() {
         }
       );
 
-      Alert.alert(
+      showMessage(
         "Cita solicitada",
-        `Tu cita para el ${dateText} a las ${selectedTime} fue registrada y está pendiente de confirmación.`
+        `Tu cita para ${formatDisplayDate(
+          dateText
+        )} a las ${formatDisplayTime(
+          selectedTime
+        )} fue registrada y está pendiente de confirmación.`
       );
 
       setSelectedTime(null);
@@ -210,7 +232,7 @@ export default function AppointmentScreen() {
           ? error.message
           : "No se pudo agendar la cita.";
 
-      Alert.alert(
+      showMessage(
         "No se pudo agendar",
         message
       );
@@ -244,24 +266,40 @@ export default function AppointmentScreen() {
 
       <View style={styles.serviceCard}>
         <View style={styles.serviceIcon}>
-          <Text style={styles.serviceIconText}>
+          <Text
+            style={
+              styles.serviceIconText
+            }
+          >
             ✂
           </Text>
         </View>
 
         <View style={styles.serviceInfo}>
-          <Text style={styles.serviceName}>
+          <Text
+            style={
+              styles.serviceName
+            }
+          >
             Corte de cabello
           </Text>
 
-          <Text style={styles.serviceMeta}>
+          <Text
+            style={
+              styles.serviceMeta
+            }
+          >
             50 min · Reserva por bloques de 1 hora
           </Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
+        <Text
+          style={
+            styles.sectionTitle
+          }
+        >
           1. Elige la fecha
         </Text>
 
@@ -277,36 +315,60 @@ export default function AppointmentScreen() {
               maxLength={10}
             />
 
-            <Text style={styles.helperText}>
+            <Text
+              style={
+                styles.helperText
+              }
+            >
               Debes reservar al menos con un día de anticipación.
             </Text>
           </>
         ) : (
           <>
             <Pressable
-              style={styles.dateButton}
+              style={
+                styles.dateButton
+              }
               onPress={() =>
-                setShowDatePicker(true)
+                setShowDatePicker(
+                  true
+                )
               }
             >
               <View>
-                <Text style={styles.dateLabel}>
+                <Text
+                  style={
+                    styles.dateLabel
+                  }
+                >
                   Fecha seleccionada
                 </Text>
 
-                <Text style={styles.dateValue}>
-                  {dateText}
+                <Text
+                  style={
+                    styles.dateValue
+                  }
+                >
+                  {formatDisplayDate(
+                    dateText
+                  )}
                 </Text>
               </View>
 
-              <Text style={styles.dateChevron}>
+              <Text
+                style={
+                  styles.dateChevron
+                }
+              >
                 ›
               </Text>
             </Pressable>
 
             {showDatePicker && (
               <DateTimePicker
-                value={selectedDate}
+                value={
+                  selectedDate
+                }
                 mode="date"
                 display="default"
                 minimumDate={
@@ -318,7 +380,11 @@ export default function AppointmentScreen() {
               />
             )}
 
-            <Text style={styles.helperText}>
+            <Text
+              style={
+                styles.helperText
+              }
+            >
               Debes reservar al menos con un día de anticipación.
             </Text>
           </>
@@ -335,7 +401,11 @@ export default function AppointmentScreen() {
           }
           disabled={loading}
         >
-          <Text style={styles.searchButtonText}>
+          <Text
+            style={
+              styles.searchButtonText
+            }
+          >
             {loading
               ? "Consultando..."
               : "Ver horarios disponibles"}
@@ -344,24 +414,46 @@ export default function AppointmentScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
+        <View
+          style={
+            styles.loadingContainer
+          }
+        >
+          <ActivityIndicator
+            size="large"
+          />
 
-          <Text style={styles.loadingText}>
+          <Text
+            style={
+              styles.loadingText
+            }
+          >
             Buscando horarios...
           </Text>
         </View>
       ) : times.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <Text
+            style={
+              styles.sectionTitle
+            }
+          >
             2. Elige la hora
           </Text>
 
-          <Text style={styles.sectionSubtitle}>
+          <Text
+            style={
+              styles.sectionSubtitle
+            }
+          >
             Los horarios ocupados no se pueden seleccionar.
           </Text>
 
-          <View style={styles.timesContainer}>
+          <View
+            style={
+              styles.timesContainer
+            }
+          >
             {times.map((slot) => {
               const selected =
                 selectedTime ===
@@ -399,7 +491,9 @@ export default function AppointmentScreen() {
                         styles.selectedTimeText,
                     ]}
                   >
-                    {slot.time}
+                    {formatDisplayTime(
+                      slot.time
+                    )}
                   </Text>
 
                   {!slot.available && (
@@ -419,48 +513,112 @@ export default function AppointmentScreen() {
       ) : null}
 
       {selectedTime && (
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryEyebrow}>
+        <View
+          style={
+            styles.summaryCard
+          }
+        >
+          <Text
+            style={
+              styles.summaryEyebrow
+            }
+          >
             RESUMEN DE LA RESERVA
           </Text>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>
+          <View
+            style={
+              styles.summaryRow
+            }
+          >
+            <Text
+              style={
+                styles.summaryLabel
+              }
+            >
               Servicio
             </Text>
 
-            <Text style={styles.summaryValue}>
+            <Text
+              style={
+                styles.summaryValue
+              }
+            >
               Corte de cabello
             </Text>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>
+          <View
+            style={
+              styles.summaryRow
+            }
+          >
+            <Text
+              style={
+                styles.summaryLabel
+              }
+            >
               Fecha
             </Text>
 
-            <Text style={styles.summaryValue}>
-              {dateText}
+            <Text
+              style={
+                styles.summaryValue
+              }
+            >
+              {formatDisplayDate(
+                dateText
+              )}
             </Text>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>
+          <View
+            style={
+              styles.summaryRow
+            }
+          >
+            <Text
+              style={
+                styles.summaryLabel
+              }
+            >
               Hora
             </Text>
 
-            <Text style={styles.summaryValue}>
-              {selectedTime}
+            <Text
+              style={
+                styles.summaryValue
+              }
+            >
+              {formatDisplayTime(
+                selectedTime
+              )}
             </Text>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>
+          <View
+            style={
+              styles.summaryRow
+            }
+          >
+            <Text
+              style={
+                styles.summaryLabel
+              }
+            >
               Estado inicial
             </Text>
 
-            <View style={styles.pendingBadge}>
-              <Text style={styles.pendingBadgeText}>
+            <View
+              style={
+                styles.pendingBadge
+              }
+            >
+              <Text
+                style={
+                  styles.pendingBadgeText
+                }
+              >
                 Pendiente
               </Text>
             </View>
@@ -475,14 +633,22 @@ export default function AppointmentScreen() {
             disabled={booking}
             onPress={handleBook}
           >
-            <Text style={styles.confirmButtonText}>
+            <Text
+              style={
+                styles.confirmButtonText
+              }
+            >
               {booking
                 ? "Agendando..."
                 : "Confirmar cita"}
             </Text>
           </Pressable>
 
-          <Text style={styles.confirmationNote}>
+          <Text
+            style={
+              styles.confirmationNote
+            }
+          >
             La barbería deberá aceptar la solicitud antes de que quede confirmada.
           </Text>
         </View>
@@ -490,8 +656,6 @@ export default function AppointmentScreen() {
 
       <BackButton />
     </ScrollView>
-
-    
   );
 }
 
@@ -502,32 +666,41 @@ const styles = StyleSheet.create({
       COLORS.background,
     paddingHorizontal:
       SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.xxl,
+    paddingTop:
+      SPACING.xl,
+    paddingBottom:
+      SPACING.xxl,
   },
 
   header: {
-    marginBottom: SPACING.xl,
+    marginBottom:
+      SPACING.xl,
   },
 
   eyebrow: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
     letterSpacing: 1.2,
     color:
       COLORS.textSecondary,
-    marginBottom: SPACING.xs,
+    marginBottom:
+      SPACING.xs,
   },
 
   title: {
-    fontSize: FONT.title,
+    fontSize:
+      FONT.title,
     fontWeight: "800",
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   subtitle: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     lineHeight: 24,
     color:
       COLORS.textSecondary,
@@ -541,20 +714,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor:
       COLORS.border,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.xl,
+    borderRadius:
+      RADIUS.lg,
+    padding:
+      SPACING.md,
+    marginBottom:
+      SPACING.xl,
   },
 
   serviceIcon: {
     width: 54,
     height: 54,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     backgroundColor:
       COLORS.primarySoft,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: SPACING.md,
+    marginRight:
+      SPACING.md,
   },
 
   serviceIconText: {
@@ -566,34 +744,43 @@ const styles = StyleSheet.create({
   },
 
   serviceName: {
-    fontSize: FONT.subheading,
+    fontSize:
+      FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
     marginBottom: 4,
   },
 
   serviceMeta: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
   },
 
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom:
+      SPACING.xl,
   },
 
   sectionTitle: {
-    fontSize: FONT.subheading,
+    fontSize:
+      FONT.subheading,
     fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
+    color:
+      COLORS.text,
+    marginBottom:
+      SPACING.sm,
   },
 
   sectionSubtitle: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
-    marginBottom: SPACING.md,
+    marginBottom:
+      SPACING.md,
   },
 
   input: {
@@ -602,12 +789,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor:
       COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     paddingHorizontal:
       SPACING.md,
     paddingVertical: 14,
-    fontSize: FONT.body,
-    color: COLORS.text,
+    fontSize:
+      FONT.body,
+    color:
+      COLORS.text,
   },
 
   dateButton: {
@@ -620,23 +810,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor:
       COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     paddingHorizontal:
       SPACING.md,
     paddingVertical: 14,
   },
 
   dateLabel: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     color:
       COLORS.textSecondary,
     marginBottom: 3,
   },
 
   dateValue: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
   },
 
   dateChevron: {
@@ -646,25 +840,30 @@ const styles = StyleSheet.create({
   },
 
   helperText: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     lineHeight: 20,
     color:
       COLORS.textSecondary,
-    marginTop: SPACING.sm,
+    marginTop:
+      SPACING.sm,
   },
 
   searchButton: {
     backgroundColor:
       COLORS.primary,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     paddingVertical: 15,
     alignItems: "center",
-    marginTop: SPACING.md,
+    marginTop:
+      SPACING.md,
   },
 
   searchButtonText: {
     color: "#FFFFFF",
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
   },
 
@@ -679,7 +878,8 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    marginTop: SPACING.sm,
+    marginTop:
+      SPACING.sm,
     color:
       COLORS.textSecondary,
   },
@@ -699,7 +899,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor:
       COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -724,9 +925,11 @@ const styles = StyleSheet.create({
   },
 
   timeText: {
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
   },
 
   unavailableText: {
@@ -736,7 +939,8 @@ const styles = StyleSheet.create({
 
   unavailableLabel: {
     marginTop: 3,
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     color:
       COLORS.textMuted,
   },
@@ -744,20 +948,24 @@ const styles = StyleSheet.create({
   summaryCard: {
     backgroundColor:
       COLORS.surface,
-    borderRadius: RADIUS.xl,
+    borderRadius:
+      RADIUS.xl,
     borderWidth: 1,
     borderColor:
       COLORS.border,
-    padding: SPACING.lg,
+    padding:
+      SPACING.lg,
   },
 
   summaryEyebrow: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
     letterSpacing: 1,
     color:
       COLORS.textSecondary,
-    marginBottom: SPACING.md,
+    marginBottom:
+      SPACING.md,
   },
 
   summaryRow: {
@@ -765,22 +973,29 @@ const styles = StyleSheet.create({
     justifyContent:
       "space-between",
     alignItems: "center",
-    paddingVertical: SPACING.sm,
+    paddingVertical:
+      SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor:
       COLORS.border,
+    gap: SPACING.md,
   },
 
   summaryLabel: {
-    fontSize: FONT.small,
+    fontSize:
+      FONT.small,
     color:
       COLORS.textSecondary,
   },
 
   summaryValue: {
-    fontSize: FONT.body,
+    flex: 1,
+    textAlign: "right",
+    fontSize:
+      FONT.body,
     fontWeight: "700",
-    color: COLORS.text,
+    color:
+      COLORS.text,
   },
 
   pendingBadge: {
@@ -789,37 +1004,44 @@ const styles = StyleSheet.create({
     paddingHorizontal:
       SPACING.md,
     paddingVertical: 6,
-    borderRadius: RADIUS.pill,
+    borderRadius:
+      RADIUS.pill,
   },
 
   pendingBadgeText: {
     color:
       COLORS.warning,
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     fontWeight: "700",
   },
 
   confirmButton: {
     backgroundColor:
       COLORS.primary,
-    borderRadius: RADIUS.md,
+    borderRadius:
+      RADIUS.md,
     paddingVertical: 15,
     alignItems: "center",
-    marginTop: SPACING.lg,
+    marginTop:
+      SPACING.lg,
   },
 
   confirmButtonText: {
     color: "#FFFFFF",
-    fontSize: FONT.body,
+    fontSize:
+      FONT.body,
     fontWeight: "700",
   },
 
   confirmationNote: {
-    fontSize: FONT.caption,
+    fontSize:
+      FONT.caption,
     lineHeight: 18,
     color:
       COLORS.textSecondary,
     textAlign: "center",
-    marginTop: SPACING.sm,
+    marginTop:
+      SPACING.sm,
   },
 });

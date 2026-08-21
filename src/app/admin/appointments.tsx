@@ -10,6 +10,11 @@ import {
 } from "react-native";
 
 import {
+    formatDisplayDate,
+    formatDisplayTime,
+} from "../../utils/date-format";
+
+import {
     acceptAdminAppointment,
     AdminAppointment,
     cancelAdminAppointment,
@@ -28,6 +33,10 @@ import {
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
+
+
+
+import { showMessage } from "../../utils/show-message";
 
 type StatusFilter =
   | "PENDING"
@@ -87,36 +96,45 @@ export default function AdminAppointmentsScreen() {
     }
   }
 
-  async function handleAccept(
-    appointmentId: number
-  ) {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setProcessingId(
-        appointmentId
-      );
-
-      setError("");
-
-      await acceptAdminAppointment(
-        token,
-        appointmentId
-      );
-
-      await loadAppointments();
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo aceptar la cita."
-      );
-    } finally {
-      setProcessingId(null);
-    }
+ async function handleAccept(
+  appointmentId: number
+) {
+  if (!token) {
+    return;
   }
+
+  try {
+    setProcessingId(
+      appointmentId
+    );
+
+    setError("");
+
+    await acceptAdminAppointment(
+      token,
+      appointmentId
+    );
+
+    await loadAppointments();
+
+    showMessage(
+      "Cita confirmada",
+      "La solicitud fue aceptada correctamente."
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo aceptar la cita.";
+
+    showMessage(
+      "No se pudo aceptar",
+      message
+    );
+  } finally {
+    setProcessingId(null);
+  }
+}
 
   async function handleReject(
     appointmentId: number
@@ -168,39 +186,44 @@ export default function AdminAppointmentsScreen() {
   }
 
   async function executeReject(
-    appointmentId: number
-  ) {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setProcessingId(
-        appointmentId
-      );
-
-      setError("");
-
-      await rejectAdminAppointment(
-        token,
-        appointmentId
-      );
-
-      await loadAppointments();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo rechazar la cita.";
-
-      Alert.alert(
-        "No se pudo rechazar",
-        message
-      );
-    } finally {
-      setProcessingId(null);
-    }
+  appointmentId: number
+) {
+  if (!token) {
+    return;
   }
+
+  try {
+    setProcessingId(
+      appointmentId
+    );
+
+    setError("");
+
+    await rejectAdminAppointment(
+      token,
+      appointmentId
+    );
+
+    await loadAppointments();
+
+    showMessage(
+      "Cita rechazada",
+      "La solicitud fue rechazada correctamente."
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo rechazar la cita.";
+
+    showMessage(
+      "No se pudo rechazar",
+      message
+    );
+  } finally {
+    setProcessingId(null);
+  }
+}
 
   async function handleComplete(
     appointmentId: number
@@ -249,39 +272,44 @@ export default function AdminAppointmentsScreen() {
   }
 
   async function executeComplete(
-    appointmentId: number
-  ) {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setProcessingId(
-        appointmentId
-      );
-
-      setError("");
-
-      await completeAdminAppointment(
-        token,
-        appointmentId
-      );
-
-      await loadAppointments();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo completar la cita.";
-
-      Alert.alert(
-        "No se pudo completar",
-        message
-      );
-    } finally {
-      setProcessingId(null);
-    }
+  appointmentId: number
+) {
+  if (!token) {
+    return;
   }
+
+  try {
+    setProcessingId(
+      appointmentId
+    );
+
+    setError("");
+
+    await completeAdminAppointment(
+      token,
+      appointmentId
+    );
+
+    await loadAppointments();
+
+    showMessage(
+      "Cita completada",
+      "La cita fue marcada como completada."
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo completar la cita.";
+
+    showMessage(
+      "No se pudo completar",
+      message
+    );
+  } finally {
+    setProcessingId(null);
+  }
+}
 
   function confirmAdminCancel(
     appointmentId: number
@@ -325,39 +353,44 @@ export default function AdminAppointmentsScreen() {
   }
 
   async function handleAdminCancel(
-    appointmentId: number
-  ) {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setProcessingId(
-        appointmentId
-      );
-
-      setError("");
-
-      await cancelAdminAppointment(
-        token,
-        appointmentId
-      );
-
-      await loadAppointments();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo cancelar la cita.";
-
-      Alert.alert(
-        "No se pudo cancelar",
-        message
-      );
-    } finally {
-      setProcessingId(null);
-    }
+  appointmentId: number
+) {
+  if (!token) {
+    return;
   }
+
+  try {
+    setProcessingId(
+      appointmentId
+    );
+
+    setError("");
+
+    await cancelAdminAppointment(
+      token,
+      appointmentId
+    );
+
+    await loadAppointments();
+
+    showMessage(
+      "Cita cancelada",
+      "La cita fue cancelada administrativamente y el horario quedó disponible."
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo cancelar la cita.";
+
+    showMessage(
+      "No se pudo cancelar",
+      message
+    );
+  } finally {
+    setProcessingId(null);
+  }
+}
 
   function getStatusText(
     status: AdminAppointment["status"]
@@ -882,7 +915,9 @@ export default function AdminAppointmentsScreen() {
                           }
                         >
                           {
-                            appointment.date
+                            formatDisplayDate(
+  appointment.date
+)
                           }
                         </Text>
                       </View>
@@ -906,7 +941,9 @@ export default function AdminAppointmentsScreen() {
                           }
                         >
                           {
-                            appointment.time
+                            formatDisplayTime(
+  appointment.time
+)
                           }
                         </Text>
                       </View>
