@@ -1,5 +1,4 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -50,13 +49,7 @@ function getTomorrowDate() {
 }
 
 export default function AppointmentScreen() {
-  const router = useRouter();
-
-  const {
-    token,
-    user,
-    loading: authLoading,
-  } = useAuth();
+  const { token } = useAuth();
 
   const initialDate =
     getTomorrowDate();
@@ -93,34 +86,10 @@ export default function AppointmentScreen() {
   const [booking, setBooking] =
     useState(false);
 
-  // Protección de ruta CLIENT
-  useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    if (user.role === "ADMIN") {
-      router.replace("/admin");
-    }
-  }, [
-    authLoading,
-    user,
-    router,
-  ]);
-
   async function handleSearch(
     customDate?: string
   ) {
-    if (
-      !token ||
-      !user ||
-      user.role !== "CLIENT"
-    ) {
+    if (!token) {
       return;
     }
 
@@ -149,9 +118,7 @@ export default function AppointmentScreen() {
           date
         );
 
-      setTimes(
-        result.times
-      );
+      setTimes(result.times);
     } catch (error) {
       const message =
         error instanceof Error
@@ -188,11 +155,7 @@ export default function AppointmentScreen() {
   }
 
   async function handleBook() {
-    if (
-      !token ||
-      !user ||
-      user.role !== "CLIENT"
-    ) {
+    if (!token) {
       return;
     }
 
@@ -230,9 +193,7 @@ export default function AppointmentScreen() {
           dateText
         );
 
-      setTimes(
-        result.times
-      );
+      setTimes(result.times);
     } catch (error) {
       const message =
         error instanceof Error
@@ -246,35 +207,6 @@ export default function AppointmentScreen() {
     } finally {
       setBooking(false);
     }
-  }
-
-  if (authLoading) {
-    return (
-      <View
-        style={
-          styles.authLoadingContainer
-        }
-      >
-        <ActivityIndicator
-          size="large"
-        />
-
-        <Text
-          style={
-            styles.loadingText
-          }
-        >
-          Cargando sesión...
-        </Text>
-      </View>
-    );
-  }
-
-  if (
-    !user ||
-    user.role !== "CLIENT"
-  ) {
-    return null;
   }
 
   return (
@@ -303,38 +235,24 @@ export default function AppointmentScreen() {
           <TextInput
             style={styles.input}
             value={dateText}
-            onChangeText={
-              setDateText
-            }
+            onChangeText={setDateText}
             placeholder="AAAA-MM-DD"
             maxLength={10}
           />
 
-          <Text
-            style={
-              styles.helperText
-            }
-          >
+          <Text style={styles.helperText}>
             Formato: AAAA-MM-DD
           </Text>
         </>
       ) : (
         <>
           <Pressable
-            style={
-              styles.dateButton
-            }
+            style={styles.dateButton}
             onPress={() =>
-              setShowDatePicker(
-                true
-              )
+              setShowDatePicker(true)
             }
           >
-            <Text
-              style={
-                styles.dateButtonText
-              }
-            >
+            <Text style={styles.dateButtonText}>
               {dateText}
             </Text>
           </Pressable>
@@ -372,11 +290,7 @@ export default function AppointmentScreen() {
         }
         disabled={loading}
       >
-        <Text
-          style={
-            styles.searchButtonText
-          }
-        >
+        <Text style={styles.searchButtonText}>
           {loading
             ? "Consultando..."
             : "Ver horarios disponibles"}
@@ -384,135 +298,92 @@ export default function AppointmentScreen() {
       </Pressable>
 
       {loading ? (
-        <View
-          style={
-            styles.loadingContainer
-          }
-        >
-          <ActivityIndicator
-            size="large"
-          />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
 
-          <Text
-            style={
-              styles.loadingText
-            }
-          >
+          <Text style={styles.loadingText}>
             Consultando horarios...
           </Text>
         </View>
       ) : times.length > 0 ? (
         <>
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
+          <Text style={styles.sectionTitle}>
             Horarios disponibles
           </Text>
 
-          <View
-            style={
-              styles.timesContainer
-            }
-          >
-            {times.map(
-              (slot) => {
-                const selected =
-                  selectedTime ===
-                  slot.time;
+          <View style={styles.timesContainer}>
+            {times.map((slot) => {
+              const selected =
+                selectedTime ===
+                slot.time;
 
-                return (
-                  <Pressable
-                    key={
+              return (
+                <Pressable
+                  key={slot.time}
+                  disabled={
+                    !slot.available
+                  }
+                  onPress={() =>
+                    setSelectedTime(
                       slot.time
-                    }
-                    disabled={
-                      !slot.available
-                    }
-                    onPress={() =>
-                      setSelectedTime(
-                        slot.time
-                      )
-                    }
+                    )
+                  }
+                  style={[
+                    styles.timeButton,
+
+                    !slot.available &&
+                      styles.unavailableTime,
+
+                    selected &&
+                      styles.selectedTime,
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.timeButton,
+                      styles.timeText,
 
                       !slot.available &&
-                        styles.unavailableTime,
+                        styles.unavailableText,
 
                       selected &&
-                        styles.selectedTime,
+                        styles.selectedTimeText,
                     ]}
                   >
+                    {slot.time}
+                  </Text>
+
+                  {!slot.available && (
                     <Text
-                      style={[
-                        styles.timeText,
-
-                        !slot.available &&
-                          styles.unavailableText,
-
-                        selected &&
-                          styles.selectedTimeText,
-                      ]}
+                      style={
+                        styles.unavailableLabel
+                      }
                     >
-                      {slot.time}
+                      Ocupado
                     </Text>
-
-                    {!slot.available && (
-                      <Text
-                        style={
-                          styles.unavailableLabel
-                        }
-                      >
-                        Ocupado
-                      </Text>
-                    )}
-                  </Pressable>
-                );
-              }
-            )}
+                  )}
+                </Pressable>
+              );
+            })}
           </View>
         </>
       ) : null}
 
       {selectedTime && (
-        <View
-          style={
-            styles.confirmation
-          }
-        >
-          <Text
-            style={
-              styles.summaryTitle
-            }
-          >
+        <View style={styles.confirmation}>
+          <Text style={styles.summaryTitle}>
             Resumen
           </Text>
 
-          <Text
-            style={
-              styles.summary
-            }
-          >
+          <Text style={styles.summary}>
             Fecha: {dateText}
           </Text>
 
-          <Text
-            style={
-              styles.summary
-            }
-          >
+          <Text style={styles.summary}>
             Hora: {selectedTime}
           </Text>
 
-          <Text
-            style={
-              styles.summary
-            }
-          >
-            Servicio: Corte de
-            cabello
+          <Text style={styles.summary}>
+            Servicio: Corte de cabello
           </Text>
 
           <Pressable
@@ -522,15 +393,9 @@ export default function AppointmentScreen() {
                 styles.disabledButton,
             ]}
             disabled={booking}
-            onPress={
-              handleBook
-            }
+            onPress={handleBook}
           >
-            <Text
-              style={
-                styles.confirmButtonText
-              }
-            >
+            <Text style={styles.confirmButtonText}>
               {booking
                 ? "Agendando..."
                 : "Confirmar cita"}
@@ -542,200 +407,187 @@ export default function AppointmentScreen() {
   );
 }
 
-const styles =
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 24,
-      backgroundColor:
-        "#f5f5f5",
-    },
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: "#f5f5f5",
+  },
 
-    authLoadingContainer: {
-      flex: 1,
-      justifyContent:
-        "center",
-      alignItems: "center",
-      backgroundColor:
-        "#f5f5f5",
-    },
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 22,
+  },
 
-    title: {
-      fontSize: 30,
-      fontWeight: "bold",
-      marginBottom: 22,
-    },
+  serviceCard: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
 
-    serviceCard: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ddd",
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 24,
-    },
+  service: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
 
-    service: {
-      fontSize: 20,
-      fontWeight: "600",
-    },
+  description: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
 
-    description: {
-      fontSize: 14,
-      color: "#666",
-      marginTop: 4,
-    },
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
 
-    label: {
-      fontSize: 15,
-      fontWeight: "600",
-      marginBottom: 6,
-    },
+  input: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
 
-    input: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      fontSize: 16,
-    },
+  dateButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
 
-    dateButton: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 14,
-    },
+  dateButtonText: {
+    fontSize: 16,
+  },
 
-    dateButtonText: {
-      fontSize: 16,
-    },
+  helperText: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 7,
+    lineHeight: 18,
+  },
 
-    helperText: {
-      fontSize: 13,
-      color: "#666",
-      marginTop: 7,
-      lineHeight: 18,
-    },
+  searchButton: {
+    backgroundColor: "#111",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 18,
+  },
 
-    searchButton: {
-      backgroundColor: "#111",
-      paddingVertical: 14,
-      borderRadius: 10,
-      alignItems: "center",
-      marginTop: 18,
-    },
+  searchButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
 
-    searchButtonText: {
-      color: "#fff",
-      fontWeight: "bold",
-      fontSize: 15,
-    },
+  disabledButton: {
+    opacity: 0.6,
+  },
 
-    disabledButton: {
-      opacity: 0.6,
-    },
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: 30,
+  },
 
-    loadingContainer: {
-      alignItems: "center",
-      paddingVertical: 30,
-    },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+  },
 
-    loadingText: {
-      marginTop: 10,
-      color: "#666",
-    },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 28,
+    marginBottom: 12,
+  },
 
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: "600",
-      marginTop: 28,
-      marginBottom: 12,
-    },
+  timesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
 
-    timesContainer: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-    },
+  timeButton: {
+    width: 90,
+    minHeight: 58,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#333",
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
 
-    timeButton: {
-      width: 90,
-      minHeight: 58,
-      justifyContent:
-        "center",
-      borderWidth: 1,
-      borderColor: "#333",
-      borderRadius: 8,
-      alignItems: "center",
-      backgroundColor: "#fff",
-    },
+  selectedTime: {
+    backgroundColor: "#111",
+  },
 
-    selectedTime: {
-      backgroundColor: "#111",
-    },
+  selectedTimeText: {
+    color: "#fff",
+  },
 
-    selectedTimeText: {
-      color: "#fff",
-    },
+  unavailableTime: {
+    backgroundColor: "#e5e5e5",
+    borderColor: "#ccc",
+  },
 
-    unavailableTime: {
-      backgroundColor:
-        "#e5e5e5",
-      borderColor: "#ccc",
-    },
+  timeText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
 
-    timeText: {
-      fontSize: 15,
-      fontWeight: "600",
-    },
+  unavailableText: {
+    color: "#999",
+  },
 
-    unavailableText: {
-      color: "#999",
-    },
+  unavailableLabel: {
+    fontSize: 10,
+    color: "#888",
+    marginTop: 2,
+  },
 
-    unavailableLabel: {
-      fontSize: 10,
-      color: "#888",
-      marginTop: 2,
-    },
+  confirmation: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 18,
+    marginTop: 28,
+  },
 
-    confirmation: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ddd",
-      borderRadius: 12,
-      padding: 18,
-      marginTop: 28,
-    },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+  },
 
-    summaryTitle: {
-      fontSize: 18,
-      fontWeight: "600",
-      marginBottom: 10,
-    },
+  summary: {
+    fontSize: 15,
+    marginBottom: 5,
+    color: "#444",
+  },
 
-    summary: {
-      fontSize: 15,
-      marginBottom: 5,
-      color: "#444",
-    },
+  confirmButton: {
+    backgroundColor: "#111",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 16,
+  },
 
-    confirmButton: {
-      backgroundColor: "#111",
-      paddingVertical: 14,
-      borderRadius: 10,
-      alignItems: "center",
-      marginTop: 16,
-    },
-
-    confirmButtonText: {
-      color: "#fff",
-      fontWeight: "bold",
-      fontSize: 15,
-    },
-  });
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+});

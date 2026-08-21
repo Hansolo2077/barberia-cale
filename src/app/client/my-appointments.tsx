@@ -32,12 +32,7 @@ type Appointment = {
 
 export default function MyAppointmentsScreen() {
   const router = useRouter();
-
-  const {
-    token,
-    user,
-    loading: authLoading,
-  } = useAuth();
+  const { token } = useAuth();
 
   const [appointments, setAppointments] =
     useState<Appointment[]>([]);
@@ -51,50 +46,14 @@ export default function MyAppointmentsScreen() {
   const [cancellingId, setCancellingId] =
     useState<number | null>(null);
 
-  // Protección de ruta
   useEffect(() => {
-    if (authLoading) {
-      return;
+    if (token) {
+      loadAppointments();
     }
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    if (user.role === "ADMIN") {
-      router.replace("/admin");
-    }
-  }, [
-    authLoading,
-    user,
-    router,
-  ]);
-
-  // Cargar citas solo si es CLIENT autenticado
-  useEffect(() => {
-    if (
-      authLoading ||
-      !token ||
-      !user ||
-      user.role !== "CLIENT"
-    ) {
-      return;
-    }
-
-    loadAppointments();
-  }, [
-    authLoading,
-    token,
-    user,
-  ]);
+  }, [token]);
 
   async function loadAppointments() {
-    if (
-      !token ||
-      !user ||
-      user.role !== "CLIENT"
-    ) {
+    if (!token) {
       return;
     }
 
@@ -181,11 +140,7 @@ export default function MyAppointmentsScreen() {
   async function handleCancel(
     appointmentId: number
   ) {
-    if (
-      !token ||
-      !user ||
-      user.role !== "CLIENT"
-    ) {
+    if (!token) {
       return;
     }
 
@@ -222,51 +177,12 @@ export default function MyAppointmentsScreen() {
     }
   }
 
-  if (authLoading) {
-    return (
-      <View
-        style={
-          styles.centerContainer
-        }
-      >
-        <ActivityIndicator
-          size="large"
-        />
-
-        <Text
-          style={
-            styles.loadingText
-          }
-        >
-          Cargando sesión...
-        </Text>
-      </View>
-    );
-  }
-
-  if (
-    !user ||
-    user.role !== "CLIENT"
-  ) {
-    return null;
-  }
-
   if (loading) {
     return (
-      <View
-        style={
-          styles.centerContainer
-        }
-      >
-        <ActivityIndicator
-          size="large"
-        />
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" />
 
-        <Text
-          style={
-            styles.loadingText
-          }
-        >
+        <Text style={styles.loadingText}>
           Cargando tus citas...
         </Text>
       </View>
@@ -283,84 +199,46 @@ export default function MyAppointmentsScreen() {
         Mis citas
       </Text>
 
-      <Text
-        style={
-          styles.subtitle
-        }
-      >
+      <Text style={styles.subtitle}>
         Consulta tus próximas
         solicitudes y su estado.
       </Text>
 
       {error ? (
-        <View
-          style={
-            styles.messageBox
-          }
-        >
-          <Text
-            style={
-              styles.messageText
-            }
-          >
+        <View style={styles.messageBox}>
+          <Text style={styles.messageText}>
             {error}
           </Text>
 
           <Pressable
-            style={
-              styles.retryButton
-            }
-            onPress={
-              loadAppointments
-            }
+            style={styles.retryButton}
+            onPress={loadAppointments}
           >
-            <Text
-              style={
-                styles.retryButtonText
-              }
-            >
+            <Text style={styles.retryButtonText}>
               Intentar nuevamente
             </Text>
           </Pressable>
         </View>
       ) : appointments.length === 0 ? (
-        <View
-          style={
-            styles.messageBox
-          }
-        >
-          <Text
-            style={
-              styles.emptyTitle
-            }
-          >
+        <View style={styles.messageBox}>
+          <Text style={styles.emptyTitle}>
             Aún no tienes citas
           </Text>
 
-          <Text
-            style={
-              styles.messageText
-            }
-          >
+          <Text style={styles.messageText}>
             Cuando solicites una cita
             aparecerá aquí.
           </Text>
 
           <Pressable
-            style={
-              styles.primaryButton
-            }
+            style={styles.primaryButton}
             onPress={() =>
               router.push(
                 "/client/appointment"
               )
             }
           >
-            <Text
-              style={
-                styles.primaryButtonText
-              }
-            >
+            <Text style={styles.primaryButtonText}>
               Agendar una cita
             </Text>
           </Pressable>
@@ -369,36 +247,16 @@ export default function MyAppointmentsScreen() {
         appointments.map(
           (appointment) => (
             <View
-              key={
-                appointment.id
-              }
+              key={appointment.id}
               style={styles.card}
             >
-              <View
-                style={
-                  styles.cardHeader
-                }
-              >
-                <Text
-                  style={
-                    styles.service
-                  }
-                >
-                  {
-                    appointment.service
-                  }
+              <View style={styles.cardHeader}>
+                <Text style={styles.service}>
+                  {appointment.service}
                 </Text>
 
-                <View
-                  style={
-                    styles.statusBadge
-                  }
-                >
-                  <Text
-                    style={
-                      styles.statusText
-                    }
-                  >
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusText}>
                     {getStatusText(
                       appointment.status
                     )}
@@ -406,24 +264,12 @@ export default function MyAppointmentsScreen() {
                 </View>
               </View>
 
-              <Text
-                style={
-                  styles.date
-                }
-              >
-                {
-                  appointment.date
-                }
+              <Text style={styles.date}>
+                {appointment.date}
               </Text>
 
-              <Text
-                style={
-                  styles.time
-                }
-              >
-                {
-                  appointment.time
-                }
+              <Text style={styles.time}>
+                {appointment.time}
               </Text>
 
               {(appointment.status ===
@@ -448,11 +294,7 @@ export default function MyAppointmentsScreen() {
                     )
                   }
                 >
-                  <Text
-                    style={
-                      styles.cancelButtonText
-                    }
-                  >
+                  <Text style={styles.cancelButtonText}>
                     {cancellingId ===
                     appointment.id
                       ? "Cancelando..."
@@ -466,18 +308,12 @@ export default function MyAppointmentsScreen() {
       )}
 
       <Pressable
-        style={
-          styles.backButton
-        }
+        style={styles.backButton}
         onPress={() =>
           router.back()
         }
       >
-        <Text
-          style={
-            styles.backButtonText
-          }
-        >
+        <Text style={styles.backButtonText}>
           Volver
         </Text>
       </Pressable>
@@ -485,151 +321,145 @@ export default function MyAppointmentsScreen() {
   );
 }
 
-const styles =
-  StyleSheet.create({
-    container: {
-      flexGrow: 1,
-      padding: 24,
-      backgroundColor:
-        "#f5f5f5",
-    },
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    padding: 24,
+    backgroundColor: "#f5f5f5",
+  },
 
-    centerContainer: {
-      flex: 1,
-      justifyContent:
-        "center",
-      alignItems: "center",
-      backgroundColor:
-        "#f5f5f5",
-    },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
 
-    loadingText: {
-      marginTop: 12,
-      color: "#666",
-    },
+  loadingText: {
+    marginTop: 12,
+    color: "#666",
+  },
 
-    title: {
-      fontSize: 30,
-      fontWeight: "bold",
-      marginBottom: 8,
-    },
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
 
-    subtitle: {
-      fontSize: 16,
-      color: "#555",
-      marginBottom: 28,
-    },
+  subtitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 28,
+  },
 
-    card: {
-      backgroundColor: "#fff",
-      borderRadius: 12,
-      padding: 18,
-      marginBottom: 14,
-      borderWidth: 1,
-      borderColor: "#ddd",
-    },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
 
-    cardHeader: {
-      flexDirection: "row",
-      justifyContent:
-        "space-between",
-      alignItems: "center",
-      marginBottom: 14,
-    },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
 
-    service: {
-      fontSize: 18,
-      fontWeight: "600",
-    },
+  service: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
 
-    statusBadge: {
-      backgroundColor:
-        "#eeeeee",
-      borderRadius: 20,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-    },
+  statusBadge: {
+    backgroundColor: "#eeeeee",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
 
-    statusText: {
-      fontSize: 12,
-      fontWeight: "600",
-    },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
 
-    date: {
-      fontSize: 16,
-      marginBottom: 4,
-    },
+  date: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
 
-    time: {
-      fontSize: 22,
-      fontWeight: "bold",
-    },
+  time: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
 
-    cancelButton: {
-      marginTop: 18,
-      borderWidth: 1,
-      borderColor: "#999",
-      borderRadius: 8,
-      paddingVertical: 10,
-      alignItems: "center",
-    },
+  cancelButton: {
+    marginTop: 18,
+    borderWidth: 1,
+    borderColor: "#999",
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
 
-    cancelButtonText: {
-      fontSize: 14,
-      fontWeight: "600",
-    },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
 
-    disabledButton: {
-      opacity: 0.6,
-    },
+  disabledButton: {
+    opacity: 0.6,
+  },
 
-    messageBox: {
-      backgroundColor: "#fff",
-      padding: 20,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: "#ddd",
-    },
+  messageBox: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
 
-    emptyTitle: {
-      fontSize: 18,
-      fontWeight: "600",
-      marginBottom: 6,
-    },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
 
-    messageText: {
-      color: "#666",
-      lineHeight: 20,
-    },
+  messageText: {
+    color: "#666",
+    lineHeight: 20,
+  },
 
-    primaryButton: {
-      backgroundColor: "#111",
-      paddingVertical: 14,
-      borderRadius: 10,
-      alignItems: "center",
-      marginTop: 18,
-    },
+  primaryButton: {
+    backgroundColor: "#111",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 18,
+  },
 
-    primaryButtonText: {
-      color: "#fff",
-      fontWeight: "bold",
-    },
+  primaryButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 
-    retryButton: {
-      marginTop: 16,
-    },
+  retryButton: {
+    marginTop: 16,
+  },
 
-    retryButtonText: {
-      fontWeight: "600",
-    },
+  retryButtonText: {
+    fontWeight: "600",
+  },
 
-    backButton: {
-      alignItems: "center",
-      padding: 14,
-      marginTop: 10,
-    },
+  backButton: {
+    alignItems: "center",
+    padding: 14,
+    marginTop: 10,
+  },
 
-    backButtonText: {
-      color: "#555",
-    },
-  });
+  backButtonText: {
+    color: "#555",
+  },
+});

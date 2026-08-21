@@ -34,10 +34,6 @@ function formatDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function getToday() {
-  return new Date();
-}
-
 function getSevenDaysLater() {
   const date = new Date();
 
@@ -50,15 +46,10 @@ function getSevenDaysLater() {
 
 export default function AdminScheduleScreen() {
   const router = useRouter();
-
-  const {
-    token,
-    user,
-    loading: authLoading,
-  } = useAuth();
+  const { token } = useAuth();
 
   const initialStartDate =
-    getToday();
+    new Date();
 
   const initialEndDate =
     getSevenDaysLater();
@@ -110,51 +101,16 @@ export default function AdminScheduleScreen() {
     useState("");
 
   useEffect(() => {
-    if (authLoading) {
-      return;
+    if (token) {
+      loadSchedule();
     }
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    if (user.role !== "ADMIN") {
-      router.replace("/client");
-    }
-  }, [
-    authLoading,
-    user,
-    router,
-  ]);
-
-  useEffect(() => {
-    if (
-      authLoading ||
-      !token ||
-      !user ||
-      user.role !== "ADMIN"
-    ) {
-      return;
-    }
-
-    loadSchedule();
-  }, [
-    authLoading,
-    token,
-    user,
-  ]);
+  }, [token]);
 
   async function loadSchedule(
     customStartDate?: string,
     customEndDate?: string
   ) {
     if (!token) {
-      setError(
-        "Tu sesión no está disponible."
-      );
-
-      setLoading(false);
       return;
     }
 
@@ -228,11 +184,8 @@ export default function AdminScheduleScreen() {
 
     setSelectedStartDate(date);
 
-    const formatted =
-      formatDate(date);
-
     setStartDateText(
-      formatted
+      formatDate(date)
     );
   }
 
@@ -248,11 +201,8 @@ export default function AdminScheduleScreen() {
 
     setSelectedEndDate(date);
 
-    const formatted =
-      formatDate(date);
-
     setEndDateText(
-      formatted
+      formatDate(date)
     );
   }
 
@@ -277,35 +227,6 @@ export default function AdminScheduleScreen() {
     }
   }
 
-  if (authLoading) {
-    return (
-      <View
-        style={
-          styles.authLoadingContainer
-        }
-      >
-        <ActivityIndicator
-          size="large"
-        />
-
-        <Text
-          style={
-            styles.loadingText
-          }
-        >
-          Cargando sesión...
-        </Text>
-      </View>
-    );
-  }
-
-  if (
-    !user ||
-    user.role !== "ADMIN"
-  ) {
-    return null;
-  }
-
   return (
     <ScrollView
       contentContainerStyle={
@@ -316,11 +237,7 @@ export default function AdminScheduleScreen() {
         Agenda
       </Text>
 
-      <Text
-        style={
-          styles.subtitle
-        }
-      >
+      <Text style={styles.subtitle}>
         Consulta las citas dentro de
         un rango de fechas.
       </Text>
@@ -341,31 +258,19 @@ export default function AdminScheduleScreen() {
             maxLength={10}
           />
 
-          <Text
-            style={
-              styles.helperText
-            }
-          >
+          <Text style={styles.helperText}>
             Formato: AAAA-MM-DD
           </Text>
         </>
       ) : (
         <>
           <Pressable
-            style={
-              styles.dateButton
-            }
+            style={styles.dateButton}
             onPress={() =>
-              setShowStartPicker(
-                true
-              )
+              setShowStartPicker(true)
             }
           >
-            <Text
-              style={
-                styles.dateButtonText
-              }
-            >
+            <Text style={styles.dateButtonText}>
               {startDateText}
             </Text>
           </Pressable>
@@ -406,31 +311,19 @@ export default function AdminScheduleScreen() {
             maxLength={10}
           />
 
-          <Text
-            style={
-              styles.helperText
-            }
-          >
+          <Text style={styles.helperText}>
             Formato: AAAA-MM-DD
           </Text>
         </>
       ) : (
         <>
           <Pressable
-            style={
-              styles.dateButton
-            }
+            style={styles.dateButton}
             onPress={() =>
-              setShowEndPicker(
-                true
-              )
+              setShowEndPicker(true)
             }
           >
-            <Text
-              style={
-                styles.dateButtonText
-              }
-            >
+            <Text style={styles.dateButtonText}>
               {endDateText}
             </Text>
           </Pressable>
@@ -453,11 +346,7 @@ export default function AdminScheduleScreen() {
         </>
       )}
 
-      <Text
-        style={
-          styles.helperText
-        }
-      >
+      <Text style={styles.helperText}>
         Puedes consultar un solo día
         usando la misma fecha inicial
         y final.
@@ -474,11 +363,7 @@ export default function AdminScheduleScreen() {
           loadSchedule()
         }
       >
-        <Text
-          style={
-            styles.searchButtonText
-          }
-        >
+        <Text style={styles.searchButtonText}>
           {loading
             ? "Consultando..."
             : "Consultar agenda"}
@@ -486,83 +371,40 @@ export default function AdminScheduleScreen() {
       </Pressable>
 
       {loading ? (
-        <View
-          style={
-            styles.loadingContainer
-          }
-        >
-          <ActivityIndicator
-            size="large"
-          />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
 
-          <Text
-            style={
-              styles.loadingText
-            }
-          >
+          <Text style={styles.loadingText}>
             Cargando agenda...
           </Text>
         </View>
       ) : error ? (
-        <View
-          style={
-            styles.messageBox
-          }
-        >
-          <Text
-            style={
-              styles.errorText
-            }
-          >
+        <View style={styles.messageBox}>
+          <Text style={styles.errorText}>
             {error}
           </Text>
         </View>
       ) : (
         <>
-          <View
-            style={
-              styles.periodBox
-            }
-          >
-            <Text
-              style={
-                styles.periodTitle
-              }
-            >
+          <View style={styles.periodBox}>
+            <Text style={styles.periodTitle}>
               Período consultado
             </Text>
 
-            <Text
-              style={
-                styles.periodText
-              }
-            >
+            <Text style={styles.periodText}>
               {startDateText}
               {" — "}
               {endDateText}
             </Text>
           </View>
 
-          {appointments.length ===
-          0 ? (
-            <View
-              style={
-                styles.messageBox
-              }
-            >
-              <Text
-                style={
-                  styles.emptyTitle
-                }
-              >
+          {appointments.length === 0 ? (
+            <View style={styles.messageBox}>
+              <Text style={styles.emptyTitle}>
                 No hay citas
               </Text>
 
-              <Text
-                style={
-                  styles.messageText
-                }
-              >
+              <Text style={styles.messageText}>
                 No existen citas
                 registradas para este
                 período.
@@ -572,50 +414,22 @@ export default function AdminScheduleScreen() {
             appointments.map(
               (appointment) => (
                 <View
-                  key={
-                    appointment.id
-                  }
-                  style={
-                    styles.card
-                  }
+                  key={appointment.id}
+                  style={styles.card}
                 >
-                  <View
-                    style={
-                      styles.cardHeader
-                    }
-                  >
+                  <View style={styles.cardHeader}>
                     <View>
-                      <Text
-                        style={
-                          styles.time
-                        }
-                      >
-                        {
-                          appointment.time
-                        }
+                      <Text style={styles.time}>
+                        {appointment.time}
                       </Text>
 
-                      <Text
-                        style={
-                          styles.date
-                        }
-                      >
-                        {
-                          appointment.date
-                        }
+                      <Text style={styles.date}>
+                        {appointment.date}
                       </Text>
                     </View>
 
-                    <View
-                      style={
-                        styles.statusBadge
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.statusText
-                        }
-                      >
+                    <View style={styles.statusBadge}>
+                      <Text style={styles.statusText}>
                         {getStatusText(
                           appointment.status
                         )}
@@ -623,43 +437,19 @@ export default function AdminScheduleScreen() {
                     </View>
                   </View>
 
-                  <View
-                    style={
-                      styles.divider
-                    }
-                  />
+                  <View style={styles.divider} />
 
-                  <Text
-                    style={
-                      styles.clientName
-                    }
-                  >
-                    {
-                      appointment.firstName
-                    }{" "}
-                    {
-                      appointment.lastName
-                    }
+                  <Text style={styles.clientName}>
+                    {appointment.firstName}{" "}
+                    {appointment.lastName}
                   </Text>
 
-                  <Text
-                    style={
-                      styles.service
-                    }
-                  >
-                    {
-                      appointment.service
-                    }
+                  <Text style={styles.service}>
+                    {appointment.service}
                   </Text>
 
-                  <Text
-                    style={
-                      styles.phone
-                    }
-                  >
-                    {
-                      appointment.phone
-                    }
+                  <Text style={styles.phone}>
+                    {appointment.phone}
                   </Text>
                 </View>
               )
@@ -669,18 +459,12 @@ export default function AdminScheduleScreen() {
       )}
 
       <Pressable
-        style={
-          styles.backButton
-        }
+        style={styles.backButton}
         onPress={() =>
           router.back()
         }
       >
-        <Text
-          style={
-            styles.backText
-          }
-        >
+        <Text style={styles.backText}>
           Volver
         </Text>
       </Pressable>
@@ -688,207 +472,195 @@ export default function AdminScheduleScreen() {
   );
 }
 
-const styles =
-  StyleSheet.create({
-    container: {
-      flexGrow: 1,
-      padding: 24,
-      backgroundColor:
-        "#f5f5f5",
-    },
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    padding: 24,
+    backgroundColor: "#f5f5f5",
+  },
 
-    authLoadingContainer: {
-      flex: 1,
-      justifyContent:
-        "center",
-      alignItems: "center",
-      backgroundColor:
-        "#f5f5f5",
-    },
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
 
-    title: {
-      fontSize: 30,
-      fontWeight: "bold",
-      marginBottom: 8,
-    },
+  subtitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 26,
+  },
 
-    subtitle: {
-      fontSize: 16,
-      color: "#555",
-      marginBottom: 26,
-    },
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
 
-    label: {
-      fontSize: 15,
-      fontWeight: "600",
-      marginBottom: 6,
-    },
+  endDateLabel: {
+    marginTop: 20,
+  },
 
-    endDateLabel: {
-      marginTop: 20,
-    },
+  input: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
 
-    input: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      fontSize: 16,
-    },
+  dateButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
 
-    dateButton: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 14,
-    },
+  dateButtonText: {
+    fontSize: 16,
+  },
 
-    dateButtonText: {
-      fontSize: 16,
-    },
+  helperText: {
+    fontSize: 13,
+    color: "#666",
+    lineHeight: 18,
+    marginTop: 7,
+  },
 
-    helperText: {
-      fontSize: 13,
-      color: "#666",
-      lineHeight: 18,
-      marginTop: 7,
-    },
+  searchButton: {
+    backgroundColor: "#111",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 22,
+    marginBottom: 24,
+  },
 
-    searchButton: {
-      backgroundColor: "#111",
-      paddingVertical: 14,
-      borderRadius: 10,
-      alignItems: "center",
-      marginTop: 22,
-      marginBottom: 24,
-    },
+  searchButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 
-    searchButtonText: {
-      color: "#fff",
-      fontWeight: "bold",
-      fontSize: 16,
-    },
+  disabledButton: {
+    opacity: 0.6,
+  },
 
-    disabledButton: {
-      opacity: 0.6,
-    },
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
 
-    loadingContainer: {
-      alignItems: "center",
-      paddingVertical: 40,
-    },
+  loadingText: {
+    color: "#666",
+    marginTop: 12,
+  },
 
-    loadingText: {
-      color: "#666",
-      marginTop: 12,
-    },
+  periodBox: {
+    marginBottom: 18,
+  },
 
-    periodBox: {
-      marginBottom: 18,
-    },
+  periodTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
 
-    periodTitle: {
-      fontSize: 20,
-      fontWeight: "bold",
-      marginBottom: 4,
-    },
+  periodText: {
+    color: "#666",
+  },
 
-    periodText: {
-      color: "#666",
-    },
+  card: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 12,
+  },
 
-    card: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ddd",
-      borderRadius: 12,
-      padding: 18,
-      marginBottom: 12,
-    },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
 
-    cardHeader: {
-      flexDirection: "row",
-      justifyContent:
-        "space-between",
-      alignItems: "flex-start",
-    },
+  time: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
 
-    time: {
-      fontSize: 22,
-      fontWeight: "bold",
-    },
+  date: {
+    color: "#666",
+    marginTop: 3,
+  },
 
-    date: {
-      color: "#666",
-      marginTop: 3,
-    },
+  statusBadge: {
+    backgroundColor: "#eee",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
 
-    statusBadge: {
-      backgroundColor: "#eee",
-      borderRadius: 20,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-    },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
 
-    statusText: {
-      fontSize: 12,
-      fontWeight: "600",
-    },
+  divider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginVertical: 14,
+  },
 
-    divider: {
-      height: 1,
-      backgroundColor: "#eee",
-      marginVertical: 14,
-    },
+  clientName: {
+    fontSize: 17,
+    fontWeight: "600",
+    marginBottom: 5,
+  },
 
-    clientName: {
-      fontSize: 17,
-      fontWeight: "600",
-      marginBottom: 5,
-    },
+  service: {
+    fontSize: 15,
+    marginBottom: 4,
+  },
 
-    service: {
-      fontSize: 15,
-      marginBottom: 4,
-    },
+  phone: {
+    color: "#666",
+  },
 
-    phone: {
-      color: "#666",
-    },
+  messageBox: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 20,
+  },
 
-    messageBox: {
-      backgroundColor: "#fff",
-      borderWidth: 1,
-      borderColor: "#ddd",
-      borderRadius: 12,
-      padding: 20,
-    },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
 
-    emptyTitle: {
-      fontSize: 18,
-      fontWeight: "600",
-      marginBottom: 6,
-    },
+  messageText: {
+    color: "#666",
+  },
 
-    messageText: {
-      color: "#666",
-    },
+  errorText: {
+    color: "#555",
+  },
 
-    errorText: {
-      color: "#555",
-    },
+  backButton: {
+    alignItems: "center",
+    padding: 14,
+    marginTop: 12,
+  },
 
-    backButton: {
-      alignItems: "center",
-      padding: 14,
-      marginTop: 12,
-    },
-
-    backText: {
-      color: "#555",
-    },
-  });
+  backText: {
+    color: "#555",
+  },
+});

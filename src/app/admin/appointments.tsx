@@ -20,45 +20,28 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function AdminAppointmentsScreen() {
   const router = useRouter();
-  const {
-  token,
-  user,
-  loading: authLoading,
-} = useAuth();
+  const { token } = useAuth();
 
   const [appointments, setAppointments] =
     useState<AdminAppointment[]>([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
   const [processingId, setProcessingId] =
     useState<number | null>(null);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
-  if (authLoading) {
-    return;
-  }
-
-  if (!user) {
-    router.replace("/auth/login");
-    return;
-  }
-
-  if (user.role !== "ADMIN") {
-    router.replace("/client");
-  }
-}, [authLoading, user, router]);
-
-  useEffect(() => {
-    loadAppointments();
+    if (token) {
+      loadAppointments();
+    }
   }, [token]);
 
   async function loadAppointments() {
     if (!token) {
-      setError("Tu sesión no está disponible.");
-      setLoading(false);
       return;
     }
 
@@ -69,7 +52,9 @@ export default function AdminAppointmentsScreen() {
       const result =
         await getAdminAppointments(token);
 
-      setAppointments(result.appointments);
+      setAppointments(
+        result.appointments
+      );
     } catch (error) {
       setError(
         error instanceof Error
@@ -89,7 +74,10 @@ export default function AdminAppointmentsScreen() {
     }
 
     try {
-      setProcessingId(appointmentId);
+      setProcessingId(
+        appointmentId
+      );
+
       setError("");
 
       await acceptAdminAppointment(
@@ -128,7 +116,10 @@ export default function AdminAppointmentsScreen() {
     }
 
     try {
-      setProcessingId(appointmentId);
+      setProcessingId(
+        appointmentId
+      );
+
       setError("");
 
       await rejectAdminAppointment(
@@ -170,22 +161,6 @@ export default function AdminAppointmentsScreen() {
   }
 
   if (loading) {
-
-    if (authLoading) {
-  return (
-    <View style={styles.centerContainer}>
-      <ActivityIndicator size="large" />
-
-      <Text style={styles.loadingText}>
-        Cargando sesión...
-      </Text>
-    </View>
-  );
-}
-
-if (!user || user.role !== "ADMIN") {
-  return null;
-}
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" />
@@ -199,15 +174,17 @@ if (!user || user.role !== "ADMIN") {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={
+        styles.container
+      }
     >
       <Text style={styles.title}>
         Gestión de citas
       </Text>
 
       <Text style={styles.subtitle}>
-        Revisa las solicitudes de los clientes y
-        administra su estado.
+        Revisa las solicitudes de los
+        clientes y administra su estado.
       </Text>
 
       {error ? (
@@ -232,117 +209,112 @@ if (!user || user.role !== "ADMIN") {
           </Text>
 
           <Text style={styles.emptyText}>
-            Las solicitudes de los clientes
-            aparecerán aquí.
+            Las solicitudes de los
+            clientes aparecerán aquí.
           </Text>
         </View>
       ) : (
-        appointments.map((appointment) => {
-          const processing =
-            processingId === appointment.id;
+        appointments.map(
+          (appointment) => {
+            const processing =
+              processingId ===
+              appointment.id;
 
-          return (
-            <View
-              key={appointment.id}
-              style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View>
-                  <Text style={styles.clientName}>
-                    {appointment.firstName}{" "}
-                    {appointment.lastName}
-                  </Text>
+            return (
+              <View
+                key={appointment.id}
+                style={styles.card}
+              >
+                <View style={styles.cardHeader}>
+                  <View>
+                    <Text style={styles.clientName}>
+                      {appointment.firstName}{" "}
+                      {appointment.lastName}
+                    </Text>
 
-                  <Text style={styles.phone}>
-                    {appointment.phone}
-                  </Text>
+                    <Text style={styles.phone}>
+                      {appointment.phone}
+                    </Text>
+                  </View>
+
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusText}>
+                      {getStatusText(
+                        appointment.status
+                      )}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>
-                    {getStatusText(
-                      appointment.status
-                    )}
-                  </Text>
-                </View>
+                <View style={styles.divider} />
+
+                <Text style={styles.service}>
+                  {appointment.service}
+                </Text>
+
+                <Text style={styles.date}>
+                  {appointment.date}
+                </Text>
+
+                <Text style={styles.time}>
+                  {appointment.time}
+                </Text>
+
+                {appointment.status ===
+                  "PENDING" && (
+                  <View style={styles.actionsContainer}>
+                    <Pressable
+                      style={[
+                        styles.acceptButton,
+                        processing &&
+                          styles.disabledButton,
+                      ]}
+                      disabled={processing}
+                      onPress={() =>
+                        handleAccept(
+                          appointment.id
+                        )
+                      }
+                    >
+                      <Text style={styles.acceptButtonText}>
+                        {processing
+                          ? "Procesando..."
+                          : "Aceptar"}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[
+                        styles.rejectButton,
+                        processing &&
+                          styles.disabledButton,
+                      ]}
+                      disabled={processing}
+                      onPress={() =>
+                        handleReject(
+                          appointment.id
+                        )
+                      }
+                    >
+                      <Text style={styles.rejectButtonText}>
+                        {processing
+                          ? "Procesando..."
+                          : "Rechazar"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
-
-              <View style={styles.divider} />
-
-              <Text style={styles.service}>
-                {appointment.service}
-              </Text>
-
-              <Text style={styles.date}>
-                {appointment.date}
-              </Text>
-
-              <Text style={styles.time}>
-                {appointment.time}
-              </Text>
-
-              {appointment.status ===
-                "PENDING" && (
-                <View
-                  style={styles.actionsContainer}
-                >
-                  <Pressable
-                    style={[
-                      styles.acceptButton,
-                      processing &&
-                        styles.disabledButton,
-                    ]}
-                    disabled={processing}
-                    onPress={() =>
-                      handleAccept(
-                        appointment.id
-                      )
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.acceptButtonText
-                      }
-                    >
-                      {processing
-                        ? "Procesando..."
-                        : "Aceptar"}
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.rejectButton,
-                      processing &&
-                        styles.disabledButton,
-                    ]}
-                    disabled={processing}
-                    onPress={() =>
-                      handleReject(
-                        appointment.id
-                      )
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.rejectButtonText
-                      }
-                    >
-                      {processing
-                        ? "Procesando..."
-                        : "Rechazar"}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          );
-        })
+            );
+          }
+        )
       )}
 
       <Pressable
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() =>
+          router.back()
+        }
       >
         <Text style={styles.backText}>
           Volver

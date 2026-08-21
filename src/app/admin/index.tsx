@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
 import {
     Pressable,
     StyleSheet,
@@ -12,39 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 export default function AdminHomeScreen() {
   const router = useRouter();
 
-  const {
-    user,
-    loading,
-  } = useAuth();
-
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    if (user.role !== "ADMIN") {
-      router.replace("/client");
-    }
-  }, [loading, user, router]);
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>
-          Cargando sesión...
-        </Text>
-      </View>
-    );
-  }
-
-  if (!user || user.role !== "ADMIN") {
-    return null;
-  }
+  const { user } = useAuth();
 
   return (
     <View style={styles.container}>
@@ -57,17 +24,20 @@ export default function AdminHomeScreen() {
       </Text>
 
       <Text style={styles.welcome}>
-        Hola, {user.firstName}
+        Hola, {user?.firstName}
       </Text>
 
       <Text style={styles.subtitle}>
-        Administra las citas y la agenda de la barbería.
+        Administra las citas y la
+        agenda de la barbería.
       </Text>
 
       <Pressable
         style={styles.primaryButton}
         onPress={() =>
-          router.push("/admin/appointments")
+          router.push(
+            "/admin/appointments"
+          )
         }
       >
         <Text style={styles.primaryButtonText}>
@@ -78,7 +48,9 @@ export default function AdminHomeScreen() {
       <Pressable
         style={styles.secondaryButton}
         onPress={() =>
-          router.push("/admin/schedule")
+          router.push(
+            "/admin/schedule"
+          )
         }
       >
         <Text style={styles.secondaryButtonText}>
@@ -96,11 +68,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
-  },
-
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
   },
 
   title: {

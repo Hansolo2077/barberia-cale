@@ -1,7 +1,5 @@
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
 import {
-    ActivityIndicator,
     Pressable,
     StyleSheet,
     Text,
@@ -15,36 +13,14 @@ export default function ClientHomeScreen() {
 
   const {
     user,
-    loading,
     signOut,
   } = useAuth();
-
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    if (user.role === "ADMIN") {
-      router.replace("/admin");
-    }
-  }, [
-    loading,
-    user,
-    router,
-  ]);
 
   async function handleLogout() {
     try {
       await signOut();
 
-      router.replace(
-        "/auth/login"
-      );
+      router.replace("/auth/login");
     } catch (error) {
       console.error(
         "Error cerrando sesión:",
@@ -53,101 +29,48 @@ export default function ClientHomeScreen() {
     }
   }
 
-  if (loading) {
-    return (
-      <View
-        style={
-          styles.centerContainer
-        }
-      >
-        <ActivityIndicator
-          size="large"
-        />
-
-        <Text
-          style={
-            styles.statusText
-          }
-        >
-          Cargando sesión...
-        </Text>
-      </View>
-    );
-  }
-
-  if (
-    !user ||
-    user.role !== "CLIENT"
-  ) {
-    return null;
-  }
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
         Barbería Cale
       </Text>
 
-      <Text
-        style={
-          styles.subtitle
-        }
-      >
-        Hola, {user.firstName}.
+      <Text style={styles.subtitle}>
+        Hola, {user?.firstName}.
         ¿Qué deseas hacer?
       </Text>
 
       <Pressable
-        style={
-          styles.primaryButton
-        }
+        style={styles.primaryButton}
         onPress={() =>
           router.push(
             "/client/appointment"
           )
         }
       >
-        <Text
-          style={
-            styles.primaryButtonText
-          }
-        >
+        <Text style={styles.primaryButtonText}>
           Agendar cita
         </Text>
       </Pressable>
 
       <Pressable
-        style={
-          styles.secondaryButton
-        }
+        style={styles.secondaryButton}
         onPress={() =>
           router.push(
             "/client/my-appointments"
           )
         }
       >
-        <Text
-          style={
-            styles.secondaryButtonText
-          }
-        >
+        <Text style={styles.secondaryButtonText}>
           Mis citas
         </Text>
       </Pressable>
 
       <Pressable
-        style={
-          styles.logoutButton
-        }
-        onPress={
-          handleLogout
-        }
+        style={styles.logoutButton}
+        onPress={handleLogout}
       >
-        <Text
-          style={
-            styles.logoutText
-          }
-        >
+        <Text style={styles.logoutText}>
           Cerrar sesión
         </Text>
       </Pressable>
@@ -164,13 +87,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
 
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-  },
-
   title: {
     fontSize: 30,
     fontWeight: "bold",
@@ -182,12 +98,6 @@ const styles = StyleSheet.create({
     color: "#555",
     marginBottom: 32,
     textAlign: "center",
-  },
-
-  statusText: {
-    fontSize: 16,
-    color: "#555",
-    marginTop: 12,
   },
 
   primaryButton: {
