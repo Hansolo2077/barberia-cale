@@ -1,21 +1,42 @@
-import { Tabs, useRouter } from "expo-router";
-import { useEffect } from "react";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    View,
+  Tabs,
+  useRouter,
+} from "expo-router";
+
+import {
+  useEffect,
+} from "react";
+
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { useAuth } from "../../context/AuthContext";
 
 import {
-    COLORS,
-    FONT,
+  COLORS,
+  FONT,
 } from "../../constants/app-theme";
 
 export default function ClientLayout() {
-  const router = useRouter();
+  const router =
+    useRouter();
+
+  const insets =
+    useSafeAreaInsets();
+
+    console.log(
+  "ANDROID SAFE AREA:",
+  insets
+);
 
   const {
     user,
@@ -28,12 +49,20 @@ export default function ClientLayout() {
     }
 
     if (!user) {
-      router.replace("/auth/login");
+      router.replace(
+        "/auth/login"
+      );
+
       return;
     }
 
-    if (user.role === "ADMIN") {
-      router.replace("/admin");
+    if (
+      user.role ===
+      "ADMIN"
+    ) {
+      router.replace(
+        "/admin"
+      );
     }
   }, [
     loading,
@@ -43,10 +72,20 @@ export default function ClientLayout() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
+      <View
+        style={
+          styles.container
+        }
+      >
+        <ActivityIndicator
+          size="large"
+        />
 
-        <Text style={styles.text}>
+        <Text
+          style={
+            styles.text
+          }
+        >
           Cargando sesión...
         </Text>
       </View>
@@ -55,15 +94,21 @@ export default function ClientLayout() {
 
   if (
     !user ||
-    user.role !== "CLIENT"
+    user.role !==
+      "CLIENT"
   ) {
     return null;
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "right", "left"]}
+    >
+      <Tabs
+        screenOptions={{
+        headerShown:
+          false,
 
         tabBarActiveTintColor:
           COLORS.text,
@@ -80,32 +125,45 @@ export default function ClientLayout() {
 
           borderTopWidth: 1,
 
-          height: 68,
+          height:
+            60 +
+            Math.max(
+              insets.bottom,
+              8
+            ),
 
           paddingTop: 8,
 
-          paddingBottom: 8,
+          paddingBottom:
+            Math.max(
+              insets.bottom,
+              8
+            ),
         },
 
         tabBarLabelStyle: {
           fontSize:
             FONT.caption,
 
-          fontWeight: "700",
+          fontWeight:
+            "700",
         },
-      }}
-    >
+        }}
+      >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Inicio",
+          title:
+            "Inicio",
 
           tabBarIcon: ({
             color,
           }) => (
             <Text
               style={{
-                fontSize: 20,
+                fontSize:
+                  20,
+
                 color,
               }}
             >
@@ -118,14 +176,17 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="appointment"
         options={{
-          title: "Agendar",
+          title:
+            "Agendar",
 
           tabBarIcon: ({
             color,
           }) => (
             <Text
               style={{
-                fontSize: 20,
+                fontSize:
+                  20,
+
                 color,
               }}
             >
@@ -138,14 +199,17 @@ export default function ClientLayout() {
       <Tabs.Screen
         name="my-appointments"
         options={{
-          title: "Mis citas",
+          title:
+            "Mis citas",
 
           tabBarIcon: ({
             color,
           }) => (
             <Text
               style={{
-                fontSize: 19,
+                fontSize:
+                  19,
+
                 color,
               }}
             >
@@ -154,23 +218,39 @@ export default function ClientLayout() {
           ),
         }}
       />
-    </Tabs>
+      </Tabs>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor:
-      COLORS.background,
-  },
+const styles =
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor:
+        COLORS.background,
+    },
 
-  text: {
-    marginTop: 12,
-    fontSize: FONT.small,
-    color:
-      COLORS.textSecondary,
-  },
-});
+    container: {
+      flex: 1,
+
+      justifyContent:
+        "center",
+
+      alignItems:
+        "center",
+
+      backgroundColor:
+        COLORS.background,
+    },
+
+    text: {
+      marginTop: 12,
+
+      fontSize:
+        FONT.small,
+
+      color:
+        COLORS.textSecondary,
+    },
+  });

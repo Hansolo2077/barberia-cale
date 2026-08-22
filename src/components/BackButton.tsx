@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { Href, useRouter } from "expo-router";
 import {
     Pressable,
     StyleSheet,
@@ -14,12 +14,23 @@ import {
 
 type BackButtonProps = {
   label?: string;
+  fallbackHref?: Href;
 };
 
 export default function BackButton({
   label = "Volver",
+  fallbackHref = "/",
 }: BackButtonProps) {
   const router = useRouter();
+
+  function handlePress() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace(fallbackHref);
+  }
 
   return (
     <Pressable
@@ -27,7 +38,7 @@ export default function BackButton({
         styles.button,
         pressed && styles.pressed,
       ]}
-      onPress={() => router.back()}
+      onPress={handlePress}
     >
       <Text style={styles.icon}>
         ‹

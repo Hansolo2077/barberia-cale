@@ -6,6 +6,8 @@ import {
 
 import {
     Image,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -127,15 +129,25 @@ export default function LoginScreen() {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={
-        styles.container
-      }
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={
-        false
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoiding}
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : "height"
       }
     >
+      <ScrollView
+        contentContainerStyle={
+          styles.container
+        }
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={
+          false
+        }
+      >
       <View
         style={
           styles.content
@@ -343,12 +355,17 @@ export default function LoginScreen() {
 
         <BackButton />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles =
   StyleSheet.create({
+    keyboardAvoiding: {
+      flex: 1,
+    },
+
     container: {
       flexGrow: 1,
 

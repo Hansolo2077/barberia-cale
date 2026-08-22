@@ -17,9 +17,15 @@ export async function getAvailability(
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       result.message || "No se pudo consultar la disponibilidad."
     );
+
+    Object.assign(error, {
+      status: response.status,
+    });
+
+    throw error;
   }
 
   return result;

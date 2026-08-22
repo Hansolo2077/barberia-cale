@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Platform,
@@ -56,25 +56,22 @@ function formatDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function getSevenDaysLater() {
-  const date = new Date();
-
-  date.setDate(
-    date.getDate() + 7
-  );
-
-  return date;
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
 }
 
 export default function AdminScheduleScreen() {
   const router = useRouter();
   const { token } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const initialStartDate =
     new Date();
 
   const initialEndDate =
-    getSevenDaysLater();
+    initialStartDate;
 
   const [
     selectedStartDate,
@@ -120,7 +117,19 @@ export default function AdminScheduleScreen() {
     statusFilter,
     setStatusFilter,
   ] =
-    useState<StatusFilter>("PENDING");
+    useState<StatusFilter>("ALL");
+
+  const [showCustomRange, setShowCustomRange] =
+    useState(false);
+
+  const [activePreset, setActivePreset] =
+    useState<"TODAY" | "TOMORROW" | "WEEK" | "CUSTOM">("TODAY");
+
+  const [expandedAppointmentId, setExpandedAppointmentId] =
+    useState<number | null>(null);
+
+  const [shouldScrollResults, setShouldScrollResults] =
+    useState(false);
 
   const [loading, setLoading] =
     useState(true);
@@ -198,6 +207,53 @@ export default function AdminScheduleScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function selectPreset(
+    preset: "TODAY" | "TOMORROW" | "WEEK"
+  ) {
+    const today = new Date();
+    const start =
+      preset === "TOMORROW"
+        ? addDays(today, 1)
+        : today;
+    const end =
+      preset === "WEEK"
+        ? addDays(today, 6)
+        : start;
+    const formattedStart = formatDate(start);
+    const formattedEnd = formatDate(end);
+
+    setActivePreset(preset);
+    setShowCustomRange(false);
+    setSelectedStartDate(start);
+    setSelectedEndDate(end);
+    setStartDateText(formattedStart);
+    setEndDateText(formattedEnd);
+    setStatusFilter("ALL");
+    setExpandedAppointmentId(null);
+    setShouldScrollResults(true);
+    void loadSchedule(formattedStart, formattedEnd);
+  }
+
+  function consultCustomRange() {
+    setActivePreset("CUSTOM");
+    setStatusFilter("ALL");
+    setExpandedAppointmentId(null);
+    setShouldScrollResults(true);
+    void loadSchedule();
+  }
+
+  function handleResultsLayout(y: number) {
+    if (!shouldScrollResults || loading) {
+      return;
+    }
+
+    setShouldScrollResults(false);
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(y - SPACING.md, 0),
+      animated: true,
+    });
   }
 
   function handleStartDateChange(
@@ -376,8 +432,19 @@ export default function AdminScheduleScreen() {
         "ACCEPTED"
     ).length;
 
+  function getFilterCount(filter: StatusFilter) {
+    if (filter === "ALL") {
+      return appointments.length;
+    }
+
+    return appointments.filter(
+      (appointment) => appointment.status === filter
+    ).length;
+  }
+
   return (
     <ScrollView
+      ref={scrollViewRef}
       contentContainerStyle={
         styles.container
       }
@@ -413,6 +480,54 @@ export default function AdminScheduleScreen() {
         >
           Período
         </Text>
+
+        <View style={styles.presetContainer}>
+          {[
+            { value: "TODAY" as const, label: "Hoy" },
+            { value: "TOMORROW" as const, label: "Mañana" },
+            { value: "WEEK" as const, label: "7 días" },
+          ].map((preset) => {
+            const active = activePreset === preset.value;
+
+            return (
+              <Pressable
+                key={preset.value}
+                style={[
+                  styles.presetButton,
+                  active && styles.activePresetButton,
+                ]}
+                disabled={loading}
+                onPress={() => selectPreset(preset.value)}
+              >
+                <Text
+                  style={[
+                    styles.presetButtonText,
+                    active && styles.activePresetButtonText,
+                  ]}
+                >
+                  {preset.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Pressable
+          style={styles.customRangeToggle}
+          onPress={() => {
+            setShowCustomRange((current) => !current);
+            setActivePreset("CUSTOM");
+          }}
+        >
+          <Text style={styles.customRangeToggleText}>
+            {showCustomRange
+              ? "Ocultar rango personalizado"
+              : "Elegir un rango personalizado"}
+          </Text>
+        </Pressable>
+
+        {showCustomRange && (
+          <View style={styles.customRangeContent}>
 
         <Text style={styles.label}>
           Fecha inicial
@@ -563,9 +678,7 @@ export default function AdminScheduleScreen() {
               styles.disabledButton,
           ]}
           disabled={loading}
-          onPress={() =>
-            loadSchedule()
-          }
+          onPress={consultCustomRange}
         >
           <Text
             style={
@@ -577,6 +690,8 @@ export default function AdminScheduleScreen() {
               : "Consultar agenda"}
           </Text>
         </Pressable>
+          </View>
+        )}
       </View>
 
       {loading ? (
@@ -621,7 +736,13 @@ export default function AdminScheduleScreen() {
           </Text>
         </View>
       ) : (
-        <>
+        <View
+          onLayout={(event) =>
+            handleResultsLayout(
+              event.nativeEvent.layout.y
+            )
+          }
+        >
           <View
             style={
               styles.periodBox
@@ -732,8 +853,10 @@ export default function AdminScheduleScreen() {
             Filtrar por estado
           </Text>
 
-          <View
-            style={
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={
               styles.filterContainer
             }
           >
@@ -766,15 +889,29 @@ export default function AdminScheduleScreen() {
                           styles.activeFilterButtonText,
                       ]}
                     >
-                      {
-                        filter.label
-                      }
+                      {filter.label}
                     </Text>
+
+                    <View
+                      style={[
+                        styles.filterCountBadge,
+                        active && styles.activeFilterCountBadge,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.filterCountText,
+                          active && styles.activeFilterCountText,
+                        ]}
+                      >
+                        {getFilterCount(filter.value)}
+                      </Text>
+                    </View>
                   </Pressable>
                 );
               }
             )}
-          </View>
+          </ScrollView>
 
           <View
             style={
@@ -845,17 +982,40 @@ export default function AdminScheduleScreen() {
             </View>
           ) : (
             filteredAppointments.map(
-              (appointment) => {
+              (appointment, index) => {
                 const statusStyle =
                   getStatusStyle(
                     appointment.status
                   );
 
+                const startsNewDay =
+                  index === 0 ||
+                  filteredAppointments[index - 1].date !==
+                    appointment.date;
+
+                const expanded =
+                  expandedAppointmentId === appointment.id;
+
                 return (
+                  <Fragment key={appointment.id}>
+                  {startsNewDay && (
+                    <View style={styles.dayHeader}>
+                      <Text style={styles.dayHeaderText}>
+                        {formatDisplayDate(appointment.date)}
+                      </Text>
+
+                      <Text style={styles.dayHeaderCount}>
+                        {
+                          filteredAppointments.filter(
+                            (item) => item.date === appointment.date
+                          ).length
+                        }{" "}
+                        citas
+                      </Text>
+                    </View>
+                  )}
+
                   <View
-                    key={
-                      appointment.id
-                    }
                     style={
                       styles.card
                     }
@@ -949,24 +1109,42 @@ export default function AdminScheduleScreen() {
                       }
                     </Text>
 
-                    <Text
-                      style={
-                        styles.phone
+                    {expanded && (
+                      <View style={styles.expandedDetails}>
+                        <Text style={styles.detailLabel}>
+                          Teléfono
+                        </Text>
+
+                        <Text style={styles.phone}>
+                          {appointment.phone}
+                        </Text>
+                      </View>
+                    )}
+
+                    <Pressable
+                      style={styles.detailsButton}
+                      onPress={() =>
+                        setExpandedAppointmentId(
+                          expanded ? null : appointment.id
+                        )
                       }
                     >
-                      {
-                        appointment.phone
-                      }
-                    </Text>
+                      <Text style={styles.detailsButtonText}>
+                        {expanded
+                          ? "Ocultar detalles"
+                          : "Ver detalles"}
+                      </Text>
+                    </Pressable>
                   </View>
+                  </Fragment>
                 );
               }
             )
           )}
-        </>
+        </View>
       )}
 
-      <BackButton />
+      <BackButton fallbackHref="/admin" />
     </ScrollView>
   );
 }
@@ -1041,6 +1219,58 @@ const styles =
         COLORS.text,
       marginBottom:
         SPACING.lg,
+    },
+
+    presetContainer: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      width: "100%",
+    },
+
+    presetButton: {
+      flex: 1,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: SPACING.xs,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+    },
+
+    activePresetButton: {
+      borderColor: COLORS.primary,
+      backgroundColor: COLORS.primary,
+    },
+
+    presetButtonText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+
+    activePresetButtonText: {
+      color: "#FFFFFF",
+    },
+
+    customRangeToggle: {
+      alignSelf: "flex-start",
+      marginTop: SPACING.md,
+      paddingVertical: SPACING.xs,
+    },
+
+    customRangeToggleText: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      fontWeight: "700",
+      textDecorationLine: "underline",
+    },
+
+    customRangeContent: {
+      marginTop: SPACING.md,
     },
 
     label: {
@@ -1223,13 +1453,17 @@ const styles =
 
     filterContainer: {
       flexDirection: "row",
-      flexWrap: "wrap",
       gap: SPACING.sm,
+      paddingRight: SPACING.lg,
       marginBottom:
         SPACING.xl,
     },
 
     filterButton: {
+      minHeight: 42,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.surface,
       borderWidth: 1,
@@ -1261,6 +1495,30 @@ const styles =
       color: "#FFFFFF",
     },
 
+    filterCountBadge: {
+      minWidth: 24,
+      height: 24,
+      paddingHorizontal: SPACING.xs,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+    },
+
+    activeFilterCountBadge: {
+      backgroundColor: "rgba(255, 255, 255, 0.2)",
+    },
+
+    filterCountText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      fontWeight: "800",
+    },
+
+    activeFilterCountText: {
+      color: "#FFFFFF",
+    },
+
     resultsHeader: {
       flexDirection: "row",
       justifyContent:
@@ -1268,6 +1526,54 @@ const styles =
       alignItems: "center",
       marginBottom:
         SPACING.md,
+    },
+
+    dayHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: SPACING.lg,
+      marginBottom: SPACING.sm,
+    },
+
+    dayHeaderText: {
+      color: COLORS.text,
+      fontSize: FONT.subheading,
+      fontWeight: "800",
+    },
+
+    dayHeaderCount: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      fontWeight: "600",
+    },
+
+    expandedDetails: {
+      marginTop: SPACING.md,
+      paddingTop: SPACING.md,
+      borderTopWidth: 1,
+      borderTopColor: COLORS.border,
+    },
+
+    detailLabel: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      fontWeight: "700",
+      marginBottom: SPACING.xs,
+    },
+
+    detailsButton: {
+      alignItems: "center",
+      marginTop: SPACING.md,
+      paddingVertical: 10,
+      borderRadius: RADIUS.md,
+      backgroundColor: COLORS.primarySoft,
+    },
+
+    detailsButtonText: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      fontWeight: "700",
     },
 
     resultsTitle: {

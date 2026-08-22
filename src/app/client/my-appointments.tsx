@@ -4,11 +4,13 @@ import {
 } from "expo-router";
 import {
     useCallback,
+    useEffect,
     useState,
 } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -51,6 +53,7 @@ type Appointment = {
     | "CANCELLED"
     | "COMPLETED";
   createdAt: string;
+  canCancel?: boolean;
 };
 
 type AppointmentView =
@@ -86,6 +89,17 @@ export default function MyAppointmentsScreen() {
     setCancellingId,
   ] =
     useState<number | null>(null);
+
+  const [currentTime, setCurrentTime] =
+    useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30_000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useFocusEffect(
   useCallback(() => {
@@ -200,39 +214,35 @@ export default function MyAppointmentsScreen() {
     const message =
       "¿Estás seguro de que deseas cancelar esta cita? El horario quedará disponible para otro cliente.";
 
-    if (
-      typeof window !== "undefined"
-    ) {
-      const confirmed =
-        window.confirm(message);
-
-      if (confirmed) {
-        handleCancel(
-          appointmentId
-        );
-      }
+    if (Platform.OS !== "web") {
+      Alert.alert(
+        "Cancelar cita",
+        message,
+        [
+          {
+            text: "Volver",
+            style: "cancel",
+          },
+          {
+            text: "Sí, cancelar",
+            style: "destructive",
+            onPress: () =>
+              handleCancel(
+                appointmentId
+              ),
+          },
+        ]
+      );
 
       return;
     }
 
-    Alert.alert(
-      "Cancelar cita",
-      message,
-      [
-        {
-          text: "Volver",
-          style: "cancel",
-        },
-        {
-          text: "Sí, cancelar",
-          style: "destructive",
-          onPress: () =>
-            handleCancel(
-              appointmentId
-            ),
-        },
-      ]
-    );
+    if (
+      typeof window.confirm === "function" &&
+      window.confirm(message)
+    ) {
+      void handleCancel(appointmentId);
+    }
   }
 
   async function handleCancel(
@@ -562,11 +572,23 @@ export default function MyAppointmentsScreen() {
                   appointment.status
                 );
 
-              const canCancel =
+              const hasCancellableStatus =
                 appointment.status ===
                   "PENDING" ||
                 appointment.status ===
                   "ACCEPTED";
+
+              const cancellationExpired =
+                currentTime >
+                  new Date(
+                    appointment.createdAt
+                  ).getTime() +
+                    60 * 60 * 1000 ||
+                appointment.canCancel === false;
+
+              const canCancel =
+                hasCancellableStatus &&
+                !cancellationExpired;
 
               const isCancelling =
                 cancellingId ===
@@ -752,6 +774,15 @@ export default function MyAppointmentsScreen() {
                           : "Cancelar cita"}
                       </Text>
                     </Pressable>
+                  )}
+
+                  {hasCancellableStatus &&
+                    cancellationExpired && (
+                    <View style={styles.expiredNotice}>
+                      <Text style={styles.expiredNoticeText}>
+                        Ya no se puede cancelar esta cita. El plazo de cancelación expiró.
+                      </Text>
+                    </View>
                   )}
                 </View>
               );
@@ -1090,6 +1121,22 @@ const styles = StyleSheet.create({
 
   disabledButton: {
     opacity: 0.5,
+  },
+
+  expiredNotice: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor:
+      COLORS.dangerBackground,
+  },
+
+  expiredNoticeText: {
+    color: COLORS.danger,
+    fontSize: FONT.small,
+    lineHeight: 20,
+    fontWeight: "600",
+    textAlign: "center",
   },
 
   newBookingButton: {

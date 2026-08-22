@@ -18,6 +18,17 @@ const AVAILABLE_TIMES = [
  * para una fecha.
  */
 async function getAvailability(date) {
+  const cutoffResult = await db.query(`
+    SELECT
+      TO_CHAR(
+        (NOW() AT TIME ZONE 'America/Managua') + INTERVAL '1 day',
+        'YYYY-MM-DD HH24:MI'
+      ) AS cutoff
+  `);
+
+  const bookingCutoff =
+    cutoffResult.rows[0].cutoff;
+
   const result = await db.query(
     `
       SELECT
@@ -48,7 +59,8 @@ async function getAvailability(date) {
     (time) => ({
       time,
       available:
-        !occupiedTimes.has(time),
+        !occupiedTimes.has(time) &&
+        `${date} ${time}` >= bookingCutoff,
     })
   );
 }
@@ -78,6 +90,30 @@ async function createAppointment({
   ) {
     const error = new Error(
       "El horario seleccionado no es válido."
+    );
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  const leadTimeResult =
+    await db.query(
+      `
+        SELECT
+          (
+            $1::date + $2::time
+          ) >= (
+            (NOW() AT TIME ZONE 'America/Managua')
+            + INTERVAL '1 day'
+          ) AS allowed
+      `,
+      [date, time]
+    );
+
+  if (!leadTimeResult.rows[0].allowed) {
+    const error = new Error(
+      "Debes reservar con al menos 24 horas de anticipación."
     );
 
     error.statusCode = 400;
@@ -316,7 +352,12 @@ async function getUserAppointments(
 
         status,
 
-        created_at AS "createdAt"
+        created_at AS "createdAt",
+
+        (
+          status IN ('PENDING', 'ACCEPTED')
+          AND created_at >= NOW() - INTERVAL '1 hour'
+        ) AS "canCancel"
 
       FROM appointments
 
@@ -417,7 +458,7 @@ async function cancelAppointment(
     oneHour
   ) {
     const error = new Error(
-      "El plazo de una hora para cancelar esta cita ha finalizado."
+      "Ya no se puede cancelar esta cita. El plazo de cancelación expiró."
     );
 
     error.statusCode = 400;
@@ -484,6 +525,18 @@ async function getAllAppointments() {
         ) AS time,
 
         a.status,
+
+        (
+          a.appointment_date + a.appointment_time
+        ) <= (
+          NOW() AT TIME ZONE 'America/Managua'
+        ) AS "canComplete",
+
+        (
+          a.appointment_date + a.appointment_time
+        ) > (
+          NOW() AT TIME ZONE 'America/Managua'
+        ) AS "canAdminCancel",
 
         a.created_at
           AS "createdAt",

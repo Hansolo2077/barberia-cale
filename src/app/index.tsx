@@ -1,6 +1,7 @@
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -8,6 +9,9 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useAuth } from "../context/AuthContext";
 
 import {
   COLORS,
@@ -18,12 +22,31 @@ import {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (user) {
+    return (
+      <Redirect href={user.role === "ADMIN" ? "/admin" : "/client"} />
+    );
+  }
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "right", "bottom", "left"]}
     >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.brandBlock}>
         <Image
           source={require(
@@ -152,11 +175,24 @@ export default function HomeScreen() {
       <Text style={styles.footer}>
         BARBERÍA CALE
       </Text>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.background,
+  },
+
   container: {
     flexGrow: 1,
     backgroundColor: COLORS.background,

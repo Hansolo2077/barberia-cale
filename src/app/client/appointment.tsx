@@ -4,6 +4,7 @@ import {
 
 import {
     useCallback,
+    useRef,
     useState,
 } from "react";
 
@@ -64,19 +65,42 @@ function formatDate(date: Date) {
 }
 
 function getTomorrowDate() {
-  const tomorrow =
-    new Date();
+  const parts = new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone: "America/Managua",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }
+  ).formatToParts(new Date());
 
-  tomorrow.setDate(
-    tomorrow.getDate() + 1
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value])
   );
 
-  return tomorrow;
+  return new Date(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day) + 1,
+    12
+  );
+}
+
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+
+  result.setDate(result.getDate() + days);
+
+  return result;
 }
 
 export default function AppointmentScreen() {
   const { token } =
     useAuth();
+
+  const scrollViewRef =
+    useRef<ScrollView>(null);
 
   const initialDate =
     getTomorrowDate();
@@ -116,6 +140,16 @@ export default function AppointmentScreen() {
   ] = useState(false);
 
   const [
+    recommendationError,
+    setRecommendationError,
+  ] = useState("");
+
+  const [
+    hasRequestedTimes,
+    setHasRequestedTimes,
+  ] = useState(false);
+
+  const [
     booking,
     setBooking,
   ] = useState(false);
@@ -149,11 +183,13 @@ export default function AppointmentScreen() {
     }
 
     try {
+      setHasRequestedTimes(true);
       setLoading(true);
 
       setSelectedTime(
         null
       );
+      setTimes([]);
 
       const result =
         await getAvailability(
@@ -179,19 +215,76 @@ export default function AppointmentScreen() {
     }
   }
 
+  async function loadNextAvailableDate() {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setHasRequestedTimes(false);
+      setLoading(true);
+      setRecommendationError("");
+      setSelectedTime(null);
+
+      const firstCandidate = getTomorrowDate();
+
+      for (let offset = 0; offset < 60; offset += 1) {
+        const candidate = addDays(firstCandidate, offset);
+        const formatted = formatDate(candidate);
+        let result;
+
+        try {
+          result = await getAvailability(token, formatted);
+        } catch (error) {
+          const status = (
+            error as Error & { status?: number }
+          ).status;
+
+          if (status === 400) {
+            continue;
+          }
+
+          throw error;
+        }
+
+        if (
+          result.times.some(
+            (slot: TimeSlot) => slot.available
+          )
+        ) {
+          setSelectedDate(candidate);
+          setDateText(formatted);
+          setTimes(result.times);
+          return;
+        }
+      }
+
+      setTimes([]);
+      setRecommendationError(
+        "No encontramos horarios disponibles en los próximos 60 días."
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo buscar la siguiente fecha disponible.";
+
+      setTimes([]);
+      setRecommendationError(
+        message
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useFocusEffect(
     useCallback(() => {
-      if (
-        token &&
-        dateText
-      ) {
-        handleSearch(
-          dateText
-        );
+      if (token) {
+        void loadNextAvailableDate();
       }
     }, [
       token,
-      dateText,
     ])
   );
 
@@ -210,6 +303,10 @@ export default function AppointmentScreen() {
     setSelectedDate(
       date
     );
+    setRecommendationError("");
+    setHasRequestedTimes(false);
+    setTimes([]);
+    setSelectedTime(null);
 
     const formatted =
       formatDate(date);
@@ -218,9 +315,17 @@ export default function AppointmentScreen() {
       formatted
     );
 
-    handleSearch(
-      formatted
-    );
+  }
+
+  function handleTimeSelect(time: string) {
+    setSelectedTime(time);
+  }
+
+  function scrollToSection(y: number) {
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(y - SPACING.md, 0),
+      animated: true,
+    });
   }
 
   async function handleBook() {
@@ -298,6 +403,7 @@ export default function AppointmentScreen() {
 
   return (
     <ScrollView
+      ref={scrollViewRef}
       contentContainerStyle={
         styles.container
       }
@@ -407,13 +513,6 @@ export default function AppointmentScreen() {
               maxLength={10}
             />
 
-            <Text
-              style={
-                styles.helperText
-              }
-            >
-              Debes reservar al menos con un día de anticipación.
-            </Text>
           </>
         ) : (
           <>
@@ -441,9 +540,7 @@ export default function AppointmentScreen() {
                     styles.dateValue
                   }
                 >
-                  {formatDisplayDate(
-                    dateText
-                  )}
+                  {formatDisplayDate(dateText)}
                 </Text>
               </View>
 
@@ -472,15 +569,18 @@ export default function AppointmentScreen() {
               />
             )}
 
-            <Text
-              style={
-                styles.helperText
-              }
-            >
-              Debes reservar al menos con un día de anticipación.
-            </Text>
           </>
         )}
+
+        <Text style={styles.helperText}>
+          Debes reservar al menos con 24 horas de anticipación.
+        </Text>
+
+        {recommendationError ? (
+          <Text style={styles.recommendationError}>
+            {recommendationError}
+          </Text>
+        ) : null}
 
         <Pressable
           style={[
@@ -508,10 +608,15 @@ export default function AppointmentScreen() {
         </Pressable>
       </View>
 
-      {loading ? (
+      {hasRequestedTimes && (loading ? (
         <View
           style={
             styles.loadingContainer
+          }
+          onLayout={(event) =>
+            scrollToSection(
+              event.nativeEvent.layout.y
+            )
           }
         >
           <ActivityIndicator
@@ -531,6 +636,11 @@ export default function AppointmentScreen() {
         <View
           style={
             styles.section
+          }
+          onLayout={(event) =>
+            scrollToSection(
+              event.nativeEvent.layout.y
+            )
           }
         >
           <Text
@@ -569,7 +679,7 @@ export default function AppointmentScreen() {
                       !slot.available
                     }
                     onPress={() =>
-                      setSelectedTime(
+                      handleTimeSelect(
                         slot.time
                       )
                     }
@@ -614,12 +724,17 @@ export default function AppointmentScreen() {
             )}
           </View>
         </View>
-      ) : null}
+      ) : null)}
 
       {selectedTime && (
         <View
           style={
             styles.summaryCard
+          }
+          onLayout={(event) =>
+            scrollToSection(
+              event.nativeEvent.layout.y
+            )
           }
         >
           <Text
@@ -763,7 +878,7 @@ export default function AppointmentScreen() {
         </View>
       )}
 
-      <BackButton />
+      <BackButton fallbackHref="/client" />
     </ScrollView>
   );
 }
@@ -959,6 +1074,14 @@ const styles =
         COLORS.textSecondary,
       marginTop:
         SPACING.sm,
+    },
+
+    recommendationError: {
+      marginTop: SPACING.sm,
+      color: COLORS.danger,
+      fontSize: FONT.small,
+      lineHeight: 20,
+      fontWeight: "600",
     },
 
     searchButton: {

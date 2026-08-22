@@ -5,27 +5,6 @@ function isValidDateFormat(date) {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 }
 
-function getTomorrowDate() {
-  const tomorrow = new Date();
-
-  tomorrow.setDate(
-    tomorrow.getDate() + 1
-  );
-
-  const year =
-    tomorrow.getFullYear();
-
-  const month = String(
-    tomorrow.getMonth() + 1
-  ).padStart(2, "0");
-
-  const day = String(
-    tomorrow.getDate()
-  ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 async function availability(
   req,
   res
@@ -41,17 +20,6 @@ async function availability(
         success: false,
         message:
           "Debes proporcionar una fecha válida.",
-      });
-    }
-
-    const minimumDate =
-      getTomorrowDate();
-
-    if (date < minimumDate) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Las citas deben agendarse al menos con un día de anticipación.",
       });
     }
 
@@ -108,17 +76,6 @@ async function create(
         success: false,
         message:
           "La fecha no es válida.",
-      });
-    }
-
-    const minimumDate =
-      getTomorrowDate();
-
-    if (date < minimumDate) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Las citas deben agendarse al menos con un día de anticipación.",
       });
     }
 

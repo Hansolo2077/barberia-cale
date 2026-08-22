@@ -15,6 +15,8 @@ export type AdminAppointment = {
   | "COMPLETED";
 
   createdAt: string;
+  canComplete?: boolean;
+  canAdminCancel?: boolean;
 
   userId: number;
   firstName: string;

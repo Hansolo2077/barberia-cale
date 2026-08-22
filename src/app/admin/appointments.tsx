@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -48,6 +49,8 @@ type StatusFilter =
 
 export default function AdminAppointmentsScreen() {
   const { token } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const resultsOffsetRef = useRef(0);
 
   const [appointments, setAppointments] =
     useState<AdminAppointment[]>([]);
@@ -64,19 +67,26 @@ export default function AdminAppointmentsScreen() {
   const [error, setError] =
     useState("");
 
+  const [expandedAppointmentId, setExpandedAppointmentId] =
+    useState<number | null>(null);
+
   useEffect(() => {
     if (token) {
-      loadAppointments();
+      loadAppointments(true);
     }
   }, [token]);
 
-  async function loadAppointments() {
+  async function loadAppointments(
+    showFullScreen = false
+  ) {
     if (!token) {
       return;
     }
 
     try {
-      setLoading(true);
+      if (showFullScreen) {
+        setLoading(true);
+      }
       setError("");
 
       const result =
@@ -115,7 +125,7 @@ export default function AdminAppointmentsScreen() {
       appointmentId
     );
 
-    await loadAppointments();
+    await loadAppointments(false);
 
     showMessage(
       "Cita confirmada",
@@ -136,7 +146,7 @@ export default function AdminAppointmentsScreen() {
   }
 }
 
-  async function handleReject(
+  function handleReject(
     appointmentId: number
   ) {
     if (!token) {
@@ -146,14 +156,7 @@ export default function AdminAppointmentsScreen() {
     const message =
       "¿Deseas rechazar esta solicitud?";
 
-    let confirmed = true;
-
-    if (
-      typeof window !== "undefined"
-    ) {
-      confirmed =
-        window.confirm(message);
-    } else {
+    if (Platform.OS !== "web") {
       Alert.alert(
         "Rechazar cita",
         message,
@@ -176,13 +179,16 @@ export default function AdminAppointmentsScreen() {
       return;
     }
 
+    const confirmed =
+      typeof window.confirm === "function"
+        ? window.confirm(message)
+        : false;
+
     if (!confirmed) {
       return;
     }
 
-    await executeReject(
-      appointmentId
-    );
+    void executeReject(appointmentId);
   }
 
   async function executeReject(
@@ -204,7 +210,7 @@ export default function AdminAppointmentsScreen() {
       appointmentId
     );
 
-    await loadAppointments();
+    await loadAppointments(false);
 
     showMessage(
       "Cita rechazada",
@@ -225,7 +231,7 @@ export default function AdminAppointmentsScreen() {
   }
 }
 
-  async function handleComplete(
+  function handleComplete(
     appointmentId: number
   ) {
     if (!token) {
@@ -235,40 +241,34 @@ export default function AdminAppointmentsScreen() {
     const message =
       "¿Confirmas que esta cita ya fue atendida y completada?";
 
-    if (
-      typeof window !== "undefined"
-    ) {
-      const confirmed =
-        window.confirm(message);
-
-      if (!confirmed) {
-        return;
-      }
-
-      await executeComplete(
-        appointmentId
+    if (Platform.OS !== "web") {
+      Alert.alert(
+        "Completar cita",
+        message,
+        [
+          {
+            text: "Volver",
+            style: "cancel",
+          },
+          {
+            text: "Sí, completar",
+            onPress: () =>
+              executeComplete(
+                appointmentId
+              ),
+          },
+        ]
       );
 
       return;
     }
 
-    Alert.alert(
-      "Completar cita",
-      message,
-      [
-        {
-          text: "Volver",
-          style: "cancel",
-        },
-        {
-          text: "Sí, completar",
-          onPress: () =>
-            executeComplete(
-              appointmentId
-            ),
-        },
-      ]
-    );
+    if (
+      typeof window.confirm === "function" &&
+      window.confirm(message)
+    ) {
+      void executeComplete(appointmentId);
+    }
   }
 
   async function executeComplete(
@@ -290,7 +290,7 @@ export default function AdminAppointmentsScreen() {
       appointmentId
     );
 
-    await loadAppointments();
+    await loadAppointments(false);
 
     showMessage(
       "Cita completada",
@@ -317,39 +317,35 @@ export default function AdminAppointmentsScreen() {
     const message =
       "¿Deseas cancelar esta cita confirmada? El horario volverá a quedar disponible para otros clientes.";
 
-    if (
-      typeof window !== "undefined"
-    ) {
-      const confirmed =
-        window.confirm(message);
-
-      if (confirmed) {
-        handleAdminCancel(
-          appointmentId
-        );
-      }
+    if (Platform.OS !== "web") {
+      Alert.alert(
+        "Cancelar cita",
+        message,
+        [
+          {
+            text: "Volver",
+            style: "cancel",
+          },
+          {
+            text: "Sí, cancelar",
+            style: "destructive",
+            onPress: () =>
+              handleAdminCancel(
+                appointmentId
+              ),
+          },
+        ]
+      );
 
       return;
     }
 
-    Alert.alert(
-      "Cancelar cita",
-      message,
-      [
-        {
-          text: "Volver",
-          style: "cancel",
-        },
-        {
-          text: "Sí, cancelar",
-          style: "destructive",
-          onPress: () =>
-            handleAdminCancel(
-              appointmentId
-            ),
-        },
-      ]
-    );
+    if (
+      typeof window.confirm === "function" &&
+      window.confirm(message)
+    ) {
+      void handleAdminCancel(appointmentId);
+    }
   }
 
   async function handleAdminCancel(
@@ -371,7 +367,7 @@ export default function AdminAppointmentsScreen() {
       appointmentId
     );
 
-    await loadAppointments();
+    await loadAppointments(false);
 
     showMessage(
       "Cita cancelada",
@@ -470,14 +466,27 @@ export default function AdminAppointmentsScreen() {
         "PENDING"
     ).length;
 
-  const filteredAppointments =
+  const filteredAppointments = (
     statusFilter === "ALL"
       ? appointments
       : appointments.filter(
           (appointment) =>
             appointment.status ===
             statusFilter
-        );
+        )
+  ).slice();
+
+  if (
+    statusFilter === "PENDING" ||
+    statusFilter === "ACCEPTED"
+  ) {
+    filteredAppointments.sort(
+      (first, second) =>
+        `${first.date} ${first.time}`.localeCompare(
+          `${second.date} ${second.time}`
+        )
+    );
+  }
 
   const filters: {
     value: StatusFilter;
@@ -492,6 +501,10 @@ export default function AdminAppointmentsScreen() {
       label: "Confirmadas",
     },
     {
+      value: "ALL",
+      label: "Todas",
+    },
+    {
       value: "COMPLETED",
       label: "Completadas",
     },
@@ -503,11 +516,32 @@ export default function AdminAppointmentsScreen() {
       value: "CANCELLED",
       label: "Canceladas",
     },
-    {
-      value: "ALL",
-      label: "Todas",
-    },
   ];
+
+  function getFilterCount(filter: StatusFilter) {
+    if (filter === "ALL") {
+      return appointments.length;
+    }
+
+    return appointments.filter(
+      (appointment) => appointment.status === filter
+    ).length;
+  }
+
+  function handleFilterPress(filter: StatusFilter) {
+    setStatusFilter(filter);
+    setExpandedAppointmentId(null);
+
+    requestAnimationFrame(() => {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(
+          resultsOffsetRef.current - SPACING.md,
+          0
+        ),
+        animated: true,
+      });
+    });
+  }
 
   function getSectionTitle() {
     switch (statusFilter) {
@@ -555,6 +589,7 @@ export default function AdminAppointmentsScreen() {
 
   return (
     <ScrollView
+      ref={scrollViewRef}
       contentContainerStyle={
         styles.container
       }
@@ -636,8 +671,10 @@ export default function AdminAppointmentsScreen() {
         Filtrar por estado
       </Text>
 
-      <View
-        style={
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={
           styles.filterContainer
         }
       >
@@ -658,9 +695,7 @@ export default function AdminAppointmentsScreen() {
                     styles.activeFilterButton,
                 ]}
                 onPress={() =>
-                  setStatusFilter(
-                    filter.value
-                  )
+                  handleFilterPress(filter.value)
                 }
               >
                 <Text
@@ -672,11 +707,27 @@ export default function AdminAppointmentsScreen() {
                 >
                   {filter.label}
                 </Text>
+
+                <View
+                  style={[
+                    styles.filterCountBadge,
+                    active && styles.activeFilterCountBadge,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterCountText,
+                      active && styles.activeFilterCountText,
+                    ]}
+                  >
+                    {getFilterCount(filter.value)}
+                  </Text>
+                </View>
               </Pressable>
             );
           }
         )}
-      </View>
+      </ScrollView>
 
       {error ? (
         <View
@@ -704,8 +755,8 @@ export default function AdminAppointmentsScreen() {
             style={
               styles.retryButton
             }
-            onPress={
-              loadAppointments
+            onPress={() =>
+              loadAppointments(true)
             }
           >
             <Text
@@ -719,6 +770,12 @@ export default function AdminAppointmentsScreen() {
         </View>
       ) : (
         <>
+          <View
+            onLayout={(event) => {
+              resultsOffsetRef.current =
+                event.nativeEvent.layout.y;
+            }}
+          >
           <Text
             style={
               styles.sectionTitle
@@ -726,6 +783,7 @@ export default function AdminAppointmentsScreen() {
           >
             {getSectionTitle()}
           </Text>
+          </View>
 
           {filteredAppointments
             .length === 0 ? (
@@ -767,7 +825,7 @@ export default function AdminAppointmentsScreen() {
             </View>
           ) : (
             filteredAppointments.map(
-              (appointment) => {
+              (appointment, index) => {
                 const processing =
                   processingId ===
                   appointment.id;
@@ -777,11 +835,52 @@ export default function AdminAppointmentsScreen() {
                     appointment.status
                   );
 
+                const operationalView =
+                  statusFilter === "PENDING" ||
+                  statusFilter === "ACCEPTED";
+
+                const startsNewDay =
+                  operationalView &&
+                  (index === 0 ||
+                    filteredAppointments[index - 1].date !==
+                      appointment.date);
+
+                const expanded =
+                  expandedAppointmentId === appointment.id;
+
+                const appointmentTimestamp =
+                  new Date(
+                    `${appointment.date}T${appointment.time}:00-06:00`
+                  ).getTime();
+
+                const canComplete =
+                  appointment.canComplete ??
+                  Date.now() >= appointmentTimestamp;
+
+                const canAdminCancel =
+                  appointment.canAdminCancel ??
+                  Date.now() < appointmentTimestamp;
+
                 return (
+                  <Fragment key={appointment.id}>
+                  {startsNewDay && (
+                    <View style={styles.dayHeader}>
+                      <Text style={styles.dayHeaderText}>
+                        {formatDisplayDate(appointment.date)}
+                      </Text>
+
+                      <Text style={styles.dayHeaderCount}>
+                        {
+                          filteredAppointments.filter(
+                            (item) => item.date === appointment.date
+                          ).length
+                        }{" "}
+                        citas
+                      </Text>
+                    </View>
+                  )}
+
                   <View
-                    key={
-                      appointment.id
-                    }
                     style={
                       styles.card
                     }
@@ -830,15 +929,6 @@ export default function AdminAppointmentsScreen() {
                             }
                           </Text>
 
-                          <Text
-                            style={
-                              styles.phone
-                            }
-                          >
-                            {
-                              appointment.phone
-                            }
-                          </Text>
                         </View>
                       </View>
 
@@ -949,6 +1039,33 @@ export default function AdminAppointmentsScreen() {
                       </View>
                     </View>
 
+                    {expanded && (
+                      <View style={styles.expandedDetails}>
+                        <Text style={styles.detailLabel}>
+                          Teléfono
+                        </Text>
+
+                        <Text style={styles.phone}>
+                          {appointment.phone}
+                        </Text>
+                      </View>
+                    )}
+
+                    <Pressable
+                      style={styles.detailsButton}
+                      onPress={() =>
+                        setExpandedAppointmentId(
+                          expanded ? null : appointment.id
+                        )
+                      }
+                    >
+                      <Text style={styles.detailsButtonText}>
+                        {expanded
+                          ? "Ocultar detalles"
+                          : "Ver detalles"}
+                      </Text>
+                    </Pressable>
+
                     {appointment.status ===
                       "PENDING" && (
                       <View
@@ -1023,71 +1140,57 @@ export default function AdminAppointmentsScreen() {
                           Gestión de la cita
                         </Text>
 
-                        <Pressable
-                          style={[
-                            styles.completeButton,
-                            processing &&
-                              styles.disabledButton,
-                          ]}
-                          disabled={
-                            processing
-                          }
-                          onPress={() =>
-                            handleComplete(
-                              appointment.id
-                            )
-                          }
-                        >
-                          <Text
-                            style={
-                              styles.completeButtonText
+                        {canComplete ? (
+                          <Pressable
+                            style={[
+                              styles.completeButton,
+                              processing && styles.disabledButton,
+                            ]}
+                            disabled={processing}
+                            onPress={() =>
+                              handleComplete(appointment.id)
                             }
                           >
-                            {processing
-                              ? "Procesando..."
-                              : "Marcar como completada"}
+                            <Text style={styles.completeButtonText}>
+                              {processing
+                                ? "Procesando..."
+                                : "Marcar como completada"}
+                            </Text>
+                          </Pressable>
+                        ) : (
+                          <Text style={styles.actionAvailabilityHint}>
+                            Podrás completar esta cita después de la hora programada.
                           </Text>
-                        </Pressable>
+                        )}
 
-                        <Text
-                          style={
-                            styles.adminCancelHint
-                          }
-                        >
-                          Si surge una situación de
-                          fuerza mayor antes de la cita,
-                          puedes cancelarla y liberar el
-                          horario.
-                        </Text>
+                        {canAdminCancel && (
+                          <>
+                            <Text style={styles.adminCancelHint}>
+                              Si surge una situación de fuerza mayor antes de la cita, puedes cancelarla y liberar el horario.
+                            </Text>
 
-                        <Pressable
-                          style={[
-                            styles.adminCancelButton,
-                            processing &&
-                              styles.disabledButton,
-                          ]}
-                          disabled={
-                            processing
-                          }
-                          onPress={() =>
-                            confirmAdminCancel(
-                              appointment.id
-                            )
-                          }
-                        >
-                          <Text
-                            style={
-                              styles.adminCancelButtonText
-                            }
-                          >
-                            {processing
-                              ? "Procesando..."
-                              : "Cancelar cita"}
-                          </Text>
-                        </Pressable>
+                            <Pressable
+                              style={[
+                                styles.adminCancelButton,
+                                processing && styles.disabledButton,
+                              ]}
+                              disabled={processing}
+                              onPress={() =>
+                                confirmAdminCancel(appointment.id)
+                              }
+                            >
+                              <Text style={styles.adminCancelButtonText}>
+                                {processing
+                                  ? "Procesando..."
+                                  : "Cancelar cita"}
+                              </Text>
+                            </Pressable>
+                          </>
+                        )}
                       </View>
                     )}
                   </View>
+                  </Fragment>
                 );
               }
             )
@@ -1095,7 +1198,7 @@ export default function AdminAppointmentsScreen() {
         </>
       )}
 
-      <BackButton />
+      <BackButton fallbackHref="/admin" />
     </ScrollView>
   );
 }
@@ -1231,13 +1334,17 @@ const styles =
 
     filterContainer: {
       flexDirection: "row",
-      flexWrap: "wrap",
       gap: SPACING.sm,
+      paddingRight: SPACING.lg,
       marginBottom:
         SPACING.xl,
     },
 
     filterButton: {
+      minHeight: 42,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.surface,
       borderWidth: 1,
@@ -1269,6 +1376,30 @@ const styles =
       color: "#FFFFFF",
     },
 
+    filterCountBadge: {
+      minWidth: 24,
+      height: 24,
+      paddingHorizontal: SPACING.xs,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+    },
+
+    activeFilterCountBadge: {
+      backgroundColor: "rgba(255, 255, 255, 0.2)",
+    },
+
+    filterCountText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      fontWeight: "800",
+    },
+
+    activeFilterCountText: {
+      color: "#FFFFFF",
+    },
+
     sectionTitle: {
       fontSize:
         FONT.subheading,
@@ -1276,6 +1407,54 @@ const styles =
       color: COLORS.text,
       marginBottom:
         SPACING.md,
+    },
+
+    dayHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: SPACING.lg,
+      marginBottom: SPACING.sm,
+    },
+
+    dayHeaderText: {
+      color: COLORS.text,
+      fontSize: FONT.subheading,
+      fontWeight: "800",
+    },
+
+    dayHeaderCount: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      fontWeight: "600",
+    },
+
+    expandedDetails: {
+      marginTop: SPACING.md,
+      paddingTop: SPACING.md,
+      borderTopWidth: 1,
+      borderTopColor: COLORS.border,
+    },
+
+    detailLabel: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      fontWeight: "700",
+      marginBottom: SPACING.xs,
+    },
+
+    detailsButton: {
+      alignItems: "center",
+      marginTop: SPACING.md,
+      paddingVertical: 10,
+      borderRadius: RADIUS.md,
+      backgroundColor: COLORS.primarySoft,
+    },
+
+    detailsButtonText: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      fontWeight: "700",
     },
 
     card: {
@@ -1491,6 +1670,18 @@ const styles =
       fontSize:
         FONT.small,
       fontWeight: "700",
+    },
+
+    actionAvailabilityHint: {
+      marginBottom: SPACING.md,
+      padding: SPACING.md,
+      borderRadius: RADIUS.md,
+      backgroundColor: COLORS.primarySoft,
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      lineHeight: 20,
+      fontWeight: "600",
+      textAlign: "center",
     },
 
     adminCancelHint: {

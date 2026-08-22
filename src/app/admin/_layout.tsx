@@ -8,6 +8,7 @@ import {
 } from "react-native";
 
 import { useAuth } from "../../context/AuthContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdminLayout() {
   const router = useRouter();
@@ -49,15 +50,22 @@ export default function AdminLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    />
+    <SafeAreaView style={styles.safeArea} edges={["top", "right", "bottom", "left"]}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+
   container: {
     flex: 1,
     justifyContent: "center",
