@@ -453,19 +453,26 @@ export default function AdminScheduleScreen() {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>
-          CALENDARIO
-        </Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.eyebrow}>
+            CALENDARIO
+          </Text>
 
-        <Text style={styles.title}>
-          Agenda
-        </Text>
+          <Text style={styles.title}>
+            Agenda
+          </Text>
 
-        <Text style={styles.subtitle}>
-          Consulta las citas dentro de
-          un rango de fechas y filtra
-          los resultados por estado.
-        </Text>
+          <Text style={styles.subtitle}>
+            Consulta las citas dentro de
+            un rango de fechas y filtra
+            los resultados por estado.
+          </Text>
+        </View>
+
+        <BackButton
+          iconOnly
+          fallbackHref="/admin"
+        />
       </View>
 
       <View
@@ -1164,8 +1171,15 @@ const styles =
     },
 
     header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.md,
       marginBottom:
         SPACING.xl,
+    },
+
+    headerContent: {
+      flex: 1,
     },
 
     eyebrow: {

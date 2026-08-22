@@ -41,6 +41,8 @@ import {
     SPACING,
 } from "../../constants/app-theme";
 
+import BackButton from "../../components/BackButton";
+
 type Appointment = {
   id: number;
   service: string;
@@ -342,23 +344,30 @@ export default function MyAppointmentsScreen() {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>
-          TU AGENDA
-        </Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.eyebrow}>
+            TU AGENDA
+          </Text>
 
-        <Text style={styles.title}>
-          Mis citas
-        </Text>
+          <Text style={styles.title}>
+            Mis citas
+          </Text>
 
-        <Text
-          style={
-            styles.subtitle
-          }
-        >
-          Consulta tus próximas
-          reservas y el historial de
-          citas anteriores.
-        </Text>
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
+            Consulta tus próximas
+            reservas y el historial de
+            citas anteriores.
+          </Text>
+        </View>
+
+        <BackButton
+          iconOnly
+          fallbackHref="/client"
+        />
       </View>
 
       <View
@@ -812,6 +821,8 @@ export default function MyAppointmentsScreen() {
           )}
         </>
       )}
+
+      <BackButton fallbackHref="/client" />
     </ScrollView>
   );
 }
@@ -848,8 +859,15 @@ const styles = StyleSheet.create({
   },
 
   header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: SPACING.md,
     marginBottom:
       SPACING.lg,
+  },
+
+  headerContent: {
+    flex: 1,
   },
 
   eyebrow: {

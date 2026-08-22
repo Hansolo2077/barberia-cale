@@ -1,5 +1,6 @@
 import {
     useFocusEffect,
+    useRouter,
 } from "expo-router";
 
 import {
@@ -98,6 +99,9 @@ function addDays(date: Date, days: number) {
 export default function AppointmentScreen() {
   const { token } =
     useAuth();
+
+  const router =
+    useRouter();
 
   const scrollViewRef =
     useRef<ScrollView>(null);
@@ -373,18 +377,8 @@ export default function AppointmentScreen() {
         )} fue registrada y está pendiente de confirmación.`
       );
 
-      setSelectedTime(
-        null
-      );
-
-      const result =
-        await getAvailability(
-          token,
-          dateText
-        );
-
-      setTimes(
-        result.times
+      router.replace(
+        "/client"
       );
     } catch (error) {
       const message =

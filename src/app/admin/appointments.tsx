@@ -677,27 +677,34 @@ export default function AdminAppointmentsScreen() {
         styles.container
       }
       showsVerticalScrollIndicator={
-        false
+      false
       }
     >
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>
-          SOLICITUDES
-        </Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.eyebrow}>
+            SOLICITUDES
+          </Text>
 
-        <Text style={styles.title}>
-          Gestión de citas
-        </Text>
+          <Text style={styles.title}>
+            Gestión de citas
+          </Text>
 
-        <Text
-          style={
-            styles.subtitle
-          }
-        >
-          Gestiona las solicitudes
-          pendientes y consulta citas
-          por estado.
-        </Text>
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
+            Gestiona las solicitudes
+            pendientes y consulta citas
+            por estado.
+          </Text>
+        </View>
+
+        <BackButton
+          iconOnly
+          fallbackHref="/admin"
+        />
       </View>
 
       <View
@@ -756,6 +763,7 @@ export default function AdminAppointmentsScreen() {
 
       <ScrollView
         horizontal
+        style={styles.filterScroll}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={
           styles.filterContainer
@@ -1152,13 +1160,17 @@ export default function AdminAppointmentsScreen() {
                     {appointment.status ===
                       "PENDING" && (
                       <View
-                        style={
-                          styles.actionsContainer
-                        }
+                        style={[
+                          styles.actionsContainer,
+                          Platform.OS === "web" &&
+                            styles.webActionsContainer,
+                        ]}
                       >
                         <Pressable
                           style={[
                             styles.acceptButton,
+                            Platform.OS === "web" &&
+                              styles.webRequestButton,
                             processing &&
                               styles.disabledButton,
                           ]}
@@ -1185,6 +1197,8 @@ export default function AdminAppointmentsScreen() {
                         <Pressable
                           style={[
                             styles.rejectButton,
+                            Platform.OS === "web" &&
+                              styles.webRequestButton,
                             processing &&
                               styles.disabledButton,
                           ]}
@@ -1227,6 +1241,8 @@ export default function AdminAppointmentsScreen() {
                           <Pressable
                             style={[
                               styles.completeButton,
+                              Platform.OS === "web" &&
+                                styles.webManagementButton,
                               processing && styles.disabledButton,
                             ]}
                             disabled={processing}
@@ -1255,6 +1271,8 @@ export default function AdminAppointmentsScreen() {
                             <Pressable
                               style={[
                                 styles.adminCancelButton,
+                                Platform.OS === "web" &&
+                                  styles.webManagementButton,
                                 processing && styles.disabledButton,
                               ]}
                               disabled={processing}
@@ -1318,8 +1336,15 @@ const styles =
     },
 
     header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.md,
       marginBottom:
         SPACING.xl,
+    },
+
+    headerContent: {
+      flex: 1,
     },
 
     eyebrow: {
@@ -1415,12 +1440,18 @@ const styles =
         SPACING.md,
     },
 
+    filterScroll: {
+      flexGrow: 0,
+      flexShrink: 0,
+      height: 42,
+      marginBottom:
+        SPACING.xl,
+    },
+
     filterContainer: {
       flexDirection: "row",
       gap: SPACING.sm,
       paddingRight: SPACING.lg,
-      marginBottom:
-        SPACING.xl,
     },
 
     filterButton: {
@@ -1680,6 +1711,11 @@ const styles =
         SPACING.lg,
     },
 
+    webActionsContainer: {
+      justifyContent: "center",
+      gap: SPACING.xl,
+    },
+
     acceptButton: {
       flex: 1,
       backgroundColor:
@@ -1716,6 +1752,20 @@ const styles =
       fontSize:
         FONT.small,
       fontWeight: "700",
+    },
+
+    webRequestButton: {
+      flexGrow: 0,
+      flexShrink: 0,
+      flexBasis: "auto",
+      minWidth: 110,
+      minHeight: 42,
+      justifyContent: "center",
+      borderRadius:
+        RADIUS.pill,
+      paddingHorizontal:
+        SPACING.md,
+      paddingVertical: 9,
     },
 
     acceptedActionsSection: {
@@ -1795,6 +1845,14 @@ const styles =
       fontSize:
         FONT.small,
       fontWeight: "700",
+    },
+
+    webManagementButton: {
+      width: 220,
+      maxWidth: "100%",
+      alignSelf: "flex-start",
+      paddingHorizontal:
+        SPACING.md,
     },
 
     disabledButton: {

@@ -15,11 +15,13 @@ import {
 type BackButtonProps = {
   label?: string;
   fallbackHref?: Href;
+  iconOnly?: boolean;
 };
 
 export default function BackButton({
   label = "Volver",
   fallbackHref = "/",
+  iconOnly = false,
 }: BackButtonProps) {
   const router = useRouter();
 
@@ -36,17 +38,27 @@ export default function BackButton({
     <Pressable
       style={({ pressed }) => [
         styles.button,
+        iconOnly && styles.iconOnlyButton,
         pressed && styles.pressed,
       ]}
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
-      <Text style={styles.icon}>
+      <Text
+        style={[
+          styles.icon,
+          iconOnly && styles.iconOnly,
+        ]}
+      >
         ‹
       </Text>
 
-      <Text style={styles.text}>
-        {label}
-      </Text>
+      {!iconOnly && (
+        <Text style={styles.text}>
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -77,12 +89,31 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
 
+  iconOnlyButton: {
+    width: 40,
+    height: 40,
+    maxWidth: 40,
+    alignSelf: "auto",
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    marginTop: 0,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.primarySoft,
+  },
+
   icon: {
     fontSize: 24,
     fontWeight: "600",
     color: COLORS.text,
     marginRight: SPACING.xs,
     lineHeight: 24,
+  },
+
+  iconOnly: {
+    marginRight: 0,
+    lineHeight: 28,
   },
 
   text: {
