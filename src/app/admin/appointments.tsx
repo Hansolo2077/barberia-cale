@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Linking,
     Platform,
     Pressable,
     ScrollView,
@@ -46,6 +47,58 @@ type StatusFilter =
   | "REJECTED"
   | "CANCELLED"
   | "ALL";
+
+function normalizeWhatsAppPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length === 8) {
+    return `505${digits}`;
+  }
+
+  if (digits.startsWith("00")) {
+    return digits.slice(2);
+  }
+
+  return digits;
+}
+
+function getWhatsAppMessage(
+  appointment: AdminAppointment,
+  status: "ACCEPTED" | "REJECTED"
+) {
+  const clientName = appointment.firstName.trim();
+  const greeting = clientName ? `Hola, ${clientName}.` : "Hola.";
+  const appointmentDetails = `${appointment.service} para el ${formatDisplayDate(
+    appointment.date
+  )} a las ${formatDisplayTime(appointment.time)}`;
+
+  if (status === "ACCEPTED") {
+    return `${greeting} Tu cita de ${appointmentDetails} ha sido confirmada. ¡Te esperamos en Barbería Cale!`;
+  }
+
+  return `${greeting} No pudimos confirmar tu cita de ${appointmentDetails}. Puedes ingresar a la aplicación para elegir otro horario.`;
+}
+
+async function openWhatsAppNotification(
+  appointment: AdminAppointment,
+  status: "ACCEPTED" | "REJECTED"
+) {
+  const phone = normalizeWhatsAppPhone(appointment.phone);
+
+  if (!phone) {
+    throw new Error("El cliente no tiene un número de teléfono válido.");
+  }
+
+  const message = getWhatsAppMessage(appointment, status);
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    window.location.assign(whatsappUrl);
+    return;
+  }
+
+  await Linking.openURL(whatsappUrl);
+}
 
 export default function AdminAppointmentsScreen() {
   const { token } = useAuth();
@@ -113,6 +166,10 @@ export default function AdminAppointmentsScreen() {
     return;
   }
 
+  const appointment = appointments.find(
+    (item) => item.id === appointmentId
+  );
+
   try {
     setProcessingId(
       appointmentId
@@ -127,10 +184,21 @@ export default function AdminAppointmentsScreen() {
 
     await loadAppointments(false);
 
-    showMessage(
-      "Cita confirmada",
-      "La solicitud fue aceptada correctamente."
-    );
+    if (appointment) {
+      try {
+        await openWhatsAppNotification(appointment, "ACCEPTED");
+      } catch {
+        showMessage(
+          "Cita confirmada",
+          `La cita fue confirmada, pero no se pudo abrir WhatsApp. Puedes contactar al cliente al ${appointment.phone}.`
+        );
+      }
+    } else {
+      showMessage(
+        "Cita confirmada",
+        "La solicitud fue aceptada correctamente."
+      );
+    }
   } catch (error) {
     const message =
       error instanceof Error
@@ -198,6 +266,10 @@ export default function AdminAppointmentsScreen() {
     return;
   }
 
+  const appointment = appointments.find(
+    (item) => item.id === appointmentId
+  );
+
   try {
     setProcessingId(
       appointmentId
@@ -212,10 +284,21 @@ export default function AdminAppointmentsScreen() {
 
     await loadAppointments(false);
 
-    showMessage(
-      "Cita rechazada",
-      "La solicitud fue rechazada correctamente."
-    );
+    if (appointment) {
+      try {
+        await openWhatsAppNotification(appointment, "REJECTED");
+      } catch {
+        showMessage(
+          "Cita rechazada",
+          `La cita fue rechazada, pero no se pudo abrir WhatsApp. Puedes contactar al cliente al ${appointment.phone}.`
+        );
+      }
+    } else {
+      showMessage(
+        "Cita rechazada",
+        "La solicitud fue rechazada correctamente."
+      );
+    }
   } catch (error) {
     const message =
       error instanceof Error
