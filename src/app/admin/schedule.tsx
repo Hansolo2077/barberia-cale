@@ -1831,17 +1831,21 @@ const styles =
 
     cardHeader: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent:
         "space-between",
       alignItems:
         "flex-start",
-      gap: SPACING.md,
+      columnGap: SPACING.md,
+      rowGap: SPACING.sm,
     },
 
     clientInfo: {
       flexDirection: "row",
       alignItems: "center",
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 160,
       minWidth: 0,
     },
 
@@ -1885,6 +1889,7 @@ const styles =
 
     statusBadge: {
       flexShrink: 0,
+      marginLeft: "auto",
       borderRadius:
         RADIUS.pill,
       paddingHorizontal:
