@@ -25,6 +25,7 @@ import { showMessage } from "../../utils/show-message";
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -158,6 +159,16 @@ export default function LoginScreen() {
             styles.brandBlock
           }
         >
+          <View
+            pointerEvents="none"
+            style={styles.brandDecorationLarge}
+          />
+
+          <View
+            pointerEvents="none"
+            style={styles.brandDecorationSmall}
+          />
+
           <Image
             source={require(
               "../../../assets/images/logo-cale.png"
@@ -195,7 +206,7 @@ export default function LoginScreen() {
               styles.title
             }
           >
-            Bienvenido
+            Tu silla te espera
           </Text>
 
           <Text
@@ -203,7 +214,7 @@ export default function LoginScreen() {
               styles.subtitle
             }
           >
-            Inicia sesión para gestionar tus reservas.
+            Entra para reservar tu próximo corte y revisar tus citas.
           </Text>
         </View>
 
@@ -393,8 +404,47 @@ const styles =
     brandBlock: {
       alignItems: "center",
 
+      position: "relative",
+
+      overflow: "hidden",
+
+      backgroundColor:
+        COLORS.primary,
+
+      borderRadius:
+        RADIUS.xl,
+
+      paddingHorizontal:
+        SPACING.lg,
+
+      paddingVertical:
+        SPACING.xl,
+
       marginBottom:
         SPACING.xl,
+    },
+
+    brandDecorationLarge: {
+      position: "absolute",
+      width: 170,
+      height: 170,
+      borderRadius: 85,
+      borderWidth: 1,
+      borderColor:
+        "rgba(255, 252, 247, 0.15)",
+      top: -90,
+      right: -55,
+    },
+
+    brandDecorationSmall: {
+      position: "absolute",
+      width: 90,
+      height: 90,
+      borderRadius: 45,
+      backgroundColor:
+        "rgba(196, 154, 69, 0.15)",
+      bottom: -48,
+      left: -20,
     },
 
     logo: {
@@ -416,7 +466,7 @@ const styles =
       letterSpacing: 5,
 
       color:
-        COLORS.textSecondary,
+        COLORS.accentSoft,
 
       marginBottom: 2,
     },
@@ -430,7 +480,7 @@ const styles =
 
       letterSpacing: 7,
 
-      color: "#C9A227",
+      color: COLORS.accent,
 
       marginLeft: 7,
     },
@@ -443,7 +493,7 @@ const styles =
       borderRadius: 1,
 
       backgroundColor:
-        "#C9A227",
+        COLORS.accent,
 
       marginTop:
         SPACING.sm,
@@ -456,10 +506,13 @@ const styles =
       fontSize:
         FONT.title,
 
+      fontFamily:
+        FONT_FAMILY.display,
+
       fontWeight: "800",
 
       color:
-        COLORS.text,
+        COLORS.onPrimary,
 
       marginBottom:
         SPACING.sm,
@@ -474,7 +527,7 @@ const styles =
       lineHeight: 24,
 
       color:
-        COLORS.textSecondary,
+        COLORS.primarySoft,
 
       textAlign: "center",
 
@@ -589,7 +642,7 @@ const styles =
         COLORS.primary,
 
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
 
       paddingVertical: 15,
 
@@ -639,6 +692,6 @@ const styles =
       fontWeight: "700",
 
       color:
-        COLORS.text,
+        COLORS.primary,
     },
   });

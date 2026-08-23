@@ -8,11 +8,13 @@ import {
 } from "react-native";
 
 import UserMenu from "../../components/UserMenu";
+import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -107,13 +109,15 @@ export default function AdminHomeScreen() {
         }
       >
         <View style={styles.actionIcon}>
-          <Text
-            style={
-              styles.actionIconText
-            }
-          >
-            ✓
-          </Text>
+          <AppIcon
+            name={{
+              ios: "list.clipboard.fill",
+              android: "assignment",
+              web: "assignment",
+            }}
+            size={24}
+            color={COLORS.primary}
+          />
         </View>
 
         <View style={styles.actionContent}>
@@ -127,9 +131,15 @@ export default function AdminHomeScreen() {
           </Text>
         </View>
 
-        <Text style={styles.chevron}>
-          ›
-        </Text>
+        <AppIcon
+          name={{
+            ios: "chevron.right",
+            android: "chevron_right",
+            web: "chevron_right",
+          }}
+          size={22}
+          color={COLORS.textMuted}
+        />
       </Pressable>
 
       <Pressable
@@ -145,13 +155,15 @@ export default function AdminHomeScreen() {
         }
       >
         <View style={styles.actionIcon}>
-          <Text
-            style={
-              styles.actionIconText
-            }
-          >
-            ◷
-          </Text>
+          <AppIcon
+            name={{
+              ios: "calendar",
+              android: "calendar_month",
+              web: "calendar_month",
+            }}
+            size={24}
+            color={COLORS.primary}
+          />
         </View>
 
         <View style={styles.actionContent}>
@@ -165,9 +177,15 @@ export default function AdminHomeScreen() {
           </Text>
         </View>
 
-        <Text style={styles.chevron}>
-          ›
-        </Text>
+        <AppIcon
+          name={{
+            ios: "chevron.right",
+            android: "chevron_right",
+            web: "chevron_right",
+          }}
+          size={22}
+          color={COLORS.textMuted}
+        />
       </Pressable>
 
       <View style={styles.infoCard}>
@@ -249,6 +267,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize:
       FONT.title,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "800",
     color:
       COLORS.text,
@@ -293,6 +313,8 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize:
       FONT.heading,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "800",
     color:
       COLORS.text,
@@ -352,13 +374,6 @@ const styles = StyleSheet.create({
       SPACING.md,
   },
 
-  actionIconText: {
-    fontSize: 22,
-    fontWeight: "700",
-    color:
-      COLORS.text,
-  },
-
   actionContent: {
     flex: 1,
   },
@@ -378,12 +393,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color:
       COLORS.textSecondary,
-  },
-
-  chevron: {
-    fontSize: 28,
-    color:
-      COLORS.textMuted,
   },
 
   infoCard: {

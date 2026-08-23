@@ -28,10 +28,12 @@ import {
 import { useAuth } from "../../context/AuthContext";
 
 import BackButton from "../../components/BackButton";
+import AppIcon from "../../components/AppIcon";
 
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -657,6 +659,7 @@ export default function AdminAppointmentsScreen() {
       >
         <ActivityIndicator
           size="large"
+          color={COLORS.primary}
         />
 
         <Text
@@ -682,6 +685,8 @@ export default function AdminAppointmentsScreen() {
     >
       <View style={styles.header}>
         <View style={styles.headerContent}>
+          <View style={styles.headerAccent} />
+
           <Text style={styles.eyebrow}>
             SOLICITUDES
           </Text>
@@ -712,29 +717,23 @@ export default function AdminAppointmentsScreen() {
           styles.summaryCard
         }
       >
-        <View>
-          <Text
-            style={
-              styles.summaryLabel
-            }
-          >
-            Requieren atención
+        <View style={styles.summaryContent}>
+          <Text style={styles.summaryLabel}>
+            TRABAJO PENDIENTE
           </Text>
 
-          <Text
-            style={
-              styles.summaryValue
-            }
-          >
-            {pendingCount}
+          <Text style={styles.summaryTitle}>
+            {pendingCount === 0
+              ? "Todo está al día"
+              : pendingCount === 1
+                ? "1 solicitud por revisar"
+                : `${pendingCount} solicitudes por revisar`}
           </Text>
 
-          <Text
-            style={
-              styles.summaryHint
-            }
-          >
-            solicitudes pendientes
+          <Text style={styles.summaryHint}>
+            {pendingCount === 0
+              ? "No hay nuevas solicitudes esperando respuesta."
+              : "Acepta o rechaza las solicitudes para mantener la agenda al día."}
           </Text>
         </View>
 
@@ -743,13 +742,15 @@ export default function AdminAppointmentsScreen() {
             styles.summaryIcon
           }
         >
-          <Text
-            style={
-              styles.summaryIconText
-            }
-          >
-            !
-          </Text>
+          <AppIcon
+            name={{
+              ios: "bell.fill",
+              android: "notifications",
+              web: "notifications",
+            }}
+            size={23}
+            color={COLORS.primary}
+          />
         </View>
       </View>
 
@@ -788,6 +789,12 @@ export default function AdminAppointmentsScreen() {
                 onPress={() =>
                   handleFilterPress(filter.value)
                 }
+                accessibilityRole="tab"
+                accessibilityLabel={`${filter.label}, ${getFilterCount(filter.value)}`}
+                accessibilityState={{
+                  selected: active,
+                }}
+                hitSlop={4}
               >
                 <Text
                   style={[
@@ -846,6 +853,8 @@ export default function AdminAppointmentsScreen() {
             style={
               styles.retryButton
             }
+            accessibilityRole="button"
+            accessibilityLabel="Intentar cargar las citas nuevamente"
             onPress={() =>
               loadAppointments(true)
             }
@@ -888,13 +897,15 @@ export default function AdminAppointmentsScreen() {
                   styles.emptyIcon
                 }
               >
-                <Text
-                  style={
-                    styles.emptyIconText
-                  }
-                >
-                  ✓
-                </Text>
+                <AppIcon
+                  name={{
+                    ios: "checkmark.circle.fill",
+                    android: "check_circle",
+                    web: "check_circle",
+                  }}
+                  size={28}
+                  color={COLORS.success}
+                />
               </View>
 
               <Text
@@ -972,9 +983,11 @@ export default function AdminAppointmentsScreen() {
                   )}
 
                   <View
-                    style={
-                      styles.card
-                    }
+                    style={[
+                      styles.card,
+                      operationalView &&
+                        styles.operationalCard,
+                    ]}
                   >
                     <View
                       style={
@@ -1048,29 +1061,29 @@ export default function AdminAppointmentsScreen() {
                       </View>
                     </View>
 
-                    <View
-                      style={
-                        styles.divider
-                      }
-                    />
+                    <View style={styles.serviceRow}>
+                      <View style={styles.serviceIcon}>
+                        <AppIcon
+                          name={{
+                            ios: "scissors",
+                            android: "content_cut",
+                            web: "content_cut",
+                          }}
+                          size={20}
+                          color={COLORS.primary}
+                        />
+                      </View>
 
-                    <Text
-                      style={
-                        styles.serviceLabel
-                      }
-                    >
-                      SERVICIO
-                    </Text>
+                      <View style={styles.serviceContent}>
+                        <Text style={styles.serviceLabel}>
+                          SERVICIO
+                        </Text>
 
-                    <Text
-                      style={
-                        styles.service
-                      }
-                    >
-                      {
-                        appointment.service
-                      }
-                    </Text>
+                        <Text style={styles.service}>
+                          {appointment.service}
+                        </Text>
+                      </View>
+                    </View>
 
                     <View
                       style={
@@ -1082,6 +1095,16 @@ export default function AdminAppointmentsScreen() {
                           styles.infoBlock
                         }
                       >
+                        <AppIcon
+                          name={{
+                            ios: "calendar",
+                            android: "calendar_month",
+                            web: "calendar_month",
+                          }}
+                          size={19}
+                          color={COLORS.primary}
+                        />
+
                         <Text
                           style={
                             styles.infoLabel
@@ -1108,6 +1131,16 @@ export default function AdminAppointmentsScreen() {
                           styles.infoBlock
                         }
                       >
+                        <AppIcon
+                          name={{
+                            ios: "clock",
+                            android: "schedule",
+                            web: "schedule",
+                          }}
+                          size={19}
+                          color={COLORS.primary}
+                        />
+
                         <Text
                           style={
                             styles.infoLabel
@@ -1132,24 +1165,63 @@ export default function AdminAppointmentsScreen() {
 
                     {expanded && (
                       <View style={styles.expandedDetails}>
-                        <Text style={styles.detailLabel}>
-                          Teléfono
-                        </Text>
+                        <View style={styles.detailIcon}>
+                          <AppIcon
+                            name={{
+                              ios: "phone.fill",
+                              android: "call",
+                              web: "call",
+                            }}
+                            size={18}
+                            color={COLORS.primary}
+                          />
+                        </View>
 
-                        <Text style={styles.phone}>
-                          {appointment.phone}
-                        </Text>
+                        <View style={styles.detailContent}>
+                          <Text style={styles.detailLabel}>
+                            TELÉFONO
+                          </Text>
+
+                          <Text style={styles.phone}>
+                            {appointment.phone}
+                          </Text>
+                        </View>
                       </View>
                     )}
 
                     <Pressable
                       style={styles.detailsButton}
+                      accessibilityRole="button"
+                      accessibilityState={{
+                        expanded,
+                      }}
+                      accessibilityLabel={
+                        expanded
+                          ? "Ocultar los detalles de la cita"
+                          : "Ver los detalles de la cita"
+                      }
                       onPress={() =>
                         setExpandedAppointmentId(
                           expanded ? null : appointment.id
                         )
                       }
                     >
+                      <AppIcon
+                        name={{
+                          ios: expanded
+                            ? "chevron.up"
+                            : "chevron.down",
+                          android: expanded
+                            ? "expand_less"
+                            : "expand_more",
+                          web: expanded
+                            ? "expand_less"
+                            : "expand_more",
+                        }}
+                        size={18}
+                        color={COLORS.primary}
+                      />
+
                       <Text style={styles.detailsButtonText}>
                         {expanded
                           ? "Ocultar detalles"
@@ -1177,12 +1249,27 @@ export default function AdminAppointmentsScreen() {
                           disabled={
                             processing
                           }
+                          accessibilityRole="button"
+                          accessibilityLabel="Aceptar cita"
+                          accessibilityState={{
+                            disabled: processing,
+                          }}
                           onPress={() =>
                             handleAccept(
                               appointment.id
                             )
                           }
                         >
+                          <AppIcon
+                            name={{
+                              ios: "checkmark",
+                              android: "check",
+                              web: "check",
+                            }}
+                            size={18}
+                            color={COLORS.onPrimary}
+                          />
+
                           <Text
                             style={
                               styles.acceptButtonText
@@ -1205,12 +1292,27 @@ export default function AdminAppointmentsScreen() {
                           disabled={
                             processing
                           }
+                          accessibilityRole="button"
+                          accessibilityLabel="Rechazar cita"
+                          accessibilityState={{
+                            disabled: processing,
+                          }}
                           onPress={() =>
                             handleReject(
                               appointment.id
                             )
                           }
                         >
+                          <AppIcon
+                            name={{
+                              ios: "xmark",
+                              android: "close",
+                              web: "close",
+                            }}
+                            size={18}
+                            color={COLORS.danger}
+                          />
+
                           <Text
                             style={
                               styles.rejectButtonText
@@ -1246,10 +1348,25 @@ export default function AdminAppointmentsScreen() {
                               processing && styles.disabledButton,
                             ]}
                             disabled={processing}
+                            accessibilityRole="button"
+                            accessibilityLabel="Marcar cita como completada"
+                            accessibilityState={{
+                              disabled: processing,
+                            }}
                             onPress={() =>
                               handleComplete(appointment.id)
                             }
                           >
+                            <AppIcon
+                              name={{
+                                ios: "checkmark.circle.fill",
+                                android: "task_alt",
+                                web: "task_alt",
+                              }}
+                              size={18}
+                              color={COLORS.onPrimary}
+                            />
+
                             <Text style={styles.completeButtonText}>
                               {processing
                                 ? "Procesando..."
@@ -1276,10 +1393,25 @@ export default function AdminAppointmentsScreen() {
                                 processing && styles.disabledButton,
                               ]}
                               disabled={processing}
+                              accessibilityRole="button"
+                              accessibilityLabel="Cancelar cita administrativamente"
+                              accessibilityState={{
+                                disabled: processing,
+                              }}
                               onPress={() =>
                                 confirmAdminCancel(appointment.id)
                               }
                             >
+                              <AppIcon
+                                name={{
+                                  ios: "xmark.circle",
+                                  android: "event_busy",
+                                  web: "event_busy",
+                                }}
+                                size={18}
+                                color={COLORS.danger}
+                              />
+
                               <Text style={styles.adminCancelButtonText}>
                                 {processing
                                   ? "Procesando..."
@@ -1347,6 +1479,14 @@ const styles =
       flex: 1,
     },
 
+    headerAccent: {
+      width: 42,
+      height: 3,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.accent,
+      marginBottom: SPACING.md,
+    },
+
     eyebrow: {
       fontSize:
         FONT.caption,
@@ -1360,6 +1500,7 @@ const styles =
 
     title: {
       fontSize: FONT.title,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "800",
       color: COLORS.text,
       marginBottom:
@@ -1379,10 +1520,7 @@ const styles =
         "space-between",
       alignItems: "center",
       backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
+        COLORS.primarySoft,
       borderRadius:
         RADIUS.lg,
       padding:
@@ -1391,26 +1529,35 @@ const styles =
         SPACING.xl,
     },
 
-    summaryLabel: {
-      fontSize:
-        FONT.small,
-      color:
-        COLORS.textSecondary,
-      marginBottom: 4,
+    summaryContent: {
+      flex: 1,
+      paddingRight: SPACING.md,
     },
 
-    summaryValue: {
-      fontSize: 34,
+    summaryLabel: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "800",
+      letterSpacing: 0.9,
+      color:
+        COLORS.primary,
+      marginBottom: SPACING.xs,
+    },
+
+    summaryTitle: {
+      fontSize: FONT.heading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "800",
       color: COLORS.text,
+      marginBottom: SPACING.xs,
     },
 
     summaryHint: {
       fontSize:
-        FONT.caption,
+        FONT.small,
+      lineHeight: 20,
       color:
         COLORS.textMuted,
-      marginTop: 2,
     },
 
     summaryIcon: {
@@ -1419,16 +1566,9 @@ const styles =
       borderRadius:
         RADIUS.pill,
       backgroundColor:
-        COLORS.warningBackground,
+        COLORS.surface,
       justifyContent: "center",
       alignItems: "center",
-    },
-
-    summaryIconText: {
-      color:
-        COLORS.warning,
-      fontSize: 22,
-      fontWeight: "800",
     },
 
     filterLabel: {
@@ -1487,7 +1627,7 @@ const styles =
     },
 
     activeFilterButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
     },
 
     filterCountBadge: {
@@ -1511,12 +1651,13 @@ const styles =
     },
 
     activeFilterCountText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
     },
 
     sectionTitle: {
       fontSize:
         FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color: COLORS.text,
       marginBottom:
@@ -1529,11 +1670,15 @@ const styles =
       justifyContent: "space-between",
       marginTop: SPACING.lg,
       marginBottom: SPACING.sm,
+      paddingBottom: SPACING.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.accentSoft,
     },
 
     dayHeaderText: {
       color: COLORS.text,
       fontSize: FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "800",
     },
 
@@ -1544,10 +1689,26 @@ const styles =
     },
 
     expandedDetails: {
+      flexDirection: "row",
+      alignItems: "center",
       marginTop: SPACING.md,
       paddingTop: SPACING.md,
       borderTopWidth: 1,
       borderTopColor: COLORS.border,
+    },
+
+    detailIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.sm,
+    },
+
+    detailContent: {
+      flex: 1,
     },
 
     detailLabel: {
@@ -1558,10 +1719,14 @@ const styles =
     },
 
     detailsButton: {
+      flexDirection: "row",
       alignItems: "center",
+      alignSelf: "flex-start",
+      gap: SPACING.xs,
       marginTop: SPACING.md,
-      paddingVertical: 10,
-      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 9,
+      borderRadius: RADIUS.pill,
       backgroundColor: COLORS.primarySoft,
     },
 
@@ -1583,6 +1748,10 @@ const styles =
         SPACING.lg,
       marginBottom:
         SPACING.md,
+    },
+
+    operationalCard: {
+      borderColor: COLORS.accentSoft,
     },
 
     cardTopRow: {
@@ -1640,6 +1809,7 @@ const styles =
     },
 
     statusBadge: {
+      flexShrink: 0,
       borderRadius:
         RADIUS.pill,
       paddingHorizontal:
@@ -1653,12 +1823,26 @@ const styles =
       fontWeight: "700",
     },
 
-    divider: {
-      height: 1,
-      backgroundColor:
-        COLORS.border,
-      marginVertical:
-        SPACING.md,
+    serviceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: SPACING.lg,
+      marginBottom: SPACING.md,
+    },
+
+    serviceIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.sm,
+    },
+
+    serviceContent: {
+      flex: 1,
+      minWidth: 0,
     },
 
     serviceLabel: {
@@ -1676,8 +1860,6 @@ const styles =
         FONT.subheading,
       fontWeight: "700",
       color: COLORS.text,
-      marginBottom:
-        SPACING.md,
     },
 
     infoRow: {
@@ -1687,6 +1869,10 @@ const styles =
 
     infoBlock: {
       flex: 1,
+      minWidth: 0,
+      backgroundColor: COLORS.primarySoft,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
     },
 
     infoLabel: {
@@ -1694,12 +1880,14 @@ const styles =
         FONT.caption,
       color:
         COLORS.textSecondary,
+      marginTop: SPACING.sm,
       marginBottom: 5,
     },
 
     infoValue: {
       fontSize:
-        FONT.body,
+        FONT.small,
+      lineHeight: 20,
       fontWeight: "700",
       color: COLORS.text,
     },
@@ -1718,16 +1906,19 @@ const styles =
 
     acceptButton: {
       flex: 1,
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.primary,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       paddingVertical: 14,
       alignItems: "center",
     },
 
     acceptButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
       fontSize:
         FONT.small,
       fontWeight: "700",
@@ -1735,13 +1926,16 @@ const styles =
 
     rejectButton: {
       flex: 1,
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.surface,
       borderWidth: 1,
       borderColor:
         COLORS.danger,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       paddingVertical: 14,
       alignItems: "center",
     },
@@ -1771,11 +1965,9 @@ const styles =
     acceptedActionsSection: {
       marginTop:
         SPACING.lg,
-      paddingTop:
-        SPACING.md,
-      borderTopWidth: 1,
-      borderTopColor:
-        COLORS.border,
+      padding: SPACING.md,
+      borderRadius: RADIUS.lg,
+      backgroundColor: COLORS.primarySoft,
     },
 
     acceptedActionsTitle: {
@@ -1788,10 +1980,13 @@ const styles =
     },
 
     completeButton: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.primary,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       paddingVertical: 14,
       alignItems: "center",
       marginBottom:
@@ -1799,7 +1994,7 @@ const styles =
     },
 
     completeButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
       fontSize:
         FONT.small,
       fontWeight: "700",
@@ -1828,13 +2023,16 @@ const styles =
     },
 
     adminCancelButton: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.surface,
       borderWidth: 1,
       borderColor:
         COLORS.danger,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       paddingVertical: 13,
       alignItems: "center",
     },
@@ -1874,6 +2072,7 @@ const styles =
     messageTitle: {
       fontSize:
         FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color: COLORS.text,
       marginBottom:
@@ -1892,7 +2091,7 @@ const styles =
       backgroundColor:
         COLORS.primary,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       paddingVertical: 14,
       alignItems: "center",
       marginTop:
@@ -1900,7 +2099,7 @@ const styles =
     },
 
     retryButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
       fontSize:
         FONT.small,
       fontWeight: "700",
@@ -1932,16 +2131,10 @@ const styles =
         SPACING.md,
     },
 
-    emptyIconText: {
-      fontSize: 26,
-      color:
-        COLORS.success,
-      fontWeight: "800",
-    },
-
     emptyTitle: {
       fontSize:
         FONT.heading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color: COLORS.text,
       marginBottom:

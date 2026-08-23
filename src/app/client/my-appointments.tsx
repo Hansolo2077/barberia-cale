@@ -37,11 +37,13 @@ import {
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
 
 import BackButton from "../../components/BackButton";
+import AppIcon from "../../components/AppIcon";
 
 type Appointment = {
   id: number;
@@ -321,6 +323,7 @@ export default function MyAppointmentsScreen() {
       >
         <ActivityIndicator
           size="large"
+          color={COLORS.primary}
         />
 
         <Text
@@ -345,6 +348,8 @@ export default function MyAppointmentsScreen() {
     >
       <View style={styles.header}>
         <View style={styles.headerContent}>
+          <View style={styles.headerAccent} />
+
           <Text style={styles.eyebrow}>
             TU AGENDA
           </Text>
@@ -388,6 +393,12 @@ export default function MyAppointmentsScreen() {
               "UPCOMING"
             )
           }
+          accessibilityRole="tab"
+          accessibilityLabel={`Próximas, ${upcomingAppointments.length}`}
+          accessibilityState={{
+            selected:
+              selectedView === "UPCOMING",
+          }}
         >
           <Text
             style={[
@@ -442,6 +453,12 @@ export default function MyAppointmentsScreen() {
               "HISTORY"
             )
           }
+          accessibilityRole="tab"
+          accessibilityLabel={`Historial, ${historyAppointments.length}`}
+          accessibilityState={{
+            selected:
+              selectedView === "HISTORY",
+          }}
         >
           <Text
             style={[
@@ -508,13 +525,23 @@ export default function MyAppointmentsScreen() {
               styles.emptyIcon
             }
           >
-            <Text
-              style={
-                styles.emptyIconText
+            <AppIcon
+              name={
+                selectedView === "UPCOMING"
+                  ? {
+                      ios: "calendar.badge.plus",
+                      android: "event_available",
+                      web: "event_available",
+                    }
+                  : {
+                      ios: "clock.arrow.circlepath",
+                      android: "history",
+                      web: "history",
+                    }
               }
-            >
-              ✂
-            </Text>
+              size={28}
+              color={COLORS.primary}
+            />
           </View>
 
           <Text
@@ -570,8 +597,8 @@ export default function MyAppointmentsScreen() {
           >
             {selectedView ===
             "UPCOMING"
-              ? "Próximas reservas"
-              : "Historial"}
+              ? "Próximas visitas"
+              : "Visitas anteriores"}
           </Text>
 
           {visibleAppointments.map(
@@ -608,33 +635,50 @@ export default function MyAppointmentsScreen() {
                   key={
                     appointment.id
                   }
-                  style={
-                    styles.appointmentCard
-                  }
+                  style={[
+                    styles.appointmentCard,
+                    selectedView === "UPCOMING"
+                      ? styles.upcomingCard
+                      : styles.historyCard,
+                  ]}
                 >
                   <View
                     style={
                       styles.cardTopRow
                     }
                   >
-                    <View>
-                      <Text
-                        style={
-                          styles.serviceName
-                        }
-                      >
-                        {
-                          appointment.service
-                        }
-                      </Text>
+                    <View style={styles.serviceIdentity}>
+                      <View style={styles.serviceIcon}>
+                        <AppIcon
+                          name={{
+                            ios: "scissors",
+                            android: "content_cut",
+                            web: "content_cut",
+                          }}
+                          size={21}
+                          color={COLORS.primary}
+                        />
+                      </View>
 
-                      <Text
-                        style={
-                          styles.serviceMeta
-                        }
-                      >
-                        50 min
-                      </Text>
+                      <View style={styles.serviceContent}>
+                        <Text
+                          style={
+                            styles.serviceName
+                          }
+                        >
+                          {
+                            appointment.service
+                          }
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.serviceMeta
+                          }
+                        >
+                          50 min · Barbería Cale
+                        </Text>
+                      </View>
                     </View>
 
                     <View
@@ -664,20 +708,26 @@ export default function MyAppointmentsScreen() {
 
                   <View
                     style={
-                      styles.divider
-                    }
-                  />
-
-                  <View
-                    style={
                       styles.bookingInfoRow
                     }
                   >
                     <View
-                      style={
-                        styles.bookingInfoBlock
-                      }
+                      style={[
+                        styles.bookingInfoBlock,
+                        selectedView === "HISTORY" &&
+                          styles.historyInfoBlock,
+                      ]}
                     >
+                      <AppIcon
+                        name={{
+                          ios: "calendar",
+                          android: "calendar_month",
+                          web: "calendar_month",
+                        }}
+                        size={20}
+                        color={COLORS.primary}
+                      />
+
                       <Text
                         style={
                           styles.infoLabel
@@ -698,10 +748,22 @@ export default function MyAppointmentsScreen() {
                     </View>
 
                     <View
-                      style={
-                        styles.bookingInfoBlock
-                      }
+                      style={[
+                        styles.bookingInfoBlock,
+                        selectedView === "HISTORY" &&
+                          styles.historyInfoBlock,
+                      ]}
                     >
+                      <AppIcon
+                        name={{
+                          ios: "clock",
+                          android: "schedule",
+                          web: "schedule",
+                        }}
+                        size={20}
+                        color={COLORS.primary}
+                      />
+
                       <Text
                         style={
                           styles.infoLabel
@@ -722,40 +784,6 @@ export default function MyAppointmentsScreen() {
                     </View>
                   </View>
 
-                  {appointment.status ===
-                    "PENDING" && (
-                    <View
-                      style={
-                        styles.infoNotice
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.infoNoticeText
-                        }
-                      >
-                        La barbería todavía debe aceptar esta solicitud.
-                      </Text>
-                    </View>
-                  )}
-
-                  {appointment.status ===
-                    "ACCEPTED" && (
-                    <View
-                      style={
-                        styles.confirmedNotice
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.confirmedNoticeText
-                        }
-                      >
-                        Tu cita está confirmada.
-                      </Text>
-                    </View>
-                  )}
-
                   {canCancel && (
                     <Pressable
                       style={[
@@ -767,12 +795,27 @@ export default function MyAppointmentsScreen() {
                       disabled={
                         isCancelling
                       }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Cancelar cita de ${appointment.service}`}
+                      accessibilityState={{
+                        disabled: isCancelling,
+                      }}
                       onPress={() =>
                         confirmCancel(
                           appointment.id
                         )
                       }
                     >
+                      <AppIcon
+                        name={{
+                          ios: "xmark",
+                          android: "close",
+                          web: "close",
+                        }}
+                        size={17}
+                        color={COLORS.danger}
+                      />
+
                       <Text
                         style={
                           styles.cancelButtonText
@@ -785,9 +828,73 @@ export default function MyAppointmentsScreen() {
                     </Pressable>
                   )}
 
+                  {appointment.status ===
+                    "PENDING" && (
+                    <View
+                      style={
+                        styles.infoNotice
+                      }
+                    >
+                      <AppIcon
+                        name={{
+                          ios: "clock",
+                          android: "schedule",
+                          web: "schedule",
+                        }}
+                        size={18}
+                        color={COLORS.warning}
+                      />
+
+                      <Text
+                        style={
+                          styles.infoNoticeText
+                        }
+                      >
+                        Esperando confirmación de la barbería.
+                      </Text>
+                    </View>
+                  )}
+
+                  {appointment.status ===
+                    "ACCEPTED" && (
+                    <View
+                      style={
+                        styles.confirmedNotice
+                      }
+                    >
+                      <AppIcon
+                        name={{
+                          ios: "checkmark.circle.fill",
+                          android: "check_circle",
+                          web: "check_circle",
+                        }}
+                        size={18}
+                        color={COLORS.success}
+                      />
+
+                      <Text
+                        style={
+                          styles.confirmedNoticeText
+                        }
+                      >
+                        Cita confirmada por la barbería.
+                      </Text>
+                    </View>
+                  )}
+
                   {hasCancellableStatus &&
                     cancellationExpired && (
                     <View style={styles.expiredNotice}>
+                      <AppIcon
+                        name={{
+                          ios: "info.circle",
+                          android: "info",
+                          web: "info",
+                        }}
+                        size={18}
+                        color={COLORS.textSecondary}
+                      />
+
                       <Text style={styles.expiredNoticeText}>
                         Ya no se puede cancelar esta cita. El plazo de cancelación expiró.
                       </Text>
@@ -870,6 +977,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  headerAccent: {
+    width: 42,
+    height: 3,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.accent,
+    marginBottom:
+      SPACING.md,
+  },
+
   eyebrow: {
     fontSize:
       FONT.caption,
@@ -884,6 +1002,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize:
       FONT.title,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "800",
     color:
       COLORS.text,
@@ -924,10 +1044,7 @@ const styles = StyleSheet.create({
 
   activeTabButton: {
     backgroundColor:
-      COLORS.surface,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
+      COLORS.primary,
   },
 
   tabText: {
@@ -940,7 +1057,7 @@ const styles = StyleSheet.create({
 
   activeTabText: {
     color:
-      COLORS.text,
+      COLORS.onPrimary,
   },
 
   countBadge: {
@@ -958,7 +1075,7 @@ const styles = StyleSheet.create({
 
   activeCountBadge: {
     backgroundColor:
-      COLORS.primary,
+      COLORS.accentSoft,
   },
 
   countBadgeText: {
@@ -970,12 +1087,15 @@ const styles = StyleSheet.create({
   },
 
   activeCountBadgeText: {
-    color: "#FFFFFF",
+    color:
+      COLORS.primary,
   },
 
   sectionTitle: {
     fontSize:
       FONT.subheading,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "700",
     color:
       COLORS.text,
@@ -997,6 +1117,16 @@ const styles = StyleSheet.create({
       SPACING.md,
   },
 
+  upcomingCard: {
+    borderColor:
+      COLORS.accentSoft,
+  },
+
+  historyCard: {
+    backgroundColor:
+      "rgba(255, 252, 247, 0.62)",
+  },
+
   cardTopRow: {
     flexDirection: "row",
     justifyContent:
@@ -1004,6 +1134,33 @@ const styles = StyleSheet.create({
     alignItems:
       "flex-start",
     gap: SPACING.md,
+    marginBottom:
+      SPACING.md,
+  },
+
+  serviceIdentity: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  serviceIcon: {
+    width: 44,
+    height: 44,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.primarySoft,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight:
+      SPACING.sm,
+  },
+
+  serviceContent: {
+    flex: 1,
+    minWidth: 0,
   },
 
   serviceName: {
@@ -1023,6 +1180,7 @@ const styles = StyleSheet.create({
   },
 
   statusBadge: {
+    flexShrink: 0,
     borderRadius:
       RADIUS.pill,
     paddingHorizontal:
@@ -1036,22 +1194,29 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  divider: {
-    height: 1,
-    backgroundColor:
-      COLORS.border,
-    marginVertical:
-      SPACING.md,
-  },
-
   bookingInfoRow: {
     flexDirection: "row",
     gap:
-      SPACING.lg,
+      SPACING.sm,
   },
 
   bookingInfoBlock: {
     flex: 1,
+    minWidth: 0,
+    backgroundColor:
+      COLORS.primarySoft,
+    borderRadius:
+      RADIUS.lg,
+    padding:
+      SPACING.md,
+  },
+
+  historyInfoBlock: {
+    backgroundColor:
+      COLORS.surface,
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
   },
 
   infoLabel: {
@@ -1059,12 +1224,15 @@ const styles = StyleSheet.create({
       FONT.caption,
     color:
       COLORS.textSecondary,
-    marginBottom: 5,
+    marginTop:
+      SPACING.sm,
+    marginBottom: 4,
   },
 
   infoValue: {
     fontSize:
-      FONT.body,
+      FONT.small,
+    lineHeight: 19,
     fontWeight: "700",
     color:
       COLORS.text,
@@ -1075,22 +1243,23 @@ const styles = StyleSheet.create({
       COLORS.warningBackground,
     borderRadius:
       RADIUS.md,
-    padding:
-      SPACING.md,
+    paddingHorizontal:
+      SPACING.sm,
+    paddingVertical: 8,
     marginTop:
-      SPACING.md,
+      SPACING.sm,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent:
-      "center",
+    gap: SPACING.sm,
   },
 
   infoNoticeText: {
+    flex: 1,
     color:
       COLORS.warning,
     fontSize:
-      FONT.small,
-    lineHeight: 20,
-    textAlign: "center",
+      FONT.caption,
+    lineHeight: 18,
   },
 
   confirmedNotice: {
@@ -1098,21 +1267,24 @@ const styles = StyleSheet.create({
       COLORS.successBackground,
     borderRadius:
       RADIUS.md,
-    padding:
-      SPACING.md,
+    paddingHorizontal:
+      SPACING.sm,
+    paddingVertical: 8,
     marginTop:
-      SPACING.md,
+      SPACING.sm,
+    flexDirection: "row",
     alignItems: "center",
+    gap: SPACING.sm,
   },
 
   confirmedNoticeText: {
+    flex: 1,
     color:
       COLORS.success,
     fontSize:
-      FONT.small,
-    lineHeight: 20,
+      FONT.caption,
+    lineHeight: 18,
     fontWeight: "600",
-    textAlign: "center",
   },
 
   cancelButton: {
@@ -1120,9 +1292,16 @@ const styles = StyleSheet.create({
     borderColor:
       COLORS.danger,
     borderRadius:
-      RADIUS.md,
-    paddingVertical: 13,
+      RADIUS.pill,
+    minHeight: 44,
+    paddingVertical: 11,
+    paddingHorizontal:
+      SPACING.lg,
+    flexDirection: "row",
+    gap: SPACING.xs,
     alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
     marginTop:
       SPACING.md,
     backgroundColor:
@@ -1146,22 +1325,29 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     backgroundColor:
-      COLORS.dangerBackground,
+      COLORS.primarySoft,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
   },
 
   expiredNoticeText: {
-    color: COLORS.danger,
+    flex: 1,
+    color:
+      COLORS.textSecondary,
     fontSize: FONT.small,
     lineHeight: 20,
     fontWeight: "600",
-    textAlign: "center",
   },
 
   newBookingButton: {
+    width: "100%",
+    maxWidth: 300,
+    alignSelf: "center",
     backgroundColor:
       COLORS.primary,
     borderRadius:
-      RADIUS.md,
+      RADIUS.pill,
     paddingVertical: 15,
     alignItems: "center",
     marginTop:
@@ -1169,7 +1355,8 @@ const styles = StyleSheet.create({
   },
 
   newBookingButtonText: {
-    color: "#FFFFFF",
+    color:
+      COLORS.onPrimary,
     fontSize:
       FONT.body,
     fontWeight: "700",
@@ -1190,6 +1377,8 @@ const styles = StyleSheet.create({
   messageTitle: {
     fontSize:
       FONT.subheading,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "700",
     color:
       COLORS.text,
@@ -1210,7 +1399,7 @@ const styles = StyleSheet.create({
     backgroundColor:
       COLORS.primary,
     borderRadius:
-      RADIUS.md,
+      RADIUS.pill,
     paddingVertical: 14,
     alignItems: "center",
     marginTop:
@@ -1218,7 +1407,8 @@ const styles = StyleSheet.create({
   },
 
   retryButtonText: {
-    color: "#FFFFFF",
+    color:
+      COLORS.onPrimary,
     fontSize:
       FONT.small,
     fontWeight: "700",
@@ -1229,9 +1419,7 @@ const styles = StyleSheet.create({
       COLORS.surface,
     borderRadius:
       RADIUS.xl,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
+    borderWidth: 0,
     padding:
       SPACING.xl,
     alignItems: "center",
@@ -1251,13 +1439,11 @@ const styles = StyleSheet.create({
       SPACING.md,
   },
 
-  emptyIconText: {
-    fontSize: 28,
-  },
-
   emptyTitle: {
     fontSize:
       FONT.heading,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "700",
     color:
       COLORS.text,
@@ -1279,16 +1465,18 @@ const styles = StyleSheet.create({
 
   primaryButton: {
     width: "100%",
+    maxWidth: 280,
     backgroundColor:
       COLORS.primary,
     borderRadius:
-      RADIUS.md,
+      RADIUS.pill,
     paddingVertical: 15,
     alignItems: "center",
   },
 
   primaryButtonText: {
-    color: "#FFFFFF",
+    color:
+      COLORS.onPrimary,
     fontSize:
       FONT.body,
     fontWeight: "700",

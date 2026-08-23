@@ -21,6 +21,8 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
+import AppIcon from "../../components/AppIcon";
+
 import {
   COLORS,
   FONT,
@@ -111,17 +113,17 @@ export default function ClientLayout() {
           false,
 
         tabBarActiveTintColor:
-          COLORS.text,
+          COLORS.primary,
 
         tabBarInactiveTintColor:
-          COLORS.textMuted,
+          COLORS.textSecondary,
 
         tabBarStyle: {
           backgroundColor:
             COLORS.surface,
 
           borderTopColor:
-            COLORS.border,
+            COLORS.accentSoft,
 
           borderTopWidth: 1,
 
@@ -159,16 +161,15 @@ export default function ClientLayout() {
           tabBarIcon: ({
             color,
           }) => (
-            <Text
-              style={{
-                fontSize:
-                  20,
-
-                color,
+            <AppIcon
+              name={{
+                ios: "house.fill",
+                android: "home",
+                web: "home",
               }}
-            >
-              ⌂
-            </Text>
+              size={21}
+              color={color}
+            />
           ),
         }}
       />
@@ -182,16 +183,15 @@ export default function ClientLayout() {
           tabBarIcon: ({
             color,
           }) => (
-            <Text
-              style={{
-                fontSize:
-                  20,
-
-                color,
+            <AppIcon
+              name={{
+                ios: "scissors",
+                android: "content_cut",
+                web: "content_cut",
               }}
-            >
-              +
-            </Text>
+              size={21}
+              color={color}
+            />
           ),
         }}
       />
@@ -205,16 +205,15 @@ export default function ClientLayout() {
           tabBarIcon: ({
             color,
           }) => (
-            <Text
-              style={{
-                fontSize:
-                  19,
-
-                color,
+            <AppIcon
+              name={{
+                ios: "calendar",
+                android: "calendar_month",
+                web: "calendar_month",
               }}
-            >
-              ≡
-            </Text>
+              size={21}
+              color={color}
+            />
           ),
         }}
       />

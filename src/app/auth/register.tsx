@@ -24,6 +24,7 @@ import { showMessage } from "../../utils/show-message";
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -210,29 +211,38 @@ export default function RegisterScreen() {
           styles.content
         }
       >
-        <Text
-          style={
-            styles.eyebrow
-          }
-        >
-          BARBERÍA CALE
-        </Text>
+        <View style={styles.brandHeader}>
+          <View
+            pointerEvents="none"
+            style={styles.brandDecoration}
+          />
 
-        <Text
-          style={
-            styles.title
-          }
-        >
-          Crear cuenta
-        </Text>
+          <View style={styles.brandAccent} />
 
-        <Text
-          style={
-            styles.subtitle
-          }
-        >
-          Regístrate para reservar y administrar tus citas.
-        </Text>
+          <Text
+            style={
+              styles.eyebrow
+            }
+          >
+            BARBERÍA CALE
+          </Text>
+
+          <Text
+            style={
+              styles.title
+            }
+          >
+            Haz de Cale tu barbería
+          </Text>
+
+          <Text
+            style={
+              styles.subtitle
+            }
+          >
+            Crea tu cuenta y agenda tu próximo corte cuando quieras.
+          </Text>
+        </View>
 
         <View
           style={
@@ -529,6 +539,42 @@ const styles =
       alignSelf: "center",
     },
 
+    brandHeader: {
+      position: "relative",
+      overflow: "hidden",
+      backgroundColor:
+        COLORS.primary,
+      borderRadius:
+        RADIUS.xl,
+      padding:
+        SPACING.lg,
+      marginBottom:
+        SPACING.lg,
+    },
+
+    brandDecoration: {
+      position: "absolute",
+      width: 145,
+      height: 145,
+      borderRadius: 73,
+      borderWidth: 1,
+      borderColor:
+        "rgba(255, 252, 247, 0.15)",
+      top: -72,
+      right: -42,
+    },
+
+    brandAccent: {
+      width: 38,
+      height: 3,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.accent,
+      marginBottom:
+        SPACING.md,
+    },
+
     eyebrow: {
       fontSize:
         FONT.caption,
@@ -538,7 +584,7 @@ const styles =
       letterSpacing: 1.2,
 
       color:
-        COLORS.textSecondary,
+        COLORS.accentSoft,
 
       marginBottom:
         SPACING.sm,
@@ -548,10 +594,13 @@ const styles =
       fontSize:
         FONT.title,
 
+      fontFamily:
+        FONT_FAMILY.display,
+
       fontWeight: "800",
 
       color:
-        COLORS.text,
+        COLORS.onPrimary,
 
       marginBottom:
         SPACING.sm,
@@ -564,10 +613,9 @@ const styles =
       lineHeight: 24,
 
       color:
-        COLORS.textSecondary,
+        COLORS.primarySoft,
 
-      marginBottom:
-        SPACING.xl,
+      marginBottom: 0,
     },
 
     form: {
@@ -719,7 +767,7 @@ const styles =
         COLORS.primary,
 
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
 
       paddingVertical: 15,
 
@@ -772,6 +820,6 @@ const styles =
       fontWeight: "700",
 
       color:
-        COLORS.text,
+        COLORS.primary,
     },
   });

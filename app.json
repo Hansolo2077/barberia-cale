@@ -4,6 +4,7 @@
     "slug": "barberia-cale",
     "version": "1.0.0",
     "orientation": "portrait",
+    "backgroundColor": "#F4EFE6",
     "icon": "./assets/images/logo-cale.png",
     "scheme": "barberiacale",
     "userInterfaceStyle": "automatic",
@@ -29,7 +30,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#743B2F",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }

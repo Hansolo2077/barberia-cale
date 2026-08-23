@@ -1,15 +1,21 @@
+import { Platform } from "react-native";
+
 export const COLORS = {
-  background: "#F7F7F7",
-  surface: "#FFFFFF",
+  background: "#F4EFE6",
+  surface: "#FFFCF7",
 
-  text: "#1F1F1F",
-  textSecondary: "#6B6B6B",
-  textMuted: "#8A8A8A",
+  text: "#261D19",
+  textSecondary: "#75665E",
+  textMuted: "#7A6961",
 
-  border: "#E4E4E4",
+  border: "#DED1C5",
 
-  primary: "#111111",
-  primarySoft: "#F1F1F1",
+  primary: "#743B2F",
+  primarySoft: "#F1E1D8",
+  onPrimary: "#FFFCF7",
+  accent: "#C49A45",
+  accentSoft: "#F3E4BF",
+  accentText: "#8F671C",
 
   success: "#1F7A4C",
   warning: "#A86D00",
@@ -44,4 +50,13 @@ export const FONT = {
   body: 16,
   small: 14,
   caption: 12,
+};
+
+export const FONT_FAMILY = {
+  display: Platform.select({
+    ios: "Georgia",
+    android: "serif",
+    web: "Georgia, 'Times New Roman', serif",
+    default: "serif",
+  }),
 };

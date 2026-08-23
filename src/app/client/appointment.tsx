@@ -23,6 +23,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import BackButton from "../../components/BackButton";
+import AppIcon from "../../components/AppIcon";
 
 import {
     createAppointment,
@@ -41,6 +42,7 @@ import { showMessage } from "../../utils/show-message";
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -319,6 +321,9 @@ export default function AppointmentScreen() {
       formatted
     );
 
+    void handleSearch(
+      formatted
+    );
   }
 
   function handleTimeSelect(time: string) {
@@ -410,6 +415,8 @@ export default function AppointmentScreen() {
           styles.header
         }
       >
+        <View style={styles.headerAccent} />
+
         <Text
           style={
             styles.eyebrow
@@ -445,13 +452,15 @@ export default function AppointmentScreen() {
             styles.serviceIcon
           }
         >
-          <Text
-            style={
-              styles.serviceIconText
-            }
-          >
-            ✂
-          </Text>
+          <AppIcon
+            name={{
+              ios: "scissors",
+              android: "content_cut",
+              web: "content_cut",
+            }}
+            size={25}
+            color={COLORS.primary}
+          />
         </View>
 
         <View
@@ -459,6 +468,10 @@ export default function AppointmentScreen() {
             styles.serviceInfo
           }
         >
+          <Text style={styles.serviceEyebrow}>
+            SERVICIO ELEGIDO
+          </Text>
+
           <Text
             style={
               styles.serviceName
@@ -482,13 +495,23 @@ export default function AppointmentScreen() {
           styles.section
         }
       >
-        <Text
-          style={
-            styles.sectionTitle
-          }
-        >
-          1. Elige la fecha
-        </Text>
+        <View style={styles.stepHeader}>
+          <View style={styles.stepBadge}>
+            <Text style={styles.stepBadgeText}>
+              1
+            </Text>
+          </View>
+
+          <View style={styles.stepContent}>
+            <Text style={styles.sectionTitle}>
+              Elige la fecha
+            </Text>
+
+            <Text style={styles.stepDescription}>
+              Cuéntanos cuándo quieres visitarnos.
+            </Text>
+          </View>
+        </View>
 
         {Platform.OS ===
         "web" ? (
@@ -538,13 +561,15 @@ export default function AppointmentScreen() {
                 </Text>
               </View>
 
-              <Text
-                style={
-                  styles.dateChevron
-                }
-              >
-                ›
-              </Text>
+              <AppIcon
+                name={{
+                  ios: "calendar",
+                  android: "calendar_month",
+                  web: "calendar_month",
+                }}
+                size={22}
+                color={COLORS.textMuted}
+              />
             </Pressable>
 
             {showDatePicker && (
@@ -566,9 +591,21 @@ export default function AppointmentScreen() {
           </>
         )}
 
-        <Text style={styles.helperText}>
-          Debes reservar al menos con 24 horas de anticipación.
-        </Text>
+        <View style={styles.helperRow}>
+          <AppIcon
+            name={{
+              ios: "clock",
+              android: "schedule",
+              web: "schedule",
+            }}
+            size={17}
+            color={COLORS.textSecondary}
+          />
+
+          <Text style={styles.helperText}>
+            Reserva con al menos 24 horas de anticipación.
+          </Text>
+        </View>
 
         {recommendationError ? (
           <Text style={styles.recommendationError}>
@@ -615,6 +652,7 @@ export default function AppointmentScreen() {
         >
           <ActivityIndicator
             size="large"
+            color={COLORS.primary}
           />
 
           <Text
@@ -637,21 +675,23 @@ export default function AppointmentScreen() {
             )
           }
         >
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
-            2. Elige la hora
-          </Text>
+          <View style={styles.stepHeader}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepBadgeText}>
+                2
+              </Text>
+            </View>
 
-          <Text
-            style={
-              styles.sectionSubtitle
-            }
-          >
-            Los horarios ocupados no se pueden seleccionar.
-          </Text>
+            <View style={styles.stepContent}>
+              <Text style={styles.sectionTitle}>
+                Elige la hora
+              </Text>
+
+              <Text style={styles.stepDescription}>
+                Toca uno de los horarios disponibles.
+              </Text>
+            </View>
+          </View>
 
           <View
             style={
@@ -672,6 +712,18 @@ export default function AppointmentScreen() {
                     disabled={
                       !slot.available
                     }
+                    accessibilityRole="button"
+                    accessibilityLabel={`${formatDisplayTime(
+                      slot.time
+                    )}, ${
+                      slot.available
+                        ? "disponible"
+                        : "ocupado"
+                    }`}
+                    accessibilityState={{
+                      selected,
+                      disabled: !slot.available,
+                    }}
                     onPress={() =>
                       handleTimeSelect(
                         slot.time
@@ -703,6 +755,18 @@ export default function AppointmentScreen() {
                       )}
                     </Text>
 
+                    {selected && (
+                      <AppIcon
+                        name={{
+                          ios: "checkmark",
+                          android: "check",
+                          web: "check",
+                        }}
+                        size={15}
+                        color={COLORS.onPrimary}
+                      />
+                    )}
+
                     {!slot.available && (
                       <Text
                         style={
@@ -718,7 +782,36 @@ export default function AppointmentScreen() {
             )}
           </View>
         </View>
-      ) : null)}
+      ) : (
+        <View
+          style={styles.emptyTimes}
+          onLayout={(event) =>
+            scrollToSection(
+              event.nativeEvent.layout.y
+            )
+          }
+        >
+          <View style={styles.emptyTimesIcon}>
+            <AppIcon
+              name={{
+                ios: "calendar",
+                android: "event_busy",
+                web: "event_busy",
+              }}
+              size={25}
+              color={COLORS.primary}
+            />
+          </View>
+
+          <Text style={styles.emptyTimesTitle}>
+            Sin horarios para este día
+          </Text>
+
+          <Text style={styles.emptyTimesText}>
+            Prueba con otra fecha y encontraremos un espacio para ti.
+          </Text>
+        </View>
+      ))}
 
       {selectedTime && (
         <View
@@ -731,96 +824,16 @@ export default function AppointmentScreen() {
             )
           }
         >
-          <Text
-            style={
-              styles.summaryEyebrow
-            }
-          >
-            RESUMEN DE LA RESERVA
-          </Text>
+          <View style={styles.summaryHeader}>
+            <View style={styles.summaryHeading}>
+              <Text style={styles.summaryEyebrow}>
+                CASI LISTO
+              </Text>
 
-          <View
-            style={
-              styles.summaryRow
-            }
-          >
-            <Text
-              style={
-                styles.summaryLabel
-              }
-            >
-              Servicio
-            </Text>
-
-            <Text
-              style={
-                styles.summaryValue
-              }
-            >
-              Corte de cabello
-            </Text>
-          </View>
-
-          <View
-            style={
-              styles.summaryRow
-            }
-          >
-            <Text
-              style={
-                styles.summaryLabel
-              }
-            >
-              Fecha
-            </Text>
-
-            <Text
-              style={
-                styles.summaryValue
-              }
-            >
-              {formatDisplayDate(
-                dateText
-              )}
-            </Text>
-          </View>
-
-          <View
-            style={
-              styles.summaryRow
-            }
-          >
-            <Text
-              style={
-                styles.summaryLabel
-              }
-            >
-              Hora
-            </Text>
-
-            <Text
-              style={
-                styles.summaryValue
-              }
-            >
-              {formatDisplayTime(
-                selectedTime
-              )}
-            </Text>
-          </View>
-
-          <View
-            style={
-              styles.summaryRow
-            }
-          >
-            <Text
-              style={
-                styles.summaryLabel
-              }
-            >
-              Estado inicial
-            </Text>
+              <Text style={styles.summaryTitle}>
+                Confirma tu visita
+              </Text>
+            </View>
 
             <View
               style={
@@ -833,6 +846,72 @@ export default function AppointmentScreen() {
                 }
               >
                 Pendiente
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryService}>
+            <View style={styles.summaryServiceIcon}>
+              <AppIcon
+                name={{
+                  ios: "scissors",
+                  android: "content_cut",
+                  web: "content_cut",
+                }}
+                size={22}
+                color={COLORS.primary}
+              />
+            </View>
+
+            <View style={styles.summaryServiceContent}>
+              <Text style={styles.summaryLabel}>
+                TU SERVICIO
+              </Text>
+
+              <Text style={styles.summaryServiceName}>
+                Corte de cabello
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryDetails}>
+            <View style={styles.summaryDetail}>
+              <AppIcon
+                name={{
+                  ios: "calendar",
+                  android: "calendar_month",
+                  web: "calendar_month",
+                }}
+                size={20}
+                color={COLORS.primary}
+              />
+
+              <Text style={styles.summaryDetailLabel}>
+                Fecha
+              </Text>
+
+              <Text style={styles.summaryDetailValue}>
+                {formatDisplayDate(dateText)}
+              </Text>
+            </View>
+
+            <View style={styles.summaryDetail}>
+              <AppIcon
+                name={{
+                  ios: "clock",
+                  android: "schedule",
+                  web: "schedule",
+                }}
+                size={20}
+                color={COLORS.primary}
+              />
+
+              <Text style={styles.summaryDetailLabel}>
+                Hora
+              </Text>
+
+              <Text style={styles.summaryDetailValue}>
+                {formatDisplayTime(selectedTime)}
               </Text>
             </View>
           </View>
@@ -872,7 +951,9 @@ export default function AppointmentScreen() {
         </View>
       )}
 
-      <BackButton fallbackHref="/client" />
+      <View style={styles.footerNavigation}>
+        <BackButton fallbackHref="/client" />
+      </View>
     </ScrollView>
   );
 }
@@ -896,6 +977,17 @@ const styles =
         SPACING.xl,
     },
 
+    headerAccent: {
+      width: 42,
+      height: 3,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.accent,
+      marginBottom:
+        SPACING.md,
+    },
+
     eyebrow: {
       fontSize:
         FONT.caption,
@@ -910,6 +1002,8 @@ const styles =
     title: {
       fontSize:
         FONT.title,
+      fontFamily:
+        FONT_FAMILY.display,
       fontWeight: "800",
       color:
         COLORS.text,
@@ -929,10 +1023,8 @@ const styles =
       flexDirection: "row",
       alignItems: "center",
       backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
+        COLORS.primarySoft,
+      borderWidth: 0,
       borderRadius:
         RADIUS.lg,
       padding:
@@ -945,9 +1037,9 @@ const styles =
       width: 54,
       height: 54,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       backgroundColor:
-        COLORS.primarySoft,
+        COLORS.surface,
       justifyContent:
         "center",
       alignItems:
@@ -956,12 +1048,18 @@ const styles =
         SPACING.md,
     },
 
-    serviceIconText: {
-      fontSize: 24,
-    },
-
     serviceInfo: {
       flex: 1,
+    },
+
+    serviceEyebrow: {
+      fontSize:
+        FONT.caption,
+      fontWeight: "800",
+      letterSpacing: 0.8,
+      color:
+        COLORS.primary,
+      marginBottom: 3,
     },
 
     serviceName: {
@@ -985,23 +1083,51 @@ const styles =
         SPACING.xl,
     },
 
+    stepHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginBottom:
+        SPACING.md,
+    },
+
+    stepBadge: {
+      width: 36,
+      height: 36,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.primary,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    stepBadgeText: {
+      color:
+        COLORS.onPrimary,
+      fontSize:
+        FONT.small,
+      fontWeight: "800",
+    },
+
+    stepContent: {
+      flex: 1,
+    },
+
     sectionTitle: {
       fontSize:
         FONT.subheading,
       fontWeight: "700",
       color:
         COLORS.text,
-      marginBottom:
-        SPACING.sm,
+      marginBottom: 2,
     },
 
-    sectionSubtitle: {
+    stepDescription: {
       fontSize:
         FONT.small,
       color:
         COLORS.textSecondary,
-      marginBottom:
-        SPACING.md,
     },
 
     input: {
@@ -1009,7 +1135,7 @@ const styles =
         COLORS.surface,
       borderWidth: 1,
       borderColor:
-        COLORS.border,
+        COLORS.accentSoft,
       borderRadius:
         RADIUS.md,
       paddingHorizontal:
@@ -1030,7 +1156,7 @@ const styles =
         COLORS.surface,
       borderWidth: 1,
       borderColor:
-        COLORS.border,
+        COLORS.accentSoft,
       borderRadius:
         RADIUS.md,
       paddingHorizontal:
@@ -1054,20 +1180,21 @@ const styles =
         COLORS.text,
     },
 
-    dateChevron: {
-      fontSize: 28,
-      color:
-        COLORS.textMuted,
+    helperRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      marginTop:
+        SPACING.sm,
     },
 
     helperText: {
+      flex: 1,
       fontSize:
         FONT.small,
       lineHeight: 20,
       color:
         COLORS.textSecondary,
-      marginTop:
-        SPACING.sm,
     },
 
     recommendationError: {
@@ -1082,9 +1209,13 @@ const styles =
       backgroundColor:
         COLORS.primary,
       borderRadius:
-        RADIUS.md,
-      paddingVertical: 15,
+        RADIUS.pill,
+      paddingVertical: 14,
+      paddingHorizontal:
+        SPACING.lg,
       alignItems:
+        "center",
+      alignSelf:
         "center",
       marginTop:
         SPACING.md,
@@ -1115,6 +1246,51 @@ const styles =
         COLORS.textSecondary,
     },
 
+    emptyTimes: {
+      alignItems: "center",
+      backgroundColor:
+        COLORS.surface,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.lg,
+      marginBottom:
+        SPACING.xl,
+    },
+
+    emptyTimesIcon: {
+      width: 48,
+      height: 48,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.primarySoft,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom:
+        SPACING.sm,
+    },
+
+    emptyTimesTitle: {
+      fontSize:
+        FONT.body,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+      marginBottom:
+        SPACING.xs,
+    },
+
+    emptyTimesText: {
+      fontSize:
+        FONT.small,
+      lineHeight: 20,
+      color:
+        COLORS.textSecondary,
+      textAlign: "center",
+      maxWidth: 330,
+    },
+
     timesContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -1124,14 +1300,15 @@ const styles =
     timeButton: {
       width: "30%",
       minWidth: 92,
-      minHeight: 64,
+      maxWidth: 132,
+      minHeight: 54,
       backgroundColor:
         COLORS.surface,
       borderWidth: 1,
       borderColor:
         COLORS.border,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       justifyContent:
         "center",
       alignItems:
@@ -1180,14 +1357,25 @@ const styles =
 
     summaryCard: {
       backgroundColor:
-        COLORS.surface,
+        COLORS.accentSoft,
       borderRadius:
         RADIUS.xl,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
       padding:
         SPACING.lg,
+    },
+
+    summaryHeader: {
+      flexDirection: "row",
+      justifyContent:
+        "space-between",
+      alignItems: "flex-start",
+      gap: SPACING.md,
+      marginBottom:
+        SPACING.lg,
+    },
+
+    summaryHeading: {
+      flex: 1,
     },
 
     summaryEyebrow: {
@@ -1196,34 +1384,60 @@ const styles =
       fontWeight: "700",
       letterSpacing: 1,
       color:
-        COLORS.textSecondary,
-      marginBottom:
-        SPACING.md,
+        COLORS.primary,
+      marginBottom: 3,
     },
 
-    summaryRow: {
+    summaryTitle: {
+      fontFamily:
+        FONT_FAMILY.display,
+      fontSize:
+        FONT.heading,
+      fontWeight: "800",
+      color:
+        COLORS.text,
+    },
+
+    summaryService: {
       flexDirection: "row",
-      justifyContent:
-        "space-between",
       alignItems: "center",
-      paddingVertical:
+      backgroundColor:
+        COLORS.surface,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.md,
+      marginBottom:
         SPACING.sm,
-      borderBottomWidth: 1,
-      borderBottomColor:
-        COLORS.border,
-      gap: SPACING.md,
+    },
+
+    summaryServiceIcon: {
+      width: 44,
+      height: 44,
+      borderRadius:
+        RADIUS.pill,
+      backgroundColor:
+        COLORS.primarySoft,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight:
+        SPACING.sm,
+    },
+
+    summaryServiceContent: {
+      flex: 1,
     },
 
     summaryLabel: {
-      fontSize:
-        FONT.small,
+      fontSize: 11,
+      fontWeight: "800",
+      letterSpacing: 0.7,
       color:
         COLORS.textSecondary,
+      marginBottom: 3,
     },
 
-    summaryValue: {
-      flex: 1,
-      textAlign: "right",
+    summaryServiceName: {
       fontSize:
         FONT.body,
       fontWeight: "700",
@@ -1231,9 +1445,44 @@ const styles =
         COLORS.text,
     },
 
+    summaryDetails: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+    },
+
+    summaryDetail: {
+      flex: 1,
+      minWidth: 0,
+      backgroundColor:
+        COLORS.surface,
+      borderRadius:
+        RADIUS.lg,
+      padding:
+        SPACING.md,
+    },
+
+    summaryDetailLabel: {
+      fontSize:
+        FONT.caption,
+      color:
+        COLORS.textSecondary,
+      marginTop:
+        SPACING.sm,
+      marginBottom: 3,
+    },
+
+    summaryDetailValue: {
+      fontSize:
+        FONT.small,
+      lineHeight: 19,
+      fontWeight: "700",
+      color:
+        COLORS.text,
+    },
+
     pendingBadge: {
       backgroundColor:
-        COLORS.warningBackground,
+        COLORS.surface,
       paddingHorizontal:
         SPACING.md,
       paddingVertical: 6,
@@ -1253,7 +1502,7 @@ const styles =
       backgroundColor:
         COLORS.primary,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       paddingVertical: 15,
       alignItems:
         "center",
@@ -1273,10 +1522,24 @@ const styles =
         FONT.caption,
       lineHeight: 18,
       color:
-        COLORS.textSecondary,
+        COLORS.warning,
+      backgroundColor:
+        COLORS.warningBackground,
+      borderRadius:
+        RADIUS.md,
+      padding:
+        SPACING.sm,
       textAlign:
         "center",
       marginTop:
         SPACING.sm,
+      fontWeight: "600",
+    },
+
+    footerNavigation: {
+      marginTop:
+        SPACING.xl,
+      paddingBottom:
+        SPACING.lg,
     },
   });

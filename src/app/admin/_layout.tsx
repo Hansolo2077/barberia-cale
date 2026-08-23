@@ -9,6 +9,7 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS } from "../../constants/app-theme";
 
 export default function AdminLayout() {
   const router = useRouter();
@@ -63,14 +64,14 @@ export default function AdminLayout() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: COLORS.background,
   },
 
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: COLORS.background,
   },
 
   text: {

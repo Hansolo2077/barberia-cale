@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   COLORS,
   FONT,
+  FONT_FAMILY,
   RADIUS,
   SPACING,
 } from "../constants/app-theme";
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     lineHeight: 38,
     fontWeight: "800",
     letterSpacing: 7,
-    color: "#C9A227",
+    color: COLORS.accentText,
     marginLeft: 7,
   },
 
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 2,
     borderRadius: 1,
-    backgroundColor: "#C9A227",
+    backgroundColor: COLORS.accent,
     marginTop: SPACING.sm,
     marginBottom: SPACING.md,
   },
@@ -266,6 +267,7 @@ const styles = StyleSheet.create({
 
   heroTitle: {
     fontSize: FONT.title,
+    fontFamily: FONT_FAMILY.display,
     lineHeight: 39,
     fontWeight: "800",
     color: COLORS.text,

@@ -24,10 +24,12 @@ import {
 } from "../../api/admin.api";
 
 import BackButton from "../../components/BackButton";
+import AppIcon from "../../components/AppIcon";
 
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -98,6 +100,20 @@ export default function AdminScheduleScreen() {
   );
 
   const [
+    appliedStartDateText,
+    setAppliedStartDateText,
+  ] = useState(
+    formatDate(initialStartDate)
+  );
+
+  const [
+    appliedEndDateText,
+    setAppliedEndDateText,
+  ] = useState(
+    formatDate(initialEndDate)
+  );
+
+  const [
     showStartPicker,
     setShowStartPicker,
   ] = useState(false);
@@ -117,7 +133,7 @@ export default function AdminScheduleScreen() {
     statusFilter,
     setStatusFilter,
   ] =
-    useState<StatusFilter>("ALL");
+    useState<StatusFilter>("PENDING");
 
   const [showCustomRange, setShowCustomRange] =
     useState(false);
@@ -198,6 +214,9 @@ export default function AdminScheduleScreen() {
       setAppointments(
         result.appointments
       );
+
+      setAppliedStartDateText(startDate);
+      setAppliedEndDateText(endDate);
     } catch (error) {
       setError(
         error instanceof Error
@@ -230,7 +249,7 @@ export default function AdminScheduleScreen() {
     setSelectedEndDate(end);
     setStartDateText(formattedStart);
     setEndDateText(formattedEnd);
-    setStatusFilter("ALL");
+    setStatusFilter("PENDING");
     setExpandedAppointmentId(null);
     setShouldScrollResults(true);
     void loadSchedule(formattedStart, formattedEnd);
@@ -238,7 +257,7 @@ export default function AdminScheduleScreen() {
 
   function consultCustomRange() {
     setActivePreset("CUSTOM");
-    setStatusFilter("ALL");
+    setStatusFilter("PENDING");
     setExpandedAppointmentId(null);
     setShouldScrollResults(true);
     void loadSchedule();
@@ -384,16 +403,16 @@ export default function AdminScheduleScreen() {
     label: string;
   }[] = [
     {
-      value: "ALL",
-      label: "Todas",
-    },
-    {
       value: "PENDING",
       label: "Pendientes",
     },
     {
       value: "ACCEPTED",
       label: "Confirmadas",
+    },
+    {
+      value: "ALL",
+      label: "Todas",
     },
     {
       value: "COMPLETED",
@@ -417,6 +436,17 @@ export default function AdminScheduleScreen() {
             appointment.status ===
             statusFilter
         );
+
+  const dayAppointmentCounts =
+    filteredAppointments.reduce<Record<string, number>>(
+      (counts, appointment) => {
+        counts[appointment.date] =
+          (counts[appointment.date] ?? 0) + 1;
+
+        return counts;
+      },
+      {}
+    );
 
   const pendingCount =
     appointments.filter(
@@ -454,6 +484,8 @@ export default function AdminScheduleScreen() {
     >
       <View style={styles.header}>
         <View style={styles.headerContent}>
+          <View style={styles.headerAccent} />
+
           <Text style={styles.eyebrow}>
             CALENDARIO
           </Text>
@@ -480,13 +512,29 @@ export default function AdminScheduleScreen() {
           styles.dateSection
         }
       >
-        <Text
-          style={
-            styles.sectionTitle
-          }
-        >
-          Período
-        </Text>
+        <View style={styles.sectionHeading}>
+          <View style={styles.sectionIcon}>
+            <AppIcon
+              name={{
+                ios: "calendar",
+                android: "calendar_month",
+                web: "calendar_month",
+              }}
+              size={20}
+              color={COLORS.primary}
+            />
+          </View>
+
+          <View style={styles.sectionHeadingContent}>
+            <Text style={styles.sectionTitle}>
+              Elige el período
+            </Text>
+
+            <Text style={styles.sectionHint}>
+              Consulta rápidamente hoy, mañana o los próximos siete días.
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.presetContainer}>
           {[
@@ -504,6 +552,12 @@ export default function AdminScheduleScreen() {
                   active && styles.activePresetButton,
                 ]}
                 disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel={`Consultar agenda de ${preset.label.toLowerCase()}`}
+                accessibilityState={{
+                  selected: active,
+                  disabled: loading,
+                }}
                 onPress={() => selectPreset(preset.value)}
               >
                 <Text
@@ -521,11 +575,25 @@ export default function AdminScheduleScreen() {
 
         <Pressable
           style={styles.customRangeToggle}
+          accessibilityRole="button"
+          accessibilityState={{
+            expanded: showCustomRange,
+          }}
           onPress={() => {
             setShowCustomRange((current) => !current);
             setActivePreset("CUSTOM");
           }}
         >
+          <AppIcon
+            name={{
+              ios: showCustomRange ? "chevron.up" : "chevron.down",
+              android: showCustomRange ? "expand_less" : "expand_more",
+              web: showCustomRange ? "expand_less" : "expand_more",
+            }}
+            size={18}
+            color={COLORS.primary}
+          />
+
           <Text style={styles.customRangeToggleText}>
             {showCustomRange
               ? "Ocultar rango personalizado"
@@ -545,6 +613,7 @@ export default function AdminScheduleScreen() {
           <>
             <TextInput
               style={styles.input}
+              accessibilityLabel="Fecha inicial"
               value={
                 startDateText
               }
@@ -569,6 +638,8 @@ export default function AdminScheduleScreen() {
               style={
                 styles.dateButton
               }
+              accessibilityRole="button"
+              accessibilityLabel={`Elegir fecha inicial, ${formatDisplayDate(startDateText)}`}
               onPress={() =>
                 setShowStartPicker(
                   true
@@ -613,6 +684,7 @@ export default function AdminScheduleScreen() {
           <>
             <TextInput
               style={styles.input}
+              accessibilityLabel="Fecha final"
               value={endDateText}
               onChangeText={
                 setEndDateText
@@ -635,6 +707,8 @@ export default function AdminScheduleScreen() {
               style={
                 styles.dateButton
               }
+              accessibilityRole="button"
+              accessibilityLabel={`Elegir fecha final, ${formatDisplayDate(endDateText)}`}
               onPress={() =>
                 setShowEndPicker(
                   true
@@ -685,8 +759,23 @@ export default function AdminScheduleScreen() {
               styles.disabledButton,
           ]}
           disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Consultar agenda del rango seleccionado"
+          accessibilityState={{
+            disabled: loading,
+          }}
           onPress={consultCustomRange}
         >
+          <AppIcon
+            name={{
+              ios: "calendar.badge.checkmark",
+              android: "date_range",
+              web: "date_range",
+            }}
+            size={19}
+            color={COLORS.onPrimary}
+          />
+
           <Text
             style={
               styles.searchButtonText
@@ -709,6 +798,7 @@ export default function AdminScheduleScreen() {
         >
           <ActivityIndicator
             size="large"
+            color={COLORS.primary}
           />
 
           <Text
@@ -750,105 +840,71 @@ export default function AdminScheduleScreen() {
             )
           }
         >
-          <View
-            style={
-              styles.periodBox
-            }
-          >
-            <Text
-              style={
-                styles.periodLabel
-              }
-            >
-              PERÍODO CONSULTADO
-            </Text>
+          <View style={styles.periodSummary}>
+            <View style={styles.periodSummaryHeader}>
+              <View style={styles.periodIcon}>
+                <AppIcon
+                  name={{
+                    ios: "calendar.circle.fill",
+                    android: "calendar_month",
+                    web: "calendar_month",
+                  }}
+                  size={24}
+                  color={COLORS.primary}
+                />
+              </View>
 
-            <Text
-              style={
-                styles.periodText
-              }
-            >
-              {formatDisplayDate(
-  startDateText
-)}
-{" — "}
-{formatDisplayDate(
-  endDateText
-)}
-            </Text>
-          </View>
+              <View style={styles.periodContent}>
+                <Text style={styles.periodLabel}>
+                  PERÍODO CONSULTADO
+                </Text>
 
-          <View
-            style={
-              styles.summaryRow
-            }
-          >
-            <View
-              style={
-                styles.summaryCard
-              }
-            >
-              <Text
-                style={
-                  styles.summaryNumber
-                }
-              >
-                {
-                  appointments.length
-                }
-              </Text>
-
-              <Text
-                style={
-                  styles.summaryText
-                }
-              >
-                Total
-              </Text>
+                <Text style={styles.periodText}>
+                  {formatDisplayDate(appliedStartDateText)}
+                  {" — "}
+                  {formatDisplayDate(appliedEndDateText)}
+                </Text>
+              </View>
             </View>
 
-            <View
-              style={
-                styles.summaryCard
-              }
-            >
-              <Text
-                style={
-                  styles.summaryNumber
-                }
-              >
-                {pendingCount}
-              </Text>
+            <Text style={styles.periodNarrative}>
+              {appointments.length === 0
+                ? "La agenda está despejada para este período."
+                : appointments.length === 1
+                  ? "Hay una cita programada en este período."
+                  : `Hay ${appointments.length} citas programadas en este período.`}
+            </Text>
 
-              <Text
-                style={
-                  styles.summaryText
-                }
-              >
-                Pendientes
-              </Text>
-            </View>
+            <View style={styles.summaryMetrics}>
+              <View style={styles.summaryMetric}>
+                <Text style={styles.summaryMetricValue}>
+                  {appointments.length}
+                </Text>
 
-            <View
-              style={
-                styles.summaryCard
-              }
-            >
-              <Text
-                style={
-                  styles.summaryNumber
-                }
-              >
-                {acceptedCount}
-              </Text>
+                <Text style={styles.summaryMetricLabel}>
+                  Total
+                </Text>
+              </View>
 
-              <Text
-                style={
-                  styles.summaryText
-                }
-              >
-                Confirmadas
-              </Text>
+              <View style={styles.summaryMetric}>
+                <Text style={styles.summaryMetricValue}>
+                  {pendingCount}
+                </Text>
+
+                <Text style={styles.summaryMetricLabel}>
+                  Pendientes
+                </Text>
+              </View>
+
+              <View style={styles.summaryMetric}>
+                <Text style={styles.summaryMetricValue}>
+                  {acceptedCount}
+                </Text>
+
+                <Text style={styles.summaryMetricLabel}>
+                  Confirmadas
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -862,6 +918,7 @@ export default function AdminScheduleScreen() {
 
           <ScrollView
             horizontal
+            style={styles.filterScroll}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={
               styles.filterContainer
@@ -888,6 +945,12 @@ export default function AdminScheduleScreen() {
                         filter.value
                       )
                     }
+                    accessibilityRole="tab"
+                    accessibilityLabel={`${filter.label}, ${getFilterCount(filter.value)}`}
+                    accessibilityState={{
+                      selected: active,
+                    }}
+                    hitSlop={4}
                   >
                     <Text
                       style={[
@@ -960,13 +1023,15 @@ export default function AdminScheduleScreen() {
                   styles.emptyIcon
                 }
               >
-                <Text
-                  style={
-                    styles.emptyIconText
-                  }
-                >
-                  ✓
-                </Text>
+                <AppIcon
+                  name={{
+                    ios: "calendar.badge.checkmark",
+                    android: "event_available",
+                    web: "event_available",
+                  }}
+                  size={28}
+                  color={COLORS.success}
+                />
               </View>
 
               <Text
@@ -1012,136 +1077,152 @@ export default function AdminScheduleScreen() {
                       </Text>
 
                       <Text style={styles.dayHeaderCount}>
-                        {
-                          filteredAppointments.filter(
-                            (item) => item.date === appointment.date
-                          ).length
-                        }{" "}
+                        {dayAppointmentCounts[appointment.date]}{" "}
                         citas
                       </Text>
                     </View>
                   )}
 
-                  <View
-                    style={
-                      styles.card
-                    }
-                  >
-                    <View
-                      style={
-                        styles.cardHeader
-                      }
-                    >
-                      <View
-                        style={
-                          styles.dateTimeContainer
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.time
-                          }
-                        >
-                          {
-                            formatDisplayTime(
-  appointment.time
-)
-                          }
-                        </Text>
+                  <View style={styles.timelineItem}>
+                    <View style={styles.timelineRail}>
+                      <Text style={styles.time}>
+                        {formatDisplayTime(appointment.time)}
+                      </Text>
 
-                        <Text
-                          style={
-                            styles.date
-                          }
-                        >
-                          {
-                            formatDisplayDate(
-  appointment.date
-)
-                          }
-                        </Text>
-                      </View>
+                      <View style={styles.timelineDot} />
+                      <View style={styles.timelineLine} />
+                    </View>
 
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          {
-                            backgroundColor:
-                              statusStyle.background,
-                          },
-                        ]}
-                      >
-                        <Text
+                    <View style={styles.card}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.clientInfo}>
+                          <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>
+                              {appointment.firstName
+                                ?.charAt(0)
+                                .toUpperCase()}
+                            </Text>
+                          </View>
+
+                          <View style={styles.clientContent}>
+                            <Text style={styles.clientLabel}>
+                              CLIENTE
+                            </Text>
+
+                            <Text style={styles.clientName}>
+                              {appointment.firstName}{" "}
+                              {appointment.lastName}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View
                           style={[
-                            styles.statusText,
+                            styles.statusBadge,
                             {
-                              color:
-                                statusStyle.text,
+                              backgroundColor:
+                                statusStyle.background,
                             },
                           ]}
                         >
-                          {getStatusText(
-                            appointment.status
-                          )}
+                          <Text
+                            style={[
+                              styles.statusText,
+                              {
+                                color:
+                                  statusStyle.text,
+                              },
+                            ]}
+                          >
+                            {getStatusText(appointment.status)}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.serviceRow}>
+                        <View style={styles.serviceIcon}>
+                          <AppIcon
+                            name={{
+                              ios: "scissors",
+                              android: "content_cut",
+                              web: "content_cut",
+                            }}
+                            size={18}
+                            color={COLORS.primary}
+                          />
+                        </View>
+
+                        <Text style={styles.service}>
+                          {appointment.service}
                         </Text>
                       </View>
+
+                      {expanded && (
+                        <View style={styles.expandedDetails}>
+                          <View style={styles.detailIcon}>
+                            <AppIcon
+                              name={{
+                                ios: "phone.fill",
+                                android: "call",
+                                web: "call",
+                              }}
+                              size={17}
+                              color={COLORS.primary}
+                            />
+                          </View>
+
+                          <View style={styles.detailContent}>
+                            <Text style={styles.detailLabel}>
+                              TELÉFONO
+                            </Text>
+
+                            <Text style={styles.phone}>
+                              {appointment.phone}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+
+                      <Pressable
+                        style={styles.detailsButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          expanded
+                            ? "Ocultar los detalles de la cita"
+                            : "Ver los detalles de la cita"
+                        }
+                        accessibilityState={{
+                          expanded,
+                        }}
+                        onPress={() =>
+                          setExpandedAppointmentId(
+                            expanded ? null : appointment.id
+                          )
+                        }
+                      >
+                        <AppIcon
+                          name={{
+                            ios: expanded
+                              ? "chevron.up"
+                              : "chevron.down",
+                            android: expanded
+                              ? "expand_less"
+                              : "expand_more",
+                            web: expanded
+                              ? "expand_less"
+                              : "expand_more",
+                          }}
+                          size={18}
+                          color={COLORS.primary}
+                        />
+
+                        <Text style={styles.detailsButtonText}>
+                          {expanded
+                            ? "Ocultar detalles"
+                            : "Ver detalles"}
+                        </Text>
+                      </Pressable>
                     </View>
-
-                    <View
-                      style={
-                        styles.divider
-                      }
-                    />
-
-                    <Text
-                      style={
-                        styles.clientName
-                      }
-                    >
-                      {
-                        appointment.firstName
-                      }{" "}
-                      {
-                        appointment.lastName
-                      }
-                    </Text>
-
-                    <Text
-                      style={
-                        styles.service
-                      }
-                    >
-                      {
-                        appointment.service
-                      }
-                    </Text>
-
-                    {expanded && (
-                      <View style={styles.expandedDetails}>
-                        <Text style={styles.detailLabel}>
-                          Teléfono
-                        </Text>
-
-                        <Text style={styles.phone}>
-                          {appointment.phone}
-                        </Text>
-                      </View>
-                    )}
-
-                    <Pressable
-                      style={styles.detailsButton}
-                      onPress={() =>
-                        setExpandedAppointmentId(
-                          expanded ? null : appointment.id
-                        )
-                      }
-                    >
-                      <Text style={styles.detailsButtonText}>
-                        {expanded
-                          ? "Ocultar detalles"
-                          : "Ver detalles"}
-                      </Text>
-                    </Pressable>
                   </View>
                   </Fragment>
                 );
@@ -1182,6 +1263,14 @@ const styles =
       flex: 1,
     },
 
+    headerAccent: {
+      width: 42,
+      height: 3,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.accent,
+      marginBottom: SPACING.md,
+    },
+
     eyebrow: {
       fontSize:
         FONT.caption,
@@ -1196,6 +1285,8 @@ const styles =
     title: {
       fontSize:
         FONT.title,
+      fontFamily:
+        FONT_FAMILY.display,
       fontWeight: "800",
       color:
         COLORS.text,
@@ -1225,14 +1316,40 @@ const styles =
         SPACING.xl,
     },
 
+    sectionHeading: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: SPACING.lg,
+    },
+
+    sectionIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.sm,
+    },
+
+    sectionHeadingContent: {
+      flex: 1,
+    },
+
     sectionTitle: {
       fontSize:
         FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color:
         COLORS.text,
-      marginBottom:
-        SPACING.lg,
+      marginBottom: 3,
+    },
+
+    sectionHint: {
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      color: COLORS.textSecondary,
     },
 
     presetContainer: {
@@ -1267,20 +1384,25 @@ const styles =
     },
 
     activePresetButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
     },
 
     customRangeToggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
       alignSelf: "flex-start",
       marginTop: SPACING.md,
-      paddingVertical: SPACING.xs,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 8,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
     },
 
     customRangeToggleText: {
       color: COLORS.text,
       fontSize: FONT.small,
       fontWeight: "700",
-      textDecorationLine: "underline",
     },
 
     customRangeContent: {
@@ -1361,18 +1483,21 @@ const styles =
     },
 
     searchButton: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: SPACING.xs,
       backgroundColor:
         COLORS.primary,
       paddingVertical: 14,
       borderRadius:
-        RADIUS.md,
+        RADIUS.pill,
       alignItems: "center",
       marginTop:
         SPACING.lg,
     },
 
     searchButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
       fontWeight: "700",
       fontSize:
         FONT.body,
@@ -1394,9 +1519,30 @@ const styles =
         SPACING.sm,
     },
 
-    periodBox: {
-      marginBottom:
-        SPACING.lg,
+    periodSummary: {
+      backgroundColor: COLORS.primarySoft,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.lg,
+      marginBottom: SPACING.xl,
+    },
+
+    periodSummaryHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    periodIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.md,
+    },
+
+    periodContent: {
+      flex: 1,
     },
 
     periodLabel: {
@@ -1405,7 +1551,7 @@ const styles =
       fontWeight: "700",
       letterSpacing: 0.8,
       color:
-        COLORS.textMuted,
+        COLORS.primary,
       marginBottom:
         SPACING.xs,
     },
@@ -1418,46 +1564,48 @@ const styles =
         COLORS.text,
     },
 
-    summaryRow: {
+    periodNarrative: {
+      fontSize: FONT.small,
+      lineHeight: 20,
+      color: COLORS.textSecondary,
+      marginTop: SPACING.md,
+    },
+
+    summaryMetrics: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: SPACING.sm,
-      marginBottom:
-        SPACING.xl,
+      marginTop: SPACING.md,
     },
 
-    summaryCard: {
-      flex: 1,
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.border,
-      borderRadius:
-        RADIUS.md,
-      padding:
-        SPACING.md,
+    summaryMetric: {
+      flexDirection: "row",
       alignItems: "center",
+      gap: SPACING.xs,
+      minHeight: 34,
+      backgroundColor: COLORS.surface,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: SPACING.xs,
     },
 
-    summaryNumber: {
-      fontSize: 24,
+    summaryMetricValue: {
+      fontSize: FONT.small,
       fontWeight: "800",
-      color:
-        COLORS.text,
-      marginBottom: 3,
+      color: COLORS.primary,
     },
 
-    summaryText: {
-      fontSize:
-        FONT.caption,
-      color:
-        COLORS.textSecondary,
-      textAlign: "center",
+    summaryMetricLabel: {
+      fontSize: FONT.caption,
+      fontWeight: "600",
+      color: COLORS.textSecondary,
     },
 
     filterLabel: {
       fontSize:
         FONT.subheading,
+      lineHeight: 24,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color:
         COLORS.text,
@@ -1465,16 +1613,23 @@ const styles =
         SPACING.md,
     },
 
+    filterScroll: {
+      flexGrow: 0,
+      flexShrink: 0,
+      height: 44,
+      marginBottom: SPACING.xl,
+    },
+
     filterContainer: {
       flexDirection: "row",
+      alignItems: "center",
       gap: SPACING.sm,
       paddingRight: SPACING.lg,
-      marginBottom:
-        SPACING.xl,
+      paddingVertical: 1,
     },
 
     filterButton: {
-      minHeight: 42,
+      height: 42,
       flexDirection: "row",
       alignItems: "center",
       gap: SPACING.xs,
@@ -1506,7 +1661,7 @@ const styles =
     },
 
     activeFilterButtonText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
     },
 
     filterCountBadge: {
@@ -1530,7 +1685,7 @@ const styles =
     },
 
     activeFilterCountText: {
-      color: "#FFFFFF",
+      color: COLORS.onPrimary,
     },
 
     resultsHeader: {
@@ -1548,11 +1703,15 @@ const styles =
       justifyContent: "space-between",
       marginTop: SPACING.lg,
       marginBottom: SPACING.sm,
+      paddingBottom: SPACING.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.accentSoft,
     },
 
     dayHeaderText: {
       color: COLORS.text,
       fontSize: FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "800",
     },
 
@@ -1563,10 +1722,26 @@ const styles =
     },
 
     expandedDetails: {
+      flexDirection: "row",
+      alignItems: "center",
       marginTop: SPACING.md,
       paddingTop: SPACING.md,
       borderTopWidth: 1,
       borderTopColor: COLORS.border,
+    },
+
+    detailIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.sm,
+    },
+
+    detailContent: {
+      flex: 1,
     },
 
     detailLabel: {
@@ -1577,10 +1752,14 @@ const styles =
     },
 
     detailsButton: {
+      flexDirection: "row",
       alignItems: "center",
+      alignSelf: "flex-start",
+      gap: SPACING.xs,
       marginTop: SPACING.md,
-      paddingVertical: 10,
-      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 9,
+      borderRadius: RADIUS.pill,
       backgroundColor: COLORS.primarySoft,
     },
 
@@ -1593,6 +1772,7 @@ const styles =
     resultsTitle: {
       fontSize:
         FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color:
         COLORS.text,
@@ -1605,16 +1785,46 @@ const styles =
         COLORS.textSecondary,
     },
 
+    timelineItem: {
+      flexDirection: "row",
+      alignItems: "stretch",
+      gap: SPACING.sm,
+    },
+
+    timelineRail: {
+      width: 70,
+      alignItems: "center",
+    },
+
+    timelineDot: {
+      width: 9,
+      height: 9,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.accent,
+      marginTop: SPACING.sm,
+    },
+
+    timelineLine: {
+      width: 1,
+      flex: 1,
+      minHeight: SPACING.md,
+      backgroundColor: COLORS.accentSoft,
+      marginTop: SPACING.xs,
+      marginBottom: SPACING.sm,
+    },
+
     card: {
+      flex: 1,
+      minWidth: 0,
       backgroundColor:
         COLORS.surface,
       borderWidth: 1,
       borderColor:
-        COLORS.border,
+        COLORS.accentSoft,
       borderRadius:
         RADIUS.lg,
       padding:
-        SPACING.lg,
+        SPACING.md,
       marginBottom:
         SPACING.md,
     },
@@ -1628,26 +1838,53 @@ const styles =
       gap: SPACING.md,
     },
 
-    dateTimeContainer: {
+    clientInfo: {
+      flexDirection: "row",
+      alignItems: "center",
       flex: 1,
+      minWidth: 0,
+    },
+
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.sm,
+    },
+
+    avatarText: {
+      fontSize: FONT.body,
+      fontWeight: "800",
+      color: COLORS.primary,
+    },
+
+    clientContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    clientLabel: {
+      fontSize: FONT.caption,
+      fontWeight: "800",
+      letterSpacing: 0.7,
+      color: COLORS.textMuted,
+      marginBottom: 2,
     },
 
     time: {
-      fontSize: 24,
+      fontSize: FONT.small,
       fontWeight: "800",
       color:
-        COLORS.text,
-    },
-
-    date: {
-      fontSize:
-        FONT.small,
-      color:
-        COLORS.textSecondary,
-      marginTop: 3,
+        COLORS.primary,
+      textAlign: "center",
+      marginTop: SPACING.md,
     },
 
     statusBadge: {
+      flexShrink: 0,
       borderRadius:
         RADIUS.pill,
       paddingHorizontal:
@@ -1661,29 +1898,40 @@ const styles =
       fontWeight: "700",
     },
 
-    divider: {
-      height: 1,
-      backgroundColor:
-        COLORS.border,
-      marginVertical:
-        SPACING.md,
-    },
-
     clientName: {
       fontSize:
         FONT.body,
       fontWeight: "700",
       color:
         COLORS.text,
-      marginBottom: 5,
+    },
+
+    serviceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: COLORS.primarySoft,
+      borderRadius: RADIUS.md,
+      padding: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+
+    serviceIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: SPACING.sm,
     },
 
     service: {
+      flex: 1,
       fontSize:
         FONT.small,
+      fontWeight: "700",
       color:
         COLORS.text,
-      marginBottom: 5,
     },
 
     phone: {
@@ -1708,6 +1956,7 @@ const styles =
     errorTitle: {
       fontSize:
         FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color:
         COLORS.text,
@@ -1749,16 +1998,10 @@ const styles =
         SPACING.md,
     },
 
-    emptyIconText: {
-      fontSize: 25,
-      fontWeight: "800",
-      color:
-        COLORS.success,
-    },
-
     emptyTitle: {
       fontSize:
         FONT.heading,
+      fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color:
         COLORS.text,

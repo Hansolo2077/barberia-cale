@@ -8,12 +8,14 @@ import {
 } from "react-native";
 
 import UserMenu from "../../components/UserMenu";
+import AppIcon from "../../components/AppIcon";
 
 import { useAuth } from "../../context/AuthContext";
 
 import {
     COLORS,
     FONT,
+    FONT_FAMILY,
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
@@ -69,18 +71,30 @@ export default function ClientHomeScreen() {
       </View>
 
       <View style={styles.hero}>
+        <View
+          pointerEvents="none"
+          style={styles.heroDecorationLarge}
+        />
+
+        <View
+          pointerEvents="none"
+          style={styles.heroDecorationSmall}
+        />
+
+        <View style={styles.heroAccent} />
+
         <Text style={styles.heroEyebrow}>
-          TU PRÓXIMO CORTE
+          TU MOMENTO, TU ESTILO
         </Text>
 
         <Text style={styles.heroTitle}>
-          Reserva fácil,
-          rápido y sin llamadas
+          Tu próximo corte
+          empieza aquí
         </Text>
 
         <Text style={styles.heroDescription}>
-          Consulta horarios disponibles
-          y agenda tu cita en pocos pasos.
+          Elige tu horario y nosotros
+          tendremos la silla lista para ti.
         </Text>
 
         <Pressable
@@ -100,8 +114,20 @@ export default function ClientHomeScreen() {
               styles.heroButtonText
             }
           >
-            Reservar ahora
+            Agendar mi cita
           </Text>
+
+          <View style={styles.heroButtonIcon}>
+            <AppIcon
+              name={{
+                ios: "arrow.right",
+                android: "arrow_forward",
+                web: "arrow_forward",
+              }}
+              size={18}
+              color={COLORS.primary}
+            />
+          </View>
         </Pressable>
       </View>
 
@@ -122,13 +148,15 @@ export default function ClientHomeScreen() {
         }
       >
         <View style={styles.serviceIcon}>
-          <Text
-            style={
-              styles.serviceIconText
-            }
-          >
-            ✂
-          </Text>
+          <AppIcon
+            name={{
+              ios: "scissors",
+              android: "content_cut",
+              web: "content_cut",
+            }}
+            size={25}
+            color={COLORS.primary}
+          />
         </View>
 
         <View style={styles.serviceInfo}>
@@ -149,9 +177,15 @@ export default function ClientHomeScreen() {
           </Text>
         </View>
 
-        <Text style={styles.chevron}>
-          ›
-        </Text>
+        <AppIcon
+          name={{
+            ios: "chevron.right",
+            android: "chevron_right",
+            web: "chevron_right",
+          }}
+          size={22}
+          color={COLORS.textMuted}
+        />
       </Pressable>
 
       <Text style={styles.sectionTitle}>
@@ -234,14 +268,17 @@ const styles = StyleSheet.create({
     fontSize:
       FONT.small,
     color:
-      COLORS.textSecondary,
-    fontWeight: "600",
+      COLORS.primary,
+    fontWeight: "800",
+    letterSpacing: 0.4,
     marginBottom: 4,
   },
 
   greeting: {
     fontSize:
       FONT.heading,
+    fontFamily:
+      FONT_FAMILY.display,
     fontWeight: "700",
     color:
       COLORS.text,
@@ -249,16 +286,49 @@ const styles = StyleSheet.create({
 
   hero: {
     backgroundColor:
-      COLORS.surface,
+      COLORS.primary,
     borderRadius:
       RADIUS.xl,
     padding:
       SPACING.lg,
     marginBottom:
       SPACING.xl,
+    overflow: "hidden",
+    position: "relative",
+  },
+
+  heroDecorationLarge: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     borderWidth: 1,
     borderColor:
-      COLORS.border,
+      "rgba(255, 252, 247, 0.16)",
+    top: -85,
+    right: -55,
+  },
+
+  heroDecorationSmall: {
+    position: "absolute",
+    width: 105,
+    height: 105,
+    borderRadius: 53,
+    backgroundColor:
+      "rgba(196, 154, 69, 0.16)",
+    right: 18,
+    bottom: -58,
+  },
+
+  heroAccent: {
+    width: 42,
+    height: 3,
+    borderRadius:
+      RADIUS.pill,
+    backgroundColor:
+      COLORS.accent,
+    marginBottom:
+      SPACING.md,
   },
 
   heroEyebrow: {
@@ -267,7 +337,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.2,
     color:
-      COLORS.textSecondary,
+      COLORS.accentSoft,
     marginBottom:
       SPACING.sm,
   },
@@ -275,10 +345,12 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize:
       FONT.title,
+    fontFamily:
+      FONT_FAMILY.display,
     lineHeight: 38,
     fontWeight: "800",
     color:
-      COLORS.text,
+      COLORS.onPrimary,
     marginBottom:
       SPACING.md,
   },
@@ -288,18 +360,23 @@ const styles = StyleSheet.create({
       FONT.body,
     lineHeight: 24,
     color:
-      COLORS.textSecondary,
+      COLORS.primarySoft,
     marginBottom:
       SPACING.lg,
   },
 
   heroButton: {
     backgroundColor:
-      COLORS.primary,
+      COLORS.onPrimary,
     borderRadius:
-      RADIUS.md,
-    paddingVertical: 15,
+      RADIUS.pill,
+    paddingVertical: 13,
+    paddingHorizontal:
+      SPACING.lg,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    alignSelf: "flex-start",
   },
 
   primaryPressed: {
@@ -307,10 +384,15 @@ const styles = StyleSheet.create({
   },
 
   heroButtonText: {
-    color: "#FFFFFF",
+    color: COLORS.primary,
     fontSize:
       FONT.body,
     fontWeight: "700",
+  },
+
+  heroButtonIcon: {
+    marginLeft:
+      SPACING.sm,
   },
 
   sectionTitle: {
@@ -327,14 +409,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor:
-      COLORS.surface,
+      COLORS.primarySoft,
     borderRadius:
       RADIUS.lg,
     padding:
       SPACING.md,
-    borderWidth: 1,
-    borderColor:
-      COLORS.border,
+    borderWidth: 0,
     marginBottom:
       SPACING.xl,
   },
@@ -345,15 +425,11 @@ const styles = StyleSheet.create({
     borderRadius:
       RADIUS.md,
     backgroundColor:
-      COLORS.primarySoft,
+      COLORS.surface,
     justifyContent: "center",
     alignItems: "center",
     marginRight:
       SPACING.md,
-  },
-
-  serviceIconText: {
-    fontSize: 24,
   },
 
   serviceInfo: {
@@ -376,12 +452,6 @@ const styles = StyleSheet.create({
       COLORS.textSecondary,
   },
 
-  chevron: {
-    fontSize: 28,
-    color:
-      COLORS.textMuted,
-  },
-
   appointmentCard: {
     flexDirection: "row",
     justifyContent:
@@ -395,7 +465,7 @@ const styles = StyleSheet.create({
       SPACING.lg,
     borderWidth: 1,
     borderColor:
-      COLORS.border,
+      COLORS.accentSoft,
   },
 
   appointmentContent: {
@@ -423,7 +493,7 @@ const styles = StyleSheet.create({
 
   appointmentAction: {
     backgroundColor:
-      COLORS.primarySoft,
+      COLORS.primary,
     paddingHorizontal:
       SPACING.md,
     paddingVertical:
@@ -434,7 +504,7 @@ const styles = StyleSheet.create({
 
   appointmentActionText: {
     color:
-      COLORS.text,
+      COLORS.onPrimary,
     fontSize:
       FONT.small,
     fontWeight: "700",

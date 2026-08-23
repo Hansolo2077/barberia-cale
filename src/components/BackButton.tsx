@@ -5,6 +5,8 @@ import {
     Text,
 } from "react-native";
 
+import AppIcon from "./AppIcon";
+
 import {
     COLORS,
     FONT,
@@ -45,14 +47,15 @@ export default function BackButton({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Text
-        style={[
-          styles.icon,
-          iconOnly && styles.iconOnly,
-        ]}
-      >
-        ‹
-      </Text>
+      <AppIcon
+        name={{
+          ios: "chevron.left",
+          android: "arrow_back_ios_new",
+          web: "arrow_back_ios_new",
+        }}
+        size={iconOnly ? 20 : 18}
+        color={COLORS.text}
+      />
 
       {!iconOnly && (
         <Text style={styles.text}>
@@ -103,22 +106,10 @@ const styles = StyleSheet.create({
       COLORS.primarySoft,
   },
 
-  icon: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginRight: SPACING.xs,
-    lineHeight: 24,
-  },
-
-  iconOnly: {
-    marginRight: 0,
-    lineHeight: 28,
-  },
-
   text: {
     color: COLORS.text,
     fontSize: FONT.body,
     fontWeight: "700",
+    marginLeft: SPACING.xs,
   },
 });
