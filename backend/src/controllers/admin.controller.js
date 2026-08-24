@@ -1,9 +1,28 @@
 const appointmentService =
   require("../services/appointment.service");
 
-function isValidDate(date) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date);
-}
+const {
+  daysBetween,
+  isValidIsoDate,
+} = require("../utils/date");
+
+const {
+  buildPaginationMeta,
+  getPagination,
+} = require("../utils/pagination");
+
+const {
+  sendControllerError,
+} = require("../utils/http-error");
+
+const MAX_SCHEDULE_RANGE_DAYS = 92;
+const VALID_STATUSES = new Set([
+  "PENDING",
+  "ACCEPTED",
+  "COMPLETED",
+  "REJECTED",
+  "CANCELLED",
+]);
 
 async function getAppointments(
   req,
@@ -13,18 +32,81 @@ async function getAppointments(
     const {
       startDate,
       endDate,
+      status,
+      search = "",
+      upcomingOnly = "false",
     } = req.query;
+
+    const normalizedStatus =
+      status && status !== "ALL"
+        ? status
+        : null;
+
+    if (
+      normalizedStatus &&
+      !VALID_STATUSES.has(normalizedStatus)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "El estado seleccionado no es válido.",
+      });
+    }
+
+    if (
+      typeof search !== "string" ||
+      search.length > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "La búsqueda no puede superar 100 caracteres.",
+      });
+    }
+
+    if (
+      upcomingOnly !== "true" &&
+      upcomingOnly !== "false"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "El filtro de próximas citas no es válido.",
+      });
+    }
+
+    const pagination = getPagination(
+      req.query
+    );
+
+    const queryOptions = {
+      ...pagination,
+      status: normalizedStatus,
+      search,
+      upcomingOnly: upcomingOnly === "true",
+    };
 
     // Sin filtros:
     // Gestión de citas obtiene todas las citas.
     if (!startDate && !endDate) {
-      const appointments =
+      const result =
         await appointmentService
-          .getAllAppointments();
+          .getAllAppointments(
+            queryOptions
+          );
 
       return res.json({
         success: true,
-        appointments,
+        appointments:
+          result.appointments,
+        statusCounts:
+          result.statusCounts,
+        pagination:
+          buildPaginationMeta({
+            page: result.page,
+            pageSize: result.pageSize,
+            total: result.total,
+          }),
       });
     }
 
@@ -39,8 +121,8 @@ async function getAppointments(
     }
 
     if (
-      !isValidDate(startDate) ||
-      !isValidDate(endDate)
+      !isValidIsoDate(startDate) ||
+      !isValidIsoDate(endDate)
     ) {
       return res.status(400).json({
         success: false,
@@ -57,18 +139,39 @@ async function getAppointments(
       });
     }
 
-    const appointments =
+    if (
+      daysBetween(startDate, endDate) >
+      MAX_SCHEDULE_RANGE_DAYS
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "El rango máximo de consulta es de 93 días.",
+      });
+    }
+
+    const result =
       await appointmentService
         .getAppointmentsByDateRange(
           startDate,
-          endDate
+          endDate,
+          queryOptions
         );
 
     return res.json({
       success: true,
       startDate,
       endDate,
-      appointments,
+      appointments:
+        result.appointments,
+      statusCounts:
+        result.statusCounts,
+      pagination:
+        buildPaginationMeta({
+          page: result.page,
+          pageSize: result.pageSize,
+          total: result.total,
+        }),
     });
   } catch (error) {
     console.error(
@@ -123,16 +226,11 @@ async function acceptAppointment(
       error
     );
 
-    return res
-      .status(
-        error.statusCode || 500
-      )
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo aceptar la cita.",
-      });
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo aceptar la cita."
+    );
   }
 }
 
@@ -175,16 +273,11 @@ async function rejectAppointment(
       error
     );
 
-    return res
-      .status(
-        error.statusCode || 500
-      )
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo rechazar la cita.",
-      });
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo rechazar la cita."
+    );
   }
 }
 
@@ -227,16 +320,11 @@ async function cancelAppointment(
       error
     );
 
-    return res
-      .status(
-        error.statusCode || 500
-      )
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo cancelar la cita.",
-      });
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo cancelar la cita."
+    );
   }
 }
 
@@ -279,16 +367,11 @@ async function completeAppointment(
       error
     );
 
-    return res
-      .status(
-        error.statusCode || 500
-      )
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo completar la cita.",
-      });
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo completar la cita."
+    );
   }
 }
 

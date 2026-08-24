@@ -1,5 +1,4 @@
-import { Stack, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { Redirect, Stack } from "expo-router";
 import {
     ActivityIndicator,
     StyleSheet,
@@ -12,32 +11,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../../constants/app-theme";
 
 export default function AdminLayout() {
-  const router = useRouter();
-
   const {
     user,
     loading,
   } = useAuth();
 
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    if (user.role !== "ADMIN") {
-      router.replace("/client");
-    }
-  }, [loading, user, router]);
-
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
+      <View style={styles.container} accessibilityLiveRegion="polite">
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          accessibilityLabel="Cargando sesión"
+        />
 
         <Text style={styles.text}>
           Cargando sesión...
@@ -46,8 +32,12 @@ export default function AdminLayout() {
     );
   }
 
-  if (!user || user.role !== "ADMIN") {
-    return null;
+  if (!user) {
+    return <Redirect href="/auth/login" />;
+  }
+
+  if (user.role !== "ADMIN") {
+    return <Redirect href="/client" />;
   }
 
   return (
@@ -77,6 +67,6 @@ const styles = StyleSheet.create({
   text: {
     marginTop: 12,
     fontSize: 16,
-    color: "#666",
+    color: COLORS.textSecondary,
   },
 });

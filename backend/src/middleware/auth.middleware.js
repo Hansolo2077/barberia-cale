@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
+const authService =
+  require("../services/auth.service");
 
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -21,22 +23,61 @@ function authenticateToken(req, res, next) {
 
   const token = parts[1];
 
+  let decoded;
+
   try {
-    const decoded = jwt.verify(
+    decoded = jwt.verify(
       token,
       process.env.JWT_SECRET
     );
-
-    req.user = {
-      userId: decoded.userId,
-      role: decoded.role,
-    };
-
-    next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
       message: "Tu sesión no es válida o ha expirado.",
+    });
+  }
+
+  const userId = Number(decoded.userId);
+
+  if (
+    !Number.isSafeInteger(userId) ||
+    userId <= 0
+  ) {
+    return res.status(401).json({
+      success: false,
+      message: "Token de autenticación inválido.",
+    });
+  }
+
+  try {
+    const currentUser = await authService
+      .findPublicUserById(userId);
+
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "La cuenta asociada a esta sesión ya no existe.",
+      });
+    }
+
+    req.user = {
+      userId: currentUser.id,
+      role: currentUser.role,
+    };
+    req.currentUser = currentUser;
+
+    return next();
+  } catch (error) {
+    console.error(
+      "ERROR VALIDANDO USUARIO AUTENTICADO:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "No se pudo validar la sesión en este momento.",
     });
   }
 }

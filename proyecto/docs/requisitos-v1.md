@@ -10,7 +10,7 @@
 | RF-06 | Crear cita | El cliente podrá reservar un horario disponible con estado inicial PENDING. El backend impedirá doble reserva, más de una cita activa del cliente en el mismo día y más de dos citas activas dentro de la ventana móvil de siete días. |
 | RF-07 | Ver próximas citas | El cliente podrá consultar sus citas activas PENDING y ACCEPTED. |
 | RF-08 | Ver historial | El cliente podrá consultar sus citas COMPLETED, REJECTED y CANCELLED. |
-| RF-09 | Cancelar cita como cliente | El cliente podrá cancelar una cita propia activa dentro de la ventana temporal definida. Una cita cancelada dejará de bloquear el horario. |
+| RF-09 | Cancelar cita como cliente | El cliente podrá cancelar una cita propia activa hasta una hora antes de su fecha y hora. Exactamente a 60 minutos de anticipación la cancelación seguirá permitida; con menos tiempo será rechazada. Una cita cancelada dejará de bloquear el horario. |
 | RF-10 | Consultar y filtrar solicitudes | El administrador podrá consultar las solicitudes/citas y filtrarlas por estado para su gestión. |
 | RF-11 | Aceptar cita | El administrador podrá cambiar una solicitud PENDING a ACCEPTED. |
 | RF-12 | Rechazar cita | El administrador podrá cambiar una solicitud PENDING a REJECTED; el horario dejará de bloquearse y podrá volver a mostrarse como disponible. |

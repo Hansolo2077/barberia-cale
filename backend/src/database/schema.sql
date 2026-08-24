@@ -89,3 +89,21 @@ CREATE INDEX IF NOT EXISTS
 ON appointments (
   status
 );
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_appointments_user_schedule
+ON appointments (
+  user_id,
+  appointment_date,
+  appointment_time
+);
+
+
+CREATE INDEX IF NOT EXISTS
+  idx_appointments_admin_schedule
+ON appointments (
+  appointment_date,
+  appointment_time,
+  status
+);

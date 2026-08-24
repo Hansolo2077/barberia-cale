@@ -6,30 +6,30 @@ const appointmentController =
 const {
   authenticateToken,
 } = require("../middleware/auth.middleware");
+const {
+  requireClient,
+} = require("../middleware/client.middleware");
 
 const router = express.Router();
 
+router.use(authenticateToken, requireClient);
+
 router.get(
   "/availability",
-  authenticateToken,
   appointmentController.availability
 );
 
-router.post(
-  "/",
-  authenticateToken,
-  appointmentController.create
+router.get(
+  "/next-availability",
+  appointmentController.nextAvailability
 );
 
-router.get(
-  "/my",
-  authenticateToken,
-  appointmentController.myAppointments
-);
+router.post("/", appointmentController.create);
+
+router.get("/my", appointmentController.myAppointments);
 
 router.patch(
   "/:id/cancel",
-  authenticateToken,
   appointmentController.cancel
 );
 

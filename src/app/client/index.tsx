@@ -1,4 +1,13 @@
-import { useRouter } from "expo-router";
+import {
+    useFocusEffect,
+    useLocalSearchParams,
+    useRouter,
+} from "expo-router";
+import {
+    useCallback,
+    useRef,
+    useState,
+} from "react";
 import {
     Pressable,
     ScrollView,
@@ -12,6 +21,14 @@ import AppIcon from "../../components/AppIcon";
 
 import { useAuth } from "../../context/AuthContext";
 
+import { getMyAppointments } from "../../api/appointments.api";
+import {
+    formatDisplayDate,
+    formatDisplayTime,
+} from "../../utils/date-format";
+import { showMessage } from "../../utils/show-message";
+import { isAppointmentPast } from "../../utils/business-date";
+
 import {
     COLORS,
     FONT,
@@ -20,13 +37,153 @@ import {
     SPACING,
 } from "../../constants/app-theme";
 
+type AppointmentSummary = {
+  id: number;
+  service: string;
+  date: string;
+  time: string;
+  status: "PENDING" | "ACCEPTED" | string;
+  isPast?: boolean;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isUpcomingAppointment(appointment: AppointmentSummary) {
+  return (
+    (appointment.status === "PENDING" ||
+      appointment.status === "ACCEPTED") &&
+    appointment.isPast !== true &&
+    !isAppointmentPast(appointment.date, appointment.time)
+  );
+}
+
 export default function ClientHomeScreen() {
   const router = useRouter();
 
+  const params = useLocalSearchParams<{
+    account?: string | string[];
+    reservation?: string | string[];
+    date?: string | string[];
+    time?: string | string[];
+  }>();
+
   const {
     user,
+    token,
     signOut,
   } = useAuth();
+
+  const [nextAppointment, setNextAppointment] =
+    useState<AppointmentSummary | null>(null);
+
+  const [pendingCount, setPendingCount] =
+    useState(0);
+
+  const [summaryLoading, setSummaryLoading] =
+    useState(true);
+
+  const [summaryError, setSummaryError] =
+    useState("");
+
+  const summaryRequestRef = useRef(0);
+
+  const accountCreated = firstParam(params.account) === "created";
+  const reservationCreated = firstParam(params.reservation) === "success";
+  const reservedDate = firstParam(params.date);
+  const reservedTime = firstParam(params.time);
+
+  const loadSummary = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    const requestId = summaryRequestRef.current + 1;
+    summaryRequestRef.current = requestId;
+
+    try {
+      setSummaryLoading(true);
+      setSummaryError("");
+
+      const active: AppointmentSummary[] = [];
+      let page = 1;
+
+      // El backend ordena primero todas las citas activas futuras. Solo
+      // avanzamos otra página si la página completa todavía pertenece a ese
+      // bloque; así el contador no queda limitado a los primeros 50 registros.
+      while (true) {
+        const result = await getMyAppointments(token, {
+          page,
+          pageSize: 100,
+        });
+
+        if (requestId !== summaryRequestRef.current) {
+          return;
+        }
+
+        const appointments =
+          (result.appointments ?? []) as AppointmentSummary[];
+        const activeOnPage = appointments.filter(isUpcomingAppointment);
+        active.push(...activeOnPage);
+
+        const reachedNonActiveAppointments =
+          activeOnPage.length < appointments.length;
+
+        if (
+          appointments.length === 0 ||
+          !result.pagination?.hasMore ||
+          reachedNonActiveAppointments
+        ) {
+          break;
+        }
+
+        page += 1;
+      }
+
+      const sortedActive = [
+        ...new Map(
+          active.map((appointment) => [appointment.id, appointment])
+        ).values(),
+      ].sort((a, b) =>
+        `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)
+      );
+
+      if (requestId !== summaryRequestRef.current) {
+        return;
+      }
+
+      setPendingCount(
+        sortedActive.filter((appointment) => appointment.status === "PENDING")
+          .length
+      );
+      setNextAppointment(sortedActive[0] ?? null);
+    } catch (error) {
+      if (requestId !== summaryRequestRef.current) {
+        return;
+      }
+
+      setSummaryError(
+        error instanceof Error
+          ? error.message
+          : "No pudimos actualizar el resumen."
+      );
+    } finally {
+      if (requestId === summaryRequestRef.current) {
+        setSummaryLoading(false);
+      }
+    }
+  }, [token]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadSummary();
+
+      return () => {
+        summaryRequestRef.current += 1;
+      };
+    }, [loadSummary])
+  );
 
   async function handleLogout() {
     try {
@@ -36,9 +193,14 @@ export default function ClientHomeScreen() {
         "/auth/login"
       );
     } catch (error) {
-      console.error(
-        "Error cerrando sesión:",
-        error
+      router.replace("/auth/login");
+
+      showMessage(
+        "Sesión cerrada con advertencia",
+        error instanceof Error
+          ? error.message
+          : "La sesión se cerró, pero no pudimos confirmar la limpieza local.",
+        { kind: "error" }
       );
     }
   }
@@ -58,7 +220,7 @@ export default function ClientHomeScreen() {
             Barbería Cale
           </Text>
 
-          <Text style={styles.greeting}>
+          <Text style={styles.greeting} accessibilityRole="header">
             Hola, {user?.firstName}
           </Text>
         </View>
@@ -69,6 +231,66 @@ export default function ClientHomeScreen() {
           onLogout={handleLogout}
         />
       </View>
+
+      {(accountCreated || reservationCreated) && (
+        <View
+          style={styles.successBanner}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <AppIcon
+            name={{
+              ios: "checkmark.circle.fill",
+              android: "check_circle",
+              web: "check_circle",
+            }}
+            size={23}
+            color={COLORS.success}
+          />
+
+          <View style={styles.successContent}>
+            <Text style={styles.successTitle}>
+              {accountCreated ? "Tu cuenta está lista" : "Cita solicitada"}
+            </Text>
+
+            <Text style={styles.successText}>
+              {accountCreated
+                ? "Ya puedes reservar y consultar tus citas desde aquí."
+                : reservedDate && reservedTime
+                  ? `${formatDisplayDate(reservedDate)}, ${formatDisplayTime(reservedTime)}. Está pendiente de confirmación.`
+                  : "La solicitud quedó pendiente de confirmación."}
+            </Text>
+
+            {reservationCreated && (
+              <Pressable
+                style={styles.successAction}
+                accessibilityRole="button"
+                accessibilityLabel="Ver mis citas"
+                onPress={() => router.replace("/client/my-appointments")}
+              >
+                <Text style={styles.successActionText}>Ver mis citas</Text>
+              </Pressable>
+            )}
+          </View>
+
+          <Pressable
+            style={styles.dismissButton}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar confirmación"
+            onPress={() => router.replace("/client")}
+          >
+            <AppIcon
+              name={{
+                ios: "xmark",
+                android: "close",
+                web: "close",
+              }}
+              size={19}
+              color={COLORS.textSecondary}
+            />
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.hero}>
         <View
@@ -108,6 +330,9 @@ export default function ClientHomeScreen() {
               "/client/appointment"
             )
           }
+          accessibilityRole="button"
+          accessibilityLabel="Agendar mi cita"
+          accessibilityHint="Abre la selección de fecha y hora"
         >
           <Text
             style={
@@ -131,8 +356,114 @@ export default function ClientHomeScreen() {
         </Pressable>
       </View>
 
-      <Text style={styles.sectionTitle}>
-        Servicios
+      <View style={styles.summaryHeader}>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Tu próxima visita
+        </Text>
+
+        <Pressable
+          style={styles.refreshSummaryButton}
+          disabled={summaryLoading}
+          accessibilityRole="button"
+          accessibilityLabel="Actualizar resumen de citas"
+          accessibilityState={{ disabled: summaryLoading, busy: summaryLoading }}
+          onPress={() => void loadSummary()}
+        >
+          <AppIcon
+            name={{
+              ios: "arrow.clockwise",
+              android: "refresh",
+              web: "refresh",
+            }}
+            size={19}
+            color={COLORS.primary}
+          />
+        </Pressable>
+      </View>
+
+      {summaryError && nextAppointment ? (
+        <View style={styles.summaryInlineError} accessibilityRole="alert">
+          <Text style={styles.summaryInlineErrorText}>
+            No pudimos actualizar el resumen. Mostramos la última información disponible.
+          </Text>
+        </View>
+      ) : null}
+
+      {summaryLoading && !nextAppointment ? (
+        <View
+          style={styles.summaryCard}
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityLabel="Actualizando tus citas"
+        >
+          <Text style={styles.summaryMutedText}>Actualizando tus citas…</Text>
+        </View>
+      ) : summaryError && !nextAppointment ? (
+        <View style={styles.summaryErrorCard} accessibilityRole="alert">
+          <Text style={styles.summaryErrorText}>{summaryError}</Text>
+          <Pressable
+            style={styles.summaryRetryButton}
+            accessibilityRole="button"
+            onPress={() => void loadSummary()}
+          >
+            <Text style={styles.summaryRetryText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      ) : nextAppointment ? (
+        <Pressable
+          style={styles.summaryCard}
+          accessibilityRole="button"
+          accessibilityLabel={`Próxima cita: ${formatDisplayDate(nextAppointment.date)} a las ${formatDisplayTime(nextAppointment.time)}, ${nextAppointment.status === "PENDING" ? "pendiente" : "confirmada"}`}
+          accessibilityHint="Abre Mis citas"
+          onPress={() => router.push("/client/my-appointments")}
+        >
+          <View style={styles.summaryMain}>
+            <Text style={styles.summaryDate}>
+              {formatDisplayDate(nextAppointment.date)}
+            </Text>
+            <Text style={styles.summaryTime}>
+              {formatDisplayTime(nextAppointment.time)} · {nextAppointment.service}
+            </Text>
+          </View>
+
+          <View style={styles.summaryBadges}>
+            <View
+              style={[
+                styles.summaryStatus,
+                nextAppointment.status === "ACCEPTED" && styles.summaryStatusAccepted,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.summaryStatusText,
+                  nextAppointment.status === "ACCEPTED" && styles.summaryStatusAcceptedText,
+                ]}
+              >
+                {nextAppointment.status === "PENDING" ? "Pendiente" : "Confirmada"}
+              </Text>
+            </View>
+
+            {pendingCount > 0 && (
+              <Text style={styles.pendingSummaryText}>
+                {pendingCount} {pendingCount === 1 ? "solicitud pendiente" : "solicitudes pendientes"}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+      ) : (
+        <Pressable
+          style={styles.summaryCard}
+          accessibilityRole="button"
+          accessibilityLabel="No tienes próximas citas. Agendar una cita"
+          onPress={() => router.push("/client/appointment")}
+        >
+          <Text style={styles.summaryDate}>Aún no tienes una cita próxima</Text>
+          <Text style={styles.summaryMutedText}>Toca aquí cuando quieras reservar tu corte.</Text>
+        </Pressable>
+      )}
+
+      <Text style={styles.sectionTitle} accessibilityRole="header">
+        Servicio
       </Text>
 
       <Pressable
@@ -146,6 +477,9 @@ export default function ClientHomeScreen() {
             "/client/appointment"
           )
         }
+        accessibilityRole="button"
+        accessibilityLabel="Corte de cabello, 50 minutos"
+        accessibilityHint="Abre la agenda para reservar"
       >
         <View style={styles.serviceIcon}>
           <AppIcon
@@ -188,7 +522,7 @@ export default function ClientHomeScreen() {
         />
       </Pressable>
 
-      <Text style={styles.sectionTitle}>
+      <Text style={styles.sectionTitle} accessibilityRole="header">
         Tus citas
       </Text>
 
@@ -203,6 +537,9 @@ export default function ClientHomeScreen() {
             "/client/my-appointments"
           )
         }
+        accessibilityRole="button"
+        accessibilityLabel="Revisar mis citas"
+        accessibilityHint="Consulta estados, horarios y cancelaciones"
       >
         <View style={styles.appointmentContent}>
           <Text
@@ -295,6 +632,55 @@ const styles = StyleSheet.create({
       SPACING.xl,
     overflow: "hidden",
     position: "relative",
+  },
+
+  successBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: SPACING.sm,
+    backgroundColor: COLORS.successBackground,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+
+  successContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  successTitle: {
+    color: COLORS.success,
+    fontSize: FONT.body,
+    fontWeight: "800",
+    marginBottom: 3,
+  },
+
+  successText: {
+    color: COLORS.text,
+    fontSize: FONT.small,
+    lineHeight: 20,
+  },
+
+  successAction: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    justifyContent: "center",
+  },
+
+  successActionText: {
+    color: COLORS.primary,
+    fontSize: FONT.small,
+    fontWeight: "800",
+  },
+
+  dismissButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: -10,
+    marginRight: -10,
   },
 
   heroDecorationLarge: {
@@ -403,6 +789,126 @@ const styles = StyleSheet.create({
       COLORS.text,
     marginBottom:
       SPACING.md,
+  },
+
+  summaryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  refreshSummaryButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: -12,
+  },
+
+  summaryCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.accentSoft,
+    padding: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+
+  summaryMain: {
+    minWidth: 0,
+  },
+
+  summaryDate: {
+    color: COLORS.text,
+    fontSize: FONT.body,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+
+  summaryTime: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.small,
+    lineHeight: 20,
+  },
+
+  summaryMutedText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.small,
+    lineHeight: 20,
+  },
+
+  summaryBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+
+  summaryStatus: {
+    backgroundColor: COLORS.warningBackground,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+  },
+
+  summaryStatusAccepted: {
+    backgroundColor: COLORS.successBackground,
+  },
+
+  summaryStatusText: {
+    color: COLORS.warning,
+    fontSize: FONT.caption,
+    fontWeight: "800",
+  },
+
+  summaryStatusAcceptedText: {
+    color: COLORS.success,
+  },
+
+  pendingSummaryText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.caption,
+    fontWeight: "600",
+  },
+
+  summaryErrorCard: {
+    backgroundColor: COLORS.dangerBackground,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+
+  summaryInlineError: {
+    backgroundColor: COLORS.dangerBackground,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    marginTop: -SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+
+  summaryInlineErrorText: {
+    color: COLORS.danger,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+  },
+
+  summaryErrorText: {
+    color: COLORS.danger,
+    fontSize: FONT.small,
+    lineHeight: 20,
+  },
+
+  summaryRetryButton: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    justifyContent: "center",
+  },
+
+  summaryRetryText: {
+    color: COLORS.primary,
+    fontSize: FONT.small,
+    fontWeight: "800",
   },
 
   serviceCard: {

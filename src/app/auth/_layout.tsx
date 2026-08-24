@@ -1,5 +1,5 @@
 import { Redirect, Stack } from "expo-router";
-import { ActivityIndicator, StyleSheet } from "react-native";
+import { ActivityIndicator, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { COLORS } from "../../constants/app-theme";
@@ -10,8 +10,16 @@ export default function AuthLayout() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <SafeAreaView
+        style={styles.loadingContainer}
+        accessibilityLiveRegion="polite"
+      >
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          accessibilityLabel="Cargando sesión"
+        />
+        <Text style={styles.loadingText}>Cargando sesión…</Text>
       </SafeAreaView>
     );
   }
@@ -42,6 +50,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.background,
+  },
+
+  loadingText: {
+    marginTop: 12,
+    color: COLORS.textSecondary,
+    fontSize: 14,
   },
 
   safeArea: {

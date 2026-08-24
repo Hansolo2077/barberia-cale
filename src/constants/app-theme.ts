@@ -9,16 +9,17 @@ export const COLORS = {
   textMuted: "#7A6961",
 
   border: "#DED1C5",
+  borderStrong: "#947B70",
 
   primary: "#743B2F",
   primarySoft: "#F1E1D8",
   onPrimary: "#FFFCF7",
   accent: "#C49A45",
   accentSoft: "#F3E4BF",
-  accentText: "#8F671C",
+  accentText: "#8B6218",
 
   success: "#1F7A4C",
-  warning: "#A86D00",
+  warning: "#865600",
   danger: "#B42318",
 
   successBackground: "#EAF7EF",

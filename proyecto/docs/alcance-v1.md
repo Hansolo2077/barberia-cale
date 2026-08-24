@@ -29,7 +29,7 @@ Desarrollar una aplicación móvil y web para Barbería Cale que permita gestion
 
 - Consulta de próximas citas e historial, con actualización de información al recuperar el foco.
 
-- Cancelación de citas por el cliente dentro de la ventana permitida y liberación del horario cuando corresponda.
+- Cancelación de citas por el cliente con al menos una hora de anticipación y liberación del horario cuando corresponda.
 
 - Gestión administrativa de solicitudes y citas: consultar, filtrar, aceptar, rechazar, cancelar y completar según estado y tiempo.
 

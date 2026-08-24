@@ -1,34 +1,104 @@
-const API_URL = "https://barberia-cale.onrender.com/api";
+import {
+  apiRequest,
+  createQueryString,
+} from "./api-client";
 
-export async function getAvailability(
-  token: string,
-  date: string
-) {
-  const response = await fetch(
-    `${API_URL}/appointments/availability?date=${date}`,
+export type AppointmentStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "COMPLETED";
+
+export type BookingPolicy = {
+  minLeadHours: number;
+  maxActivePerDay: number;
+  maxActiveInSevenDays: number;
+  cancellationWindowMinutes: number;
+  businessTimeZone?: string;
+};
+
+export type BookingEligibility = {
+  allowed: boolean;
+  reason: string | null;
+  activeOnDate: number;
+  activeInSevenDays: number;
+};
+
+export type AvailabilitySlot = {
+  time: string;
+  available: boolean;
+};
+
+export type AvailabilityResponse = {
+  success: boolean;
+  date: string;
+  times: AvailabilitySlot[];
+  eligibility: BookingEligibility;
+  policy: BookingPolicy;
+};
+
+export type NextAvailabilityResponse = {
+  success: boolean;
+  date: string | null;
+  times: AvailabilitySlot[];
+  eligibility: BookingEligibility | null;
+  policy: BookingPolicy;
+};
+
+export type UserAppointment = {
+  id: number;
+  service: string;
+  date: string;
+  time: string;
+  status: AppointmentStatus;
+  createdAt: string;
+  cancelUntil?: string;
+  canCancel?: boolean;
+  isPast?: boolean;
+};
+
+export type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+};
+
+export type AppointmentListQuery = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type MyAppointmentsResponse = {
+  success: boolean;
+  appointments: UserAppointment[];
+  pagination: Pagination;
+  policy: BookingPolicy;
+};
+
+export function getAvailability(token: string, date: string) {
+  return apiRequest<AvailabilityResponse>(
+    `/appointments/availability${createQueryString({ date })}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      token,
     }
   );
+}
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(
-      result.message || "No se pudo consultar la disponibilidad."
-    );
-
-    Object.assign(error, {
-      status: response.status,
-    });
-
-    throw error;
-  }
-
-  return result;
+export function getNextAvailability(
+  token: string,
+  startDate: string
+) {
+  return apiRequest<NextAvailabilityResponse>(
+    `/appointments/next-availability${createQueryString({ startDate })}`,
+    {
+      method: "GET",
+      token,
+    }
+  );
 }
 
 export type CreateAppointmentData = {
@@ -37,80 +107,45 @@ export type CreateAppointmentData = {
   time: string;
 };
 
-export async function createAppointment(
+export type AppointmentMutationResponse = {
+  success: boolean;
+  message: string;
+  appointment: UserAppointment;
+};
+
+export function createAppointment(
   token: string,
   data: CreateAppointmentData
 ) {
-  const response = await fetch(
-    `${API_URL}/appointments`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message || "No se pudo agendar la cita."
-    );
-  }
-
-  return result;
+  return apiRequest<AppointmentMutationResponse>("/appointments", {
+    method: "POST",
+    token,
+    json: data,
+  });
 }
 
-export async function getMyAppointments(
-  token: string
+export function getMyAppointments(
+  token: string,
+  query: AppointmentListQuery = {}
 ) {
-  const response = await fetch(
-    `${API_URL}/appointments/my`,
+  return apiRequest<MyAppointmentsResponse>(
+    `/appointments/my${createQueryString(query)}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      token,
     }
   );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message ||
-        "No se pudieron consultar tus citas."
-    );
-  }
-
-  return result;
 }
 
-export async function cancelAppointment(
+export function cancelAppointment(
   token: string,
   appointmentId: number
 ) {
-  const response = await fetch(
-    `${API_URL}/appointments/${appointmentId}/cancel`,
+  return apiRequest<AppointmentMutationResponse>(
+    `/appointments/${appointmentId}/cancel`,
     {
       method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      token,
     }
   );
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message ||
-        "No se pudo cancelar la cita."
-    );
-  }
-
-  return result;
 }

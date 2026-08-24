@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 
 import {
+    useRef,
     useState,
 } from "react";
 
@@ -16,10 +17,13 @@ import {
 } from "react-native";
 
 import BackButton from "../../components/BackButton";
+import AppIcon from "../../components/AppIcon";
+import {
+  isValidLocalPhone,
+  LOCAL_PHONE_REQUIREMENTS,
+} from "../../utils/phone-validation";
 
 import { useAuth } from "../../context/AuthContext";
-
-import { showMessage } from "../../utils/show-message";
 
 import {
     COLORS,
@@ -28,6 +32,15 @@ import {
     RADIUS,
     SPACING,
 } from "../../constants/app-theme";
+
+type RegisterField =
+  | "firstName"
+  | "lastName"
+  | "phone"
+  | "password"
+  | "confirmPassword";
+
+type RegisterErrors = Partial<Record<RegisterField | "form", string>>;
 
 export default function RegisterScreen() {
   const router =
@@ -65,12 +78,64 @@ export default function RegisterScreen() {
   const [
     rememberMe,
     setRememberMe,
-  ] = useState(true);
+  ] = useState(false);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const [errors, setErrors] =
+    useState<RegisterErrors>({});
 
   const [
     submitting,
     setSubmitting,
   ] = useState(false);
+
+  const firstNameRef = useRef<TextInput>(null);
+  const lastNameRef = useRef<TextInput>(null);
+  const phoneRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
+
+  function updateField(
+    field: RegisterField,
+    value: string
+  ) {
+    const normalized =
+      field === "phone"
+        ? value.replace(/\D/g, "").slice(0, 8)
+        : value;
+
+    switch (field) {
+      case "firstName":
+        setFirstName(normalized);
+        break;
+      case "lastName":
+        setLastName(normalized);
+        break;
+      case "phone":
+        setPhone(normalized);
+        break;
+      case "password":
+        setPassword(normalized);
+        break;
+      case "confirmPassword":
+        setConfirmPassword(normalized);
+        break;
+    }
+
+    setErrors((current) => ({
+      ...current,
+      [field]: undefined,
+      ...(field === "password"
+        ? { confirmPassword: undefined }
+        : null),
+      form: undefined,
+    }));
+  }
 
   async function handleRegister() {
     const cleanFirstName =
@@ -82,58 +147,54 @@ export default function RegisterScreen() {
     const cleanPhone =
       phone.trim();
 
-    if (
-      !cleanFirstName ||
-      !cleanLastName ||
-      !cleanPhone ||
-      !password ||
-      !confirmPassword
-    ) {
-      showMessage(
-        "Datos incompletos",
-        "Completa todos los campos para crear tu cuenta."
-      );
+    const nextErrors: RegisterErrors = {};
 
-      return;
+    if (!cleanFirstName) {
+      nextErrors.firstName = "Ingresa tu nombre.";
     }
 
-    if (
-      !/^\d{8}$/.test(
-        cleanPhone
-      )
-    ) {
-      showMessage(
-        "Número inválido",
-        "El número de celular debe contener exactamente 8 dígitos."
-      );
-
-      return;
+    if (!cleanLastName) {
+      nextErrors.lastName = "Ingresa tu apellido.";
     }
 
-    if (
-      password.length < 6
-    ) {
-      showMessage(
-        "Contraseña muy corta",
-        "La contraseña debe tener al menos 6 caracteres."
-      );
-
-      return;
+    if (!cleanPhone) {
+      nextErrors.phone = "Ingresa tu número de celular.";
+    } else if (!isValidLocalPhone(cleanPhone)) {
+      nextErrors.phone =
+        "El número debe tener 8 dígitos y comenzar con 8, 7 o 5.";
     }
 
-    if (
-      password !==
-      confirmPassword
-    ) {
-      showMessage(
-        "Las contraseñas no coinciden",
-        "Verifica que ambas contraseñas sean iguales."
-      );
+    if (!password) {
+      nextErrors.password = "Crea una contraseña.";
+    } else if (password.length < 6) {
+      nextErrors.password = "Usa al menos 6 caracteres.";
+    }
 
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "Confirma tu contraseña.";
+    } else if (password !== confirmPassword) {
+      nextErrors.confirmPassword = "Las contraseñas no coinciden.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+
+      const firstInvalid = (
+        [
+          ["firstName", firstNameRef],
+          ["lastName", lastNameRef],
+          ["phone", phoneRef],
+          ["password", passwordRef],
+          ["confirmPassword", confirmPasswordRef],
+        ] as const
+      ).find(([field]) => nextErrors[field]);
+
+      firstInvalid?.[1].current?.focus();
       return;
     }
 
     try {
+      setErrors({});
       setSubmitting(true);
 
       const user =
@@ -152,11 +213,6 @@ export default function RegisterScreen() {
           rememberMe,
         });
 
-      showMessage(
-        "Cuenta creada",
-        "Tu cuenta fue creada correctamente."
-      );
-
       if (
         user.role ===
         "ADMIN"
@@ -168,19 +224,19 @@ export default function RegisterScreen() {
         return;
       }
 
-      router.replace(
-        "/client"
-      );
+      router.replace({
+        pathname: "/client",
+        params: {
+          account: "created",
+        },
+      });
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "No se pudo crear la cuenta.";
 
-      showMessage(
-        "No se pudo crear la cuenta",
-        message
-      );
+      setErrors({ form: message });
     } finally {
       setSubmitting(false);
     }
@@ -231,6 +287,7 @@ export default function RegisterScreen() {
             style={
               styles.title
             }
+            accessibilityRole="header"
           >
             Haz de Cale tu barbería
           </Text>
@@ -258,21 +315,33 @@ export default function RegisterScreen() {
           </Text>
 
           <TextInput
-            style={
-              styles.input
-            }
+            ref={firstNameRef}
+            style={[
+              styles.input,
+              errors.firstName && styles.inputError,
+            ]}
             value={
               firstName
             }
             onChangeText={
-              setFirstName
+              (value) => updateField("firstName", value)
             }
             placeholder="Tu nombre"
             placeholderTextColor={
               COLORS.textMuted
             }
             autoCapitalize="words"
+            autoComplete="given-name"
+            returnKeyType="next"
+            onSubmitEditing={() => lastNameRef.current?.focus()}
+            accessibilityLabel="Nombre"
           />
+
+          {errors.firstName ? (
+            <Text style={styles.fieldError} accessibilityLiveRegion="polite">
+              {errors.firstName}
+            </Text>
+          ) : null}
 
           <Text
             style={
@@ -283,21 +352,33 @@ export default function RegisterScreen() {
           </Text>
 
           <TextInput
-            style={
-              styles.input
-            }
+            ref={lastNameRef}
+            style={[
+              styles.input,
+              errors.lastName && styles.inputError,
+            ]}
             value={
               lastName
             }
             onChangeText={
-              setLastName
+              (value) => updateField("lastName", value)
             }
             placeholder="Tu apellido"
             placeholderTextColor={
               COLORS.textMuted
             }
             autoCapitalize="words"
+            autoComplete="family-name"
+            returnKeyType="next"
+            onSubmitEditing={() => phoneRef.current?.focus()}
+            accessibilityLabel="Apellido"
           />
+
+          {errors.lastName ? (
+            <Text style={styles.fieldError} accessibilityLiveRegion="polite">
+              {errors.lastName}
+            </Text>
+          ) : null}
 
           <Text
             style={
@@ -308,14 +389,16 @@ export default function RegisterScreen() {
           </Text>
 
           <TextInput
-            style={
-              styles.input
-            }
+            ref={phoneRef}
+            style={[
+              styles.input,
+              errors.phone && styles.inputError,
+            ]}
             value={
               phone
             }
             onChangeText={
-              setPhone
+              (value) => updateField("phone", value)
             }
             placeholder="88888888"
             placeholderTextColor={
@@ -323,7 +406,22 @@ export default function RegisterScreen() {
             }
             keyboardType="phone-pad"
             maxLength={8}
+            autoComplete="tel"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            accessibilityLabel="Número de celular"
+            accessibilityHint={LOCAL_PHONE_REQUIREMENTS}
           />
+
+          <Text style={styles.fieldHelper}>
+            {LOCAL_PHONE_REQUIREMENTS}
+          </Text>
+
+          {errors.phone ? (
+            <Text style={styles.fieldError} accessibilityLiveRegion="polite">
+              {errors.phone}
+            </Text>
+          ) : null}
 
           <Text
             style={
@@ -333,23 +431,54 @@ export default function RegisterScreen() {
             Contraseña
           </Text>
 
-          <TextInput
-            style={
-              styles.input
-            }
-            value={
-              password
-            }
-            onChangeText={
-              setPassword
-            }
-            placeholder="Mínimo 6 caracteres"
-            placeholderTextColor={
-              COLORS.textMuted
-            }
-            secureTextEntry
-            autoCapitalize="none"
-          />
+          <View style={[
+            styles.passwordInputRow,
+            errors.password && styles.inputError,
+          ]}>
+            <TextInput
+              ref={passwordRef}
+              style={styles.passwordInput}
+              value={password}
+              onChangeText={(value) => updateField("password", value)}
+              placeholder="Crea una contraseña"
+              placeholderTextColor={COLORS.textMuted}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="new-password"
+              returnKeyType="next"
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+              accessibilityLabel="Contraseña"
+              accessibilityHint="Debe tener al menos 6 caracteres"
+            />
+
+            <Pressable
+              style={styles.passwordVisibilityButton}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              onPress={() => setShowPassword((current) => !current)}
+            >
+              <AppIcon
+                name={{
+                  ios: showPassword ? "eye.slash" : "eye",
+                  android: showPassword ? "visibility_off" : "visibility",
+                  web: showPassword ? "visibility_off" : "visibility",
+                }}
+                size={21}
+                color={COLORS.textSecondary}
+              />
+            </Pressable>
+          </View>
+
+          <Text style={styles.fieldHelper}>
+            Usa al menos 6 caracteres. No reutilices una contraseña importante.
+          </Text>
+
+          {errors.password ? (
+            <Text style={styles.fieldError} accessibilityLiveRegion="polite">
+              {errors.password}
+            </Text>
+          ) : null}
 
           <Text
             style={
@@ -359,42 +488,49 @@ export default function RegisterScreen() {
             Confirmar contraseña
           </Text>
 
-          <TextInput
-            style={[
-              styles.input,
+          <View style={[
+            styles.passwordInputRow,
+            errors.confirmPassword && styles.inputError,
+          ]}>
+            <TextInput
+              ref={confirmPasswordRef}
+              style={styles.passwordInput}
+              value={confirmPassword}
+              onChangeText={(value) => updateField("confirmPassword", value)}
+              placeholder="Escríbela nuevamente"
+              placeholderTextColor={COLORS.textMuted}
+              secureTextEntry={!showConfirmPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="new-password"
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
+              accessibilityLabel="Confirmar contraseña"
+            />
 
-              confirmPassword.length >
-                0 &&
-              password !==
-                confirmPassword &&
-              styles.inputError,
-            ]}
-            value={
-              confirmPassword
-            }
-            onChangeText={
-              setConfirmPassword
-            }
-            placeholder="Escribe la contraseña nuevamente"
-            placeholderTextColor={
-              COLORS.textMuted
-            }
-            secureTextEntry
-            autoCapitalize="none"
-          />
+            <Pressable
+              style={styles.passwordVisibilityButton}
+              accessibilityRole="button"
+              accessibilityLabel={showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"}
+              onPress={() => setShowConfirmPassword((current) => !current)}
+            >
+              <AppIcon
+                name={{
+                  ios: showConfirmPassword ? "eye.slash" : "eye",
+                  android: showConfirmPassword ? "visibility_off" : "visibility",
+                  web: showConfirmPassword ? "visibility_off" : "visibility",
+                }}
+                size={21}
+                color={COLORS.textSecondary}
+              />
+            </Pressable>
+          </View>
 
-          {confirmPassword.length >
-            0 &&
-            password !==
-              confirmPassword && (
-              <Text
-                style={
-                  styles.passwordError
-                }
-              >
-                Las contraseñas no coinciden.
-              </Text>
-            )}
+          {errors.confirmPassword ? (
+            <Text style={styles.fieldError} accessibilityLiveRegion="polite">
+              {errors.confirmPassword}
+            </Text>
+          ) : null}
 
           <Pressable
             style={
@@ -406,6 +542,10 @@ export default function RegisterScreen() {
                   !current
               )
             }
+            accessibilityRole="checkbox"
+            accessibilityLabel="Mantener mi sesión iniciada"
+            accessibilityHint="No se recomienda en dispositivos compartidos"
+            accessibilityState={{ checked: rememberMe }}
           >
             <View
               style={[
@@ -444,10 +584,27 @@ export default function RegisterScreen() {
                   styles.rememberDescription
                 }
               >
-                No tendrás que iniciar sesión cada vez que abras la aplicación.
+                Actívalo solo si este dispositivo es tuyo. En uno compartido, déjalo desmarcado.
               </Text>
             </View>
           </Pressable>
+
+          <View style={styles.privacyNotice}>
+            <Text style={styles.privacyNoticeText}>
+              Tu celular identifica tu cuenta y permite gestionar tus citas. Nunca compartiremos tu contraseña con el personal de la barbería.
+            </Text>
+          </View>
+
+          {errors.form ? (
+            <View
+              style={styles.formError}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+            >
+              <Text style={styles.formErrorTitle}>No se pudo crear la cuenta</Text>
+              <Text style={styles.formErrorText}>{errors.form}</Text>
+            </View>
+          ) : null}
 
           <Pressable
             style={[
@@ -459,6 +616,8 @@ export default function RegisterScreen() {
             disabled={
               submitting
             }
+            accessibilityRole="button"
+            accessibilityState={{ disabled: submitting, busy: submitting }}
             onPress={
               handleRegister
             }
@@ -488,8 +647,10 @@ export default function RegisterScreen() {
             </Text>
 
             <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Ir a iniciar sesión"
               onPress={() =>
-                router.push(
+                router.replace(
                   "/auth/login"
                 )
               }
@@ -647,7 +808,7 @@ const styles =
       borderWidth: 1,
 
       borderColor:
-        COLORS.border,
+        COLORS.borderStrong,
 
       borderRadius:
         RADIUS.md,
@@ -667,9 +828,10 @@ const styles =
     inputError: {
       borderColor:
         COLORS.danger,
+      borderWidth: 2,
     },
 
-    passwordError: {
+    fieldError: {
       fontSize:
         FONT.caption,
 
@@ -678,6 +840,40 @@ const styles =
 
       marginTop:
         SPACING.xs,
+    },
+
+    fieldHelper: {
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      color: COLORS.textSecondary,
+      marginTop: SPACING.xs,
+    },
+
+    passwordInputRow: {
+      width: "100%",
+      minHeight: 52,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.borderStrong,
+      borderRadius: RADIUS.md,
+      paddingLeft: SPACING.md,
+    },
+
+    passwordInput: {
+      flex: 1,
+      minWidth: 0,
+      paddingVertical: 14,
+      fontSize: FONT.body,
+      color: COLORS.text,
+    },
+
+    passwordVisibilityButton: {
+      width: 48,
+      minHeight: 48,
+      justifyContent: "center",
+      alignItems: "center",
     },
 
     rememberRow: {
@@ -691,6 +887,8 @@ const styles =
 
       marginBottom:
         SPACING.lg,
+
+      minHeight: 48,
     },
 
     checkbox: {
@@ -703,7 +901,7 @@ const styles =
       borderWidth: 1,
 
       borderColor:
-        COLORS.border,
+        COLORS.borderStrong,
 
       backgroundColor:
         COLORS.surface,
@@ -760,6 +958,39 @@ const styles =
 
       color:
         COLORS.textSecondary,
+    },
+
+    privacyNotice: {
+      backgroundColor: COLORS.primarySoft,
+      borderRadius: RADIUS.md,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+
+    privacyNoticeText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 19,
+    },
+
+    formError: {
+      backgroundColor: COLORS.dangerBackground,
+      borderRadius: RADIUS.md,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+
+    formErrorTitle: {
+      color: COLORS.danger,
+      fontSize: FONT.small,
+      fontWeight: "800",
+      marginBottom: 3,
+    },
+
+    formErrorText: {
+      color: COLORS.danger,
+      fontSize: FONT.small,
+      lineHeight: 20,
     },
 
     primaryButton: {

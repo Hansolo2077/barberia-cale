@@ -1,9 +1,22 @@
 const appointmentService =
   require("../services/appointment.service");
 
-function isValidDateFormat(date) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date);
-}
+const {
+  isValidIsoDate,
+} = require("../utils/date");
+
+const {
+  buildPaginationMeta,
+  getPagination,
+} = require("../utils/pagination");
+
+const {
+  sendControllerError,
+} = require("../utils/http-error");
+
+const ALLOWED_SERVICES = new Set([
+  "Corte de cabello",
+]);
 
 async function availability(
   req,
@@ -14,7 +27,7 @@ async function availability(
 
     if (
       !date ||
-      !isValidDateFormat(date)
+      !isValidIsoDate(date)
     ) {
       return res.status(400).json({
         success: false,
@@ -23,14 +36,17 @@ async function availability(
       });
     }
 
-    const times =
+    const result =
       await appointmentService
-        .getAvailability(date);
+        .getAvailability(
+          date,
+          req.user.userId
+        );
 
     return res.json({
       success: true,
       date,
-      times,
+      ...result,
     });
   } catch (error) {
     console.error(
@@ -46,21 +62,69 @@ async function availability(
   }
 }
 
-async function create(
+async function nextAvailability(
   req,
   res
 ) {
   try {
     const {
+      startDate,
+    } = req.query;
+
+    if (!isValidIsoDate(startDate)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Debes proporcionar una fecha inicial válida.",
+      });
+    }
+
+    const result = await appointmentService
+      .getNextAvailableDate(
+        startDate,
+        req.user.userId
+      );
+
+    return res.json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR CONSULTANDO PRÓXIMA DISPONIBILIDAD:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "No se pudo buscar la próxima fecha disponible.",
+    });
+  }
+}
+
+async function create(
+  req,
+  res
+) {
+  try {
+    const body =
+      req.body &&
+      typeof req.body === "object" &&
+      !Array.isArray(req.body)
+        ? req.body
+        : {};
+
+    const {
       service,
       date,
       time,
-    } = req.body;
+    } = body;
 
     if (
-      !service ||
-      !date ||
-      !time
+      typeof service !== "string" ||
+      typeof date !== "string" ||
+      typeof time !== "string"
     ) {
       return res.status(400).json({
         success: false,
@@ -69,8 +133,18 @@ async function create(
       });
     }
 
+    const normalizedService = service.trim();
+
+    if (!ALLOWED_SERVICES.has(normalizedService)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "El servicio seleccionado no es válido.",
+      });
+    }
+
     if (
-      !isValidDateFormat(date)
+      !isValidIsoDate(date)
     ) {
       return res.status(400).json({
         success: false,
@@ -84,7 +158,7 @@ async function create(
         .createAppointment({
           userId:
             req.user.userId,
-          service,
+          service: normalizedService,
           date,
           time,
         });
@@ -103,16 +177,11 @@ async function create(
       error
     );
 
-    return res
-      .status(
-        error.statusCode || 500
-      )
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo crear la cita.",
-      });
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo crear la cita."
+    );
   }
 }
 
@@ -121,15 +190,29 @@ async function myAppointments(
   res
 ) {
   try {
-    const appointments =
+    const pagination = getPagination(
+      req.query
+    );
+
+    const result =
       await appointmentService
         .getUserAppointments(
-          req.user.userId
+          req.user.userId,
+          pagination
         );
 
     return res.json({
       success: true,
-      appointments,
+      appointments:
+        result.appointments,
+      pagination:
+        buildPaginationMeta({
+          page: result.page,
+          pageSize: result.pageSize,
+          total: result.total,
+        }),
+      policy:
+        appointmentService.BOOKING_POLICY,
     });
   } catch (error) {
     console.error(
@@ -185,21 +268,17 @@ async function cancel(
       error
     );
 
-    return res
-      .status(
-        error.statusCode || 500
-      )
-      .json({
-        success: false,
-        message:
-          error.message ||
-          "No se pudo cancelar la cita.",
-      });
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo cancelar la cita."
+    );
   }
 }
 
 module.exports = {
   availability,
+  nextAvailability,
   create,
   myAppointments,
   cancel,

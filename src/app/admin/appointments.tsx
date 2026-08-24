@@ -1,13 +1,26 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import {
+    Fragment,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
+import {
+    useFocusEffect,
+    useLocalSearchParams,
+} from "expo-router";
 import {
     ActivityIndicator,
     Alert,
     Linking,
     Platform,
     Pressable,
+    RefreshControl,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
+    TextInput,
     View,
 } from "react-native";
 
@@ -15,15 +28,20 @@ import {
     formatDisplayDate,
     formatDisplayTime,
 } from "../../utils/date-format";
+import { isAppointmentPast as isPastInBusinessTime } from "../../utils/business-date";
+import { BUSINESS } from "../../constants/business";
 
 import {
     acceptAdminAppointment,
     AdminAppointment,
+    AppointmentStatusCounts,
     cancelAdminAppointment,
     completeAdminAppointment,
     getAdminAppointments,
     rejectAdminAppointment,
 } from "../../api/admin.api";
+import type { Pagination } from "../../api/appointments.api";
+import { ApiError } from "../../api/api-client";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -40,21 +58,48 @@ import {
 
 
 
-import { showMessage } from "../../utils/show-message";
+type StatusFilter = "PENDING" | "ACCEPTED";
 
-type StatusFilter =
-  | "PENDING"
-  | "ACCEPTED"
-  | "COMPLETED"
-  | "REJECTED"
-  | "CANCELLED"
-  | "ALL";
+type OperationNotice = {
+  kind: "success" | "error";
+  title: string;
+  message: string;
+};
+
+type WhatsAppDraft = {
+  appointment: AdminAppointment;
+  status: "ACCEPTED" | "REJECTED";
+};
+
+type AppointmentsQuery = {
+  status: StatusFilter;
+  search: string;
+};
+
+function isUnauthorizedError(error: unknown) {
+  return error instanceof ApiError && error.code === "UNAUTHORIZED";
+}
+
+function shouldReconcileMutation(error: unknown) {
+  return (
+    error instanceof ApiError &&
+    [
+      "ABORTED",
+      "CONFLICT",
+      "INVALID_RESPONSE",
+      "NETWORK",
+      "SERVER",
+      "TIMEOUT",
+      "UNKNOWN",
+    ].includes(error.code)
+  );
+}
 
 function normalizeWhatsAppPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
 
   if (digits.length === 8) {
-    return `505${digits}`;
+    return `${BUSINESS.countryCallingCode}${digits}`;
   }
 
   if (digits.startsWith("00")) {
@@ -95,7 +140,19 @@ async function openWhatsAppNotification(
   const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
   if (Platform.OS === "web" && typeof window !== "undefined") {
-    window.location.assign(whatsappUrl);
+    const openedWindow = window.open(
+      whatsappUrl,
+      "_blank"
+    );
+
+    if (!openedWindow) {
+      throw new Error(
+        "El navegador bloqueó la nueva pestaña de WhatsApp."
+      );
+    }
+
+    openedWindow.opener = null;
+
     return;
   }
 
@@ -104,374 +161,734 @@ async function openWhatsAppNotification(
 
 export default function AdminAppointmentsScreen() {
   const { token } = useAuth();
+  const params = useLocalSearchParams<{
+    query?: string | string[];
+    status?: string | string[];
+  }>();
   const scrollViewRef = useRef<ScrollView>(null);
   const resultsOffsetRef = useRef(0);
+  const hasLoadedRef = useRef(false);
+
+  const initialQuery = Array.isArray(params.query)
+    ? params.query[0] ?? ""
+    : params.query ?? "";
+
+  const requestedStatus = Array.isArray(params.status)
+    ? params.status[0]
+    : params.status;
+
+  const initialStatusFilter: StatusFilter =
+    requestedStatus === "ACCEPTED" ? "ACCEPTED" : "PENDING";
 
   const [appointments, setAppointments] =
     useState<AdminAppointment[]>([]);
 
   const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>("PENDING");
+    useState<StatusFilter>(initialStatusFilter);
+
+  const [searchQuery, setSearchQuery] =
+    useState(initialQuery);
+
+  const [appliedSearch, setAppliedSearch] =
+    useState(initialQuery);
+
+  const [pagination, setPagination] =
+    useState<Pagination | null>(null);
+
+  const [statusCounts, setStatusCounts] =
+    useState<AppointmentStatusCounts>({});
 
   const [loading, setLoading] =
     useState(true);
 
-  const [processingId, setProcessingId] =
-    useState<number | null>(null);
+  const [hasLoaded, setHasLoaded] =
+    useState(false);
+
+  const [currentTime, setCurrentTime] =
+    useState(() => Date.now());
+
+  const [refreshing, setRefreshing] =
+    useState(false);
+
+  const [loadingMore, setLoadingMore] =
+    useState(false);
+
+  const [querying, setQuerying] =
+    useState(false);
+
+  const [processingIds, setProcessingIds] =
+    useState<Set<number>>(() => new Set());
 
   const [error, setError] =
     useState("");
 
+  const [syncWarning, setSyncWarning] =
+    useState("");
+
+  const [lastUpdated, setLastUpdated] =
+    useState<Date | null>(null);
+
+  const [operationNotice, setOperationNotice] =
+    useState<OperationNotice | null>(null);
+
+  const [whatsAppDraft, setWhatsAppDraft] =
+    useState<WhatsAppDraft | null>(null);
+
   const [expandedAppointmentId, setExpandedAppointmentId] =
     useState<number | null>(null);
 
-  useEffect(() => {
-    if (token) {
-      loadAppointments(true);
-    }
-  }, [token]);
+  const [loadedQuery, setLoadedQuery] =
+    useState<AppointmentsQuery>({
+      status: initialStatusFilter,
+      search: initialQuery,
+    });
 
-  async function loadAppointments(
-    showFullScreen = false
+  const loadedQueryRef = useRef<AppointmentsQuery>({
+    status: initialStatusFilter,
+    search: initialQuery,
+  });
+
+  const loadedPageRef = useRef(1);
+  const requestSequenceRef = useRef(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30_000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (searchQuery.trim() !== loadedQueryRef.current.search) {
+        setQuerying(true);
+      }
+
+      setAppliedSearch(searchQuery.trim());
+    }, 350);
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const loadAppointments = useCallback(
+    async (
+      mode: "initial" | "refresh" | "silent" = "silent",
+      page = 1,
+      append = false
+    ) => {
+      if (!token) {
+        return false;
+      }
+
+      const requestQuery: AppointmentsQuery = {
+        status: statusFilter,
+        search: appliedSearch.trim(),
+      };
+      const queryChanged =
+        requestQuery.status !== loadedQueryRef.current.status ||
+        requestQuery.search !== loadedQueryRef.current.search;
+      const pagesToPreserve =
+        !append && !queryChanged && hasLoadedRef.current
+          ? loadedPageRef.current
+          : 1;
+      const requestSequence = ++requestSequenceRef.current;
+
+      try {
+        if (mode === "initial") {
+          setLoading(true);
+        }
+
+        if (mode === "refresh") {
+          setRefreshing(true);
+        }
+
+        if (append) {
+          setLoadingMore(true);
+        }
+
+        if (
+          queryChanged ||
+          (mode === "silent" && hasLoadedRef.current && !append)
+        ) {
+          setQuerying(true);
+        }
+
+        setError("");
+        setSyncWarning("");
+
+        const firstResult = await getAdminAppointments(token, {
+          page,
+          pageSize: 50,
+          status: requestQuery.status,
+          search: requestQuery.search,
+        });
+
+        const lastPageToPreserve =
+          !append && page === 1
+            ? Math.min(pagesToPreserve, firstResult.pagination.totalPages)
+            : page;
+
+        const additionalResults =
+          !append && page === 1 && lastPageToPreserve > 1
+            ? await Promise.all(
+                Array.from(
+                  { length: lastPageToPreserve - 1 },
+                  (_, index) =>
+                    getAdminAppointments(token, {
+                      page: index + 2,
+                      pageSize: 50,
+                      status: requestQuery.status,
+                      search: requestQuery.search,
+                    })
+                )
+              )
+            : [];
+
+        if (requestSequence !== requestSequenceRef.current) {
+          return false;
+        }
+
+        const pageResults = [firstResult, ...additionalResults];
+        const resultPagination =
+          pageResults[pageResults.length - 1].pagination;
+        const knownResultIds = new Set<number>();
+        const resultAppointments = pageResults
+          .flatMap((result) => result.appointments)
+          .filter((appointment) => {
+            if (knownResultIds.has(appointment.id)) {
+              return false;
+            }
+
+            knownResultIds.add(appointment.id);
+            return true;
+          });
+
+        setAppointments((current) => {
+          if (!append) {
+            return resultAppointments;
+          }
+
+          const existingIds = new Set(
+            current.map((appointment) => appointment.id)
+          );
+
+          return [
+            ...current,
+            ...resultAppointments.filter(
+              (appointment) => !existingIds.has(appointment.id)
+            ),
+          ];
+        });
+        setPagination(resultPagination);
+        setStatusCounts(firstResult.statusCounts ?? {});
+        setLoadedQuery(requestQuery);
+        loadedQueryRef.current = requestQuery;
+        loadedPageRef.current = resultPagination.page;
+        setLastUpdated(new Date());
+        hasLoadedRef.current = true;
+        setHasLoaded(true);
+        return true;
+      } catch (loadError) {
+        const message =
+          loadError instanceof Error
+            ? loadError.message
+            : "No se pudieron cargar las citas.";
+
+        if (requestSequence !== requestSequenceRef.current) {
+          return false;
+        }
+
+        if (isUnauthorizedError(loadError)) {
+          return false;
+        }
+
+        if (hasLoadedRef.current) {
+          setSyncWarning(
+            `Mostramos la última información disponible. ${message}`
+          );
+        } else {
+          setError(message);
+        }
+
+        return false;
+      } finally {
+        if (requestSequence === requestSequenceRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+          setLoadingMore(false);
+          setQuerying(false);
+        }
+      }
+    },
+    [appliedSearch, statusFilter, token]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadAppointments(
+        hasLoadedRef.current ? "silent" : "initial"
+      );
+    }, [loadAppointments])
+  );
+
+  function setAppointmentProcessing(
+    appointmentId: number,
+    processing: boolean
   ) {
+    setProcessingIds((current) => {
+      const next = new Set(current);
+
+      if (processing) {
+        next.add(appointmentId);
+      } else {
+        next.delete(appointmentId);
+      }
+
+      return next;
+    });
+  }
+
+  function getAppointmentSummary(appointment: AdminAppointment) {
+    return `${appointment.firstName} ${appointment.lastName}\n${formatDisplayDate(
+      appointment.date
+    )} · ${formatDisplayTime(appointment.time)}\n${appointment.service}`;
+  }
+
+  function isPastAppointment(appointment: AdminAppointment) {
+    const enhancedAppointment = appointment as AdminAppointment & {
+      isPast?: boolean;
+      canAccept?: boolean;
+    };
+
+    const locallyPast = isPastInBusinessTime(
+      appointment.date,
+      appointment.time,
+      new Date(currentTime)
+    );
+
+    return enhancedAppointment.isPast === true || locallyPast;
+  }
+
+  function canAcceptAppointment(appointment: AdminAppointment) {
+    const enhancedAppointment = appointment as AdminAppointment & {
+      canAccept?: boolean;
+    };
+
+    return (
+      enhancedAppointment.canAccept !== false &&
+      !isPastAppointment(appointment)
+    );
+  }
+
+  function confirmAction({
+    title,
+    message,
+    confirmText,
+    destructive = false,
+    onConfirm,
+  }: {
+    title: string;
+    message: string;
+    confirmText: string;
+    destructive?: boolean;
+    onConfirm: () => void;
+  }) {
+    if (Platform.OS !== "web") {
+      Alert.alert(title, message, [
+        {
+          text: "Volver",
+          style: "cancel",
+        },
+        {
+          text: confirmText,
+          style: destructive ? "destructive" : "default",
+          onPress: onConfirm,
+        },
+      ]);
+      return;
+    }
+
+    if (
+      typeof window.confirm === "function" &&
+      window.confirm(`${title}\n\n${message}`)
+    ) {
+      onConfirm();
+    }
+  }
+
+  function updateLocalStatus(
+    appointmentId: number,
+    previousStatus: AdminAppointment["status"],
+    status: AdminAppointment["status"]
+  ) {
+    const loadedStatus = loadedQueryRef.current.status;
+
+    setAppointments((current) => {
+      if (loadedStatus !== status) {
+        return current.filter(
+          (appointment) => appointment.id !== appointmentId
+        );
+      }
+
+      return current.map((appointment) =>
+        appointment.id === appointmentId
+          ? { ...appointment, status }
+          : appointment
+      );
+    });
+
+    if (previousStatus !== status) {
+      setStatusCounts((current) => ({
+        ...current,
+        [previousStatus]: Math.max(
+          0,
+          (current[previousStatus] ?? 0) - 1
+        ),
+        [status]: (current[status] ?? 0) + 1,
+      }));
+
+      setPagination((current) => {
+        if (!current) {
+          return current;
+        }
+
+        const matchedBefore =
+          loadedStatus === previousStatus;
+        const matchesAfter =
+          loadedStatus === status;
+        const total = Math.max(
+          0,
+          current.total + Number(matchesAfter) - Number(matchedBefore)
+        );
+        const totalPages = Math.max(
+          1,
+          Math.ceil(total / current.pageSize)
+        );
+
+        return {
+          ...current,
+          total,
+          totalPages,
+          hasMore: current.page < totalPages,
+        };
+      });
+    }
+
+    setLastUpdated(new Date());
+  }
+
+  function handleMutationFailure(
+    actionError: unknown,
+    title: string,
+    fallbackMessage: string
+  ) {
+    if (isUnauthorizedError(actionError)) {
+      return;
+    }
+
+    if (shouldReconcileMutation(actionError)) {
+      setOperationNotice({
+        kind: "error",
+        title: "Confirmando el estado de la cita",
+        message:
+          "No recibimos una confirmación definitiva. Estamos actualizando la lista antes de que vuelvas a intentarlo.",
+      });
+      void loadAppointments("silent");
+      return;
+    }
+
+    setOperationNotice({
+      kind: "error",
+      title,
+      message:
+        actionError instanceof Error
+          ? actionError.message
+          : fallbackMessage,
+    });
+
+  }
+
+  function handleAccept(appointment: AdminAppointment) {
+    if (!canAcceptAppointment(appointment)) {
+      setOperationNotice({
+        kind: "error",
+        title: "Solicitud vencida",
+        message:
+          "La hora de esta solicitud ya pasó. Recházala para cerrar el registro sin crear una confirmación retroactiva.",
+      });
+      return;
+    }
+
+    confirmAction({
+      title: "Aceptar cita",
+      message: `${getAppointmentSummary(
+        appointment
+      )}\n\nLa cita quedará confirmada. Después podrás decidir si abres WhatsApp.`,
+      confirmText: "Sí, aceptar",
+      onConfirm: () => void executeAccept(appointment),
+    });
+  }
+
+  async function executeAccept(appointment: AdminAppointment) {
     if (!token) {
       return;
     }
 
     try {
-      if (showFullScreen) {
-        setLoading(true);
-      }
-      setError("");
+      setAppointmentProcessing(appointment.id, true);
+      setOperationNotice(null);
 
-      const result =
-        await getAdminAppointments(token);
-
-      setAppointments(
-        result.appointments
+      await acceptAdminAppointment(token, appointment.id);
+      updateLocalStatus(
+        appointment.id,
+        appointment.status,
+        "ACCEPTED"
       );
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar las citas."
+      setWhatsAppDraft({ appointment, status: "ACCEPTED" });
+      setOperationNotice({
+        kind: "success",
+        title: "Cita confirmada",
+        message:
+          "El horario quedó confirmado. WhatsApp no se abrirá hasta que tú lo elijas.",
+      });
+      void loadAppointments("silent");
+    } catch (actionError) {
+      handleMutationFailure(
+        actionError,
+        "No se pudo aceptar",
+        "No se pudo aceptar la cita."
       );
     } finally {
-      setLoading(false);
+      setAppointmentProcessing(appointment.id, false);
     }
   }
 
- async function handleAccept(
-  appointmentId: number
-) {
-  if (!token) {
-    return;
+  function handleReject(appointment: AdminAppointment) {
+    confirmAction({
+      title: "Rechazar cita",
+      message: `${getAppointmentSummary(
+        appointment
+      )}\n\nEl horario quedará disponible para otros clientes.`,
+      confirmText: "Sí, rechazar",
+      destructive: true,
+      onConfirm: () => void executeReject(appointment),
+    });
   }
 
-  const appointment = appointments.find(
-    (item) => item.id === appointmentId
-  );
-
-  try {
-    setProcessingId(
-      appointmentId
-    );
-
-    setError("");
-
-    await acceptAdminAppointment(
-      token,
-      appointmentId
-    );
-
-    await loadAppointments(false);
-
-    if (appointment) {
-      try {
-        await openWhatsAppNotification(appointment, "ACCEPTED");
-      } catch {
-        showMessage(
-          "Cita confirmada",
-          `La cita fue confirmada, pero no se pudo abrir WhatsApp. Puedes contactar al cliente al ${appointment.phone}.`
-        );
-      }
-    } else {
-      showMessage(
-        "Cita confirmada",
-        "La solicitud fue aceptada correctamente."
-      );
-    }
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo aceptar la cita.";
-
-    showMessage(
-      "No se pudo aceptar",
-      message
-    );
-  } finally {
-    setProcessingId(null);
-  }
-}
-
-  function handleReject(
-    appointmentId: number
-  ) {
+  async function executeReject(appointment: AdminAppointment) {
     if (!token) {
       return;
     }
 
-    const message =
-      "¿Deseas rechazar esta solicitud?";
+    try {
+      setAppointmentProcessing(appointment.id, true);
+      setOperationNotice(null);
 
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Rechazar cita",
-        message,
-        [
-          {
-            text: "Volver",
-            style: "cancel",
-          },
-          {
-            text: "Sí, rechazar",
-            style: "destructive",
-            onPress: () =>
-              executeReject(
-                appointmentId
-              ),
-          },
-        ]
+      await rejectAdminAppointment(token, appointment.id);
+      updateLocalStatus(
+        appointment.id,
+        appointment.status,
+        "REJECTED"
       );
-
-      return;
-    }
-
-    const confirmed =
-      typeof window.confirm === "function"
-        ? window.confirm(message)
-        : false;
-
-    if (!confirmed) {
-      return;
-    }
-
-    void executeReject(appointmentId);
-  }
-
-  async function executeReject(
-  appointmentId: number
-) {
-  if (!token) {
-    return;
-  }
-
-  const appointment = appointments.find(
-    (item) => item.id === appointmentId
-  );
-
-  try {
-    setProcessingId(
-      appointmentId
-    );
-
-    setError("");
-
-    await rejectAdminAppointment(
-      token,
-      appointmentId
-    );
-
-    await loadAppointments(false);
-
-    if (appointment) {
-      try {
-        await openWhatsAppNotification(appointment, "REJECTED");
-      } catch {
-        showMessage(
-          "Cita rechazada",
-          `La cita fue rechazada, pero no se pudo abrir WhatsApp. Puedes contactar al cliente al ${appointment.phone}.`
-        );
-      }
-    } else {
-      showMessage(
-        "Cita rechazada",
-        "La solicitud fue rechazada correctamente."
+      setWhatsAppDraft({ appointment, status: "REJECTED" });
+      setOperationNotice({
+        kind: "success",
+        title: "Cita rechazada",
+        message:
+          "La solicitud se cerró y el horario volvió a estar disponible.",
+      });
+      void loadAppointments("silent");
+    } catch (actionError) {
+      handleMutationFailure(
+        actionError,
+        "No se pudo rechazar",
+        "No se pudo rechazar la cita."
       );
+    } finally {
+      setAppointmentProcessing(appointment.id, false);
     }
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo rechazar la cita.";
-
-    showMessage(
-      "No se pudo rechazar",
-      message
-    );
-  } finally {
-    setProcessingId(null);
   }
-}
 
-  function handleComplete(
-    appointmentId: number
-  ) {
+  function handleComplete(appointment: AdminAppointment) {
+    confirmAction({
+      title: "Completar cita",
+      message: `${getAppointmentSummary(
+        appointment
+      )}\n\nConfirma que el servicio ya fue atendido.`,
+      confirmText: "Sí, completar",
+      onConfirm: () => void executeComplete(appointment),
+    });
+  }
+
+  async function executeComplete(appointment: AdminAppointment) {
     if (!token) {
       return;
     }
 
-    const message =
-      "¿Confirmas que esta cita ya fue atendida y completada?";
+    try {
+      setAppointmentProcessing(appointment.id, true);
+      setOperationNotice(null);
 
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Completar cita",
-        message,
-        [
-          {
-            text: "Volver",
-            style: "cancel",
-          },
-          {
-            text: "Sí, completar",
-            onPress: () =>
-              executeComplete(
-                appointmentId
-              ),
-          },
-        ]
+      await completeAdminAppointment(token, appointment.id);
+      updateLocalStatus(
+        appointment.id,
+        appointment.status,
+        "COMPLETED"
       );
+      setOperationNotice({
+        kind: "success",
+        title: "Cita completada",
+        message: "La cita fue marcada como completada.",
+      });
+      void loadAppointments("silent");
+    } catch (actionError) {
+      handleMutationFailure(
+        actionError,
+        "No se pudo completar",
+        "No se pudo completar la cita."
+      );
+    } finally {
+      setAppointmentProcessing(appointment.id, false);
+    }
+  }
 
+  function confirmAdminCancel(appointment: AdminAppointment) {
+    confirmAction({
+      title: "Cancelar cita",
+      message: `${getAppointmentSummary(
+        appointment
+      )}\n\nEl horario volverá a quedar disponible para otros clientes.`,
+      confirmText: "Sí, cancelar",
+      destructive: true,
+      onConfirm: () => void executeAdminCancel(appointment),
+    });
+  }
+
+  async function executeAdminCancel(appointment: AdminAppointment) {
+    if (!token) {
       return;
     }
 
-    if (
-      typeof window.confirm === "function" &&
-      window.confirm(message)
-    ) {
-      void executeComplete(appointmentId);
+    try {
+      setAppointmentProcessing(appointment.id, true);
+      setOperationNotice(null);
+
+      await cancelAdminAppointment(token, appointment.id);
+      updateLocalStatus(
+        appointment.id,
+        appointment.status,
+        "CANCELLED"
+      );
+      setOperationNotice({
+        kind: "success",
+        title: "Cita cancelada",
+        message:
+          "La cita fue cancelada administrativamente y el horario quedó disponible.",
+      });
+      void loadAppointments("silent");
+    } catch (actionError) {
+      handleMutationFailure(
+        actionError,
+        "No se pudo cancelar",
+        "No se pudo cancelar la cita."
+      );
+    } finally {
+      setAppointmentProcessing(appointment.id, false);
     }
   }
 
-  async function executeComplete(
-  appointmentId: number
-) {
-  if (!token) {
-    return;
-  }
-
-  try {
-    setProcessingId(
-      appointmentId
-    );
-
-    setError("");
-
-    await completeAdminAppointment(
-      token,
-      appointmentId
-    );
-
-    await loadAppointments(false);
-
-    showMessage(
-      "Cita completada",
-      "La cita fue marcada como completada."
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo completar la cita.";
-
-    showMessage(
-      "No se pudo completar",
-      message
-    );
-  } finally {
-    setProcessingId(null);
-  }
-}
-
-  function confirmAdminCancel(
-    appointmentId: number
+  async function shareOrCopyText(
+    text: string,
+    successMessage: string
   ) {
-    const message =
-      "¿Deseas cancelar esta cita confirmada? El horario volverá a quedar disponible para otros clientes.";
-
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Cancelar cita",
-        message,
-        [
-          {
-            text: "Volver",
-            style: "cancel",
-          },
-          {
-            text: "Sí, cancelar",
-            style: "destructive",
-            onPress: () =>
-              handleAdminCancel(
-                appointmentId
-              ),
-          },
-        ]
-      );
-
+    if (
+      Platform.OS === "web" &&
+      typeof navigator !== "undefined" &&
+      navigator.clipboard
+    ) {
+      await navigator.clipboard.writeText(text);
+      setOperationNotice({
+        kind: "success",
+        title: "Copiado",
+        message: successMessage,
+      });
       return;
     }
 
-    if (
-      typeof window.confirm === "function" &&
-      window.confirm(message)
-    ) {
-      void handleAdminCancel(appointmentId);
+    await Share.share({ message: text });
+  }
+
+  async function handleOpenWhatsApp() {
+    if (!whatsAppDraft) {
+      return;
+    }
+
+    try {
+      await openWhatsAppNotification(
+        whatsAppDraft.appointment,
+        whatsAppDraft.status
+      );
+    } catch (whatsAppError) {
+      setOperationNotice({
+        kind: "error",
+        title: "No se pudo abrir WhatsApp",
+        message:
+          whatsAppError instanceof Error
+            ? whatsAppError.message
+            : "Puedes copiar el mensaje y contactar al cliente manualmente.",
+      });
     }
   }
 
-  async function handleAdminCancel(
-  appointmentId: number
-) {
-  if (!token) {
-    return;
+  async function handleCopyWhatsAppMessage() {
+    if (!whatsAppDraft) {
+      return;
+    }
+
+    try {
+      await shareOrCopyText(
+        getWhatsAppMessage(
+          whatsAppDraft.appointment,
+          whatsAppDraft.status
+        ),
+        "El mensaje de WhatsApp quedó en el portapapeles."
+      );
+    } catch {
+      setOperationNotice({
+        kind: "error",
+        title: "No se pudo copiar",
+        message: "El mensaje sigue visible para que puedas revisarlo.",
+      });
+    }
   }
 
-  try {
-    setProcessingId(
-      appointmentId
-    );
-
-    setError("");
-
-    await cancelAdminAppointment(
-      token,
-      appointmentId
-    );
-
-    await loadAppointments(false);
-
-    showMessage(
-      "Cita cancelada",
-      "La cita fue cancelada administrativamente y el horario quedó disponible."
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo cancelar la cita.";
-
-    showMessage(
-      "No se pudo cancelar",
-      message
-    );
-  } finally {
-    setProcessingId(null);
+  async function handleCall(phone: string) {
+    try {
+      await Linking.openURL(`tel:${phone.replace(/\s/g, "")}`);
+    } catch {
+      setOperationNotice({
+        kind: "error",
+        title: "No se pudo iniciar la llamada",
+        message: `Puedes marcar manualmente al ${phone}.`,
+      });
+    }
   }
-}
+
+  async function handleCopyPhone(phone: string) {
+    try {
+      await shareOrCopyText(
+        phone,
+        "El número del cliente quedó en el portapapeles."
+      );
+    } catch {
+      setOperationNotice({
+        kind: "error",
+        title: "No se pudo copiar el número",
+        message: `Puedes anotarlo manualmente: ${phone}.`,
+      });
+    }
+  }
 
   function getStatusText(
     status: AdminAppointment["status"]
@@ -522,7 +939,7 @@ export default function AdminAppointmentsScreen() {
           background:
             COLORS.warningBackground,
           text:
-            COLORS.warning,
+            "#7A4C00",
         };
 
       case "REJECTED":
@@ -545,25 +962,86 @@ export default function AdminAppointmentsScreen() {
   }
 
   const pendingCount =
+    statusCounts.PENDING ??
     appointments.filter(
-      (appointment) =>
-        appointment.status ===
-        "PENDING"
+      (appointment) => appointment.status === "PENDING"
     ).length;
 
-  const filteredAppointments = (
-    statusFilter === "ALL"
-      ? appointments
-      : appointments.filter(
-          (appointment) =>
-            appointment.status ===
-            statusFilter
-        )
-  ).slice();
+  const expiredPendingCount = appointments.filter(
+    (appointment) =>
+      appointment.status === "PENDING" &&
+      isPastAppointment(appointment)
+  ).length;
+
+  function getRequestAge(createdAt: string) {
+    const createdTimestamp = new Date(createdAt).getTime();
+
+    if (!Number.isFinite(createdTimestamp)) {
+      return "Fecha de solicitud no disponible";
+    }
+
+    const elapsedMinutes = Math.max(
+      0,
+      Math.floor((currentTime - createdTimestamp) / 60_000)
+    );
+
+    if (elapsedMinutes < 1) {
+      return "Solicitada hace menos de un minuto";
+    }
+
+    if (elapsedMinutes < 60) {
+      return `Solicitada hace ${elapsedMinutes} min`;
+    }
+
+    const elapsedHours = Math.floor(elapsedMinutes / 60);
+
+    if (elapsedHours < 24) {
+      return `Solicitada hace ${elapsedHours} ${
+        elapsedHours === 1 ? "hora" : "horas"
+      }`;
+    }
+
+    const elapsedDays = Math.floor(elapsedHours / 24);
+    return `Solicitada hace ${elapsedDays} ${
+      elapsedDays === 1 ? "día" : "días"
+    }`;
+  }
+
+  const normalizedQuery = loadedQuery.search
+    .trim()
+    .toLocaleLowerCase("es-NI");
+
+  const filteredAppointments = appointments
+    .filter(
+      (appointment) =>
+        appointment.status === loadedQuery.status
+    )
+    .filter((appointment) => {
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const searchableText = [
+        `#${appointment.id}`,
+        appointment.firstName,
+        appointment.lastName,
+        appointment.phone,
+        appointment.service,
+        appointment.date,
+        appointment.time,
+        formatDisplayDate(appointment.date),
+        formatDisplayTime(appointment.time),
+      ]
+        .join(" ")
+        .toLocaleLowerCase("es-NI");
+
+      return searchableText.includes(normalizedQuery);
+    })
+    .slice();
 
   if (
-    statusFilter === "PENDING" ||
-    statusFilter === "ACCEPTED"
+    loadedQuery.status === "PENDING" ||
+    loadedQuery.status === "ACCEPTED"
   ) {
     filteredAppointments.sort(
       (first, second) =>
@@ -585,35 +1063,21 @@ export default function AdminAppointmentsScreen() {
       value: "ACCEPTED",
       label: "Confirmadas",
     },
-    {
-      value: "ALL",
-      label: "Todas",
-    },
-    {
-      value: "COMPLETED",
-      label: "Completadas",
-    },
-    {
-      value: "REJECTED",
-      label: "Rechazadas",
-    },
-    {
-      value: "CANCELLED",
-      label: "Canceladas",
-    },
   ];
 
   function getFilterCount(filter: StatusFilter) {
-    if (filter === "ALL") {
-      return appointments.length;
-    }
-
-    return appointments.filter(
-      (appointment) => appointment.status === filter
-    ).length;
+    return statusCounts[filter] ??
+      appointments.filter(
+        (appointment) => appointment.status === filter
+      ).length;
   }
 
   function handleFilterPress(filter: StatusFilter) {
+    if (filter === statusFilter) {
+      return;
+    }
+
+    setQuerying(true);
     setStatusFilter(filter);
     setExpandedAppointmentId(null);
 
@@ -628,56 +1092,50 @@ export default function AdminAppointmentsScreen() {
     });
   }
 
-  function getSectionTitle() {
-    switch (statusFilter) {
-      case "PENDING":
-        return "Pendientes de gestión";
+  function getSectionTitle(filter = loadedQuery.status) {
+    return filter === "PENDING"
+      ? "Pendientes de gestión"
+      : "Citas confirmadas";
+  }
 
-      case "ACCEPTED":
-        return "Citas confirmadas";
-
-      case "COMPLETED":
-        return "Citas completadas";
-
-      case "REJECTED":
-        return "Citas rechazadas";
-
-      case "CANCELLED":
-        return "Citas canceladas";
-
-      case "ALL":
-        return "Todas las citas";
+  function getEmptyMessage() {
+    if (normalizedQuery) {
+      return "No encontramos registros que coincidan con tu búsqueda y el estado seleccionado.";
     }
+
+    return loadedQuery.status === "PENDING"
+      ? "No hay solicitudes esperando respuesta."
+      : "No hay citas confirmadas actualmente.";
   }
 
-  if (loading) {
-    return (
-      <View
-        style={
-          styles.centerContainer
-        }
-      >
-        <ActivityIndicator
-          size="large"
-          color={COLORS.primary}
-        />
+  const updatedLabel = lastUpdated
+    ? `Actualizado a las ${lastUpdated.toLocaleTimeString("es-NI", {
+        hour: "numeric",
+        minute: "2-digit",
+      })}`
+    : "Aún no se ha actualizado";
 
-        <Text
-          style={
-            styles.loadingText
-          }
-        >
-          Cargando citas...
-        </Text>
-      </View>
-    );
-  }
+  const displayingPreviousData =
+    hasLoaded &&
+    (statusFilter !== loadedQuery.status ||
+      searchQuery.trim() !== loadedQuery.search);
+
+  const networkBusy =
+    loading || refreshing || loadingMore || querying;
 
   return (
     <ScrollView
       ref={scrollViewRef}
       contentContainerStyle={
         styles.container
+      }
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => void loadAppointments("refresh")}
+          colors={[COLORS.primary]}
+          tintColor={COLORS.primary}
+        />
       }
       showsVerticalScrollIndicator={
       false
@@ -723,7 +1181,9 @@ export default function AdminAppointmentsScreen() {
           </Text>
 
           <Text style={styles.summaryTitle}>
-            {pendingCount === 0
+            {loading && !hasLoaded
+              ? "Actualizando solicitudes…"
+              : pendingCount === 0
               ? "Todo está al día"
               : pendingCount === 1
                 ? "1 solicitud por revisar"
@@ -731,7 +1191,13 @@ export default function AdminAppointmentsScreen() {
           </Text>
 
           <Text style={styles.summaryHint}>
-            {pendingCount === 0
+            {expiredPendingCount > 0
+              ? `${expiredPendingCount} ${
+                  expiredPendingCount === 1
+                    ? "solicitud tiene"
+                    : "solicitudes tienen"
+                } un horario vencido y necesita cierre.`
+              : pendingCount === 0
               ? "No hay nuevas solicitudes esperando respuesta."
               : "Acepta o rechaza las solicitudes para mantener la agenda al día."}
           </Text>
@@ -751,6 +1217,214 @@ export default function AdminAppointmentsScreen() {
             size={23}
             color={COLORS.primary}
           />
+        </View>
+      </View>
+
+      <View style={styles.dataStatusRow}>
+        <Text style={styles.updatedText}>{updatedLabel}</Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.refreshButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => void loadAppointments("refresh")}
+          disabled={networkBusy}
+          accessibilityRole="button"
+          accessibilityLabel="Actualizar citas"
+          accessibilityState={{
+            disabled: networkBusy,
+            busy: networkBusy,
+          }}
+        >
+          {refreshing || querying ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <AppIcon
+              name={{
+                ios: "arrow.clockwise",
+                android: "refresh",
+                web: "refresh",
+              }}
+              size={19}
+              color={COLORS.primary}
+            />
+          )}
+        </Pressable>
+      </View>
+
+      {syncWarning ? (
+        <View
+          style={[styles.noticeCard, styles.warningNotice]}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.noticeContent}>
+            <Text style={styles.noticeTitle}>
+              No pudimos actualizar la lista
+            </Text>
+            <Text style={styles.noticeText}>{syncWarning}</Text>
+          </View>
+
+          <Pressable
+            style={styles.noticeAction}
+            onPress={() => void loadAppointments("refresh")}
+            accessibilityRole="button"
+            accessibilityLabel="Reintentar actualización de citas"
+          >
+            <Text style={styles.noticeActionText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {operationNotice ? (
+        <View
+          style={[
+            styles.noticeCard,
+            operationNotice.kind === "error"
+              ? styles.errorNotice
+              : styles.successNotice,
+          ]}
+          accessibilityRole={
+            operationNotice.kind === "error" ? "alert" : "summary"
+          }
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.noticeContent}>
+            <Text style={styles.noticeTitle}>
+              {operationNotice.title}
+            </Text>
+            <Text style={styles.noticeText}>
+              {operationNotice.message}
+            </Text>
+          </View>
+
+          <Pressable
+            style={styles.noticeDismiss}
+            onPress={() => setOperationNotice(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar mensaje"
+          >
+            <AppIcon
+              name={{ ios: "xmark", android: "close", web: "close" }}
+              size={18}
+              color={COLORS.textSecondary}
+            />
+          </Pressable>
+        </View>
+      ) : null}
+
+      {whatsAppDraft ? (
+        <View
+          style={styles.whatsAppCard}
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.whatsAppHeading}>
+            <View style={styles.whatsAppIcon}>
+              <AppIcon
+                name={{
+                  ios: "message.fill",
+                  android: "chat",
+                  web: "chat",
+                }}
+                size={20}
+                color={COLORS.success}
+              />
+            </View>
+
+            <View style={styles.whatsAppHeadingContent}>
+              <Text style={styles.whatsAppTitle}>
+                Mensaje preparado para {whatsAppDraft.appointment.firstName}
+              </Text>
+              <Text style={styles.whatsAppHint}>
+                Revísalo antes de abrir WhatsApp. Enviar sigue siendo manual.
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.whatsAppPreview} selectable>
+            {getWhatsAppMessage(
+              whatsAppDraft.appointment,
+              whatsAppDraft.status
+            )}
+          </Text>
+
+          <View style={styles.whatsAppActions}>
+            <Pressable
+              style={styles.whatsAppPrimaryButton}
+              onPress={() => void handleOpenWhatsApp()}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir mensaje preparado en WhatsApp"
+            >
+              <Text style={styles.whatsAppPrimaryText}>Abrir WhatsApp</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.whatsAppSecondaryButton}
+              onPress={() => void handleCopyWhatsAppMessage()}
+              accessibilityRole="button"
+              accessibilityLabel={
+                Platform.OS === "web"
+                  ? "Copiar mensaje de WhatsApp"
+                  : "Compartir o copiar mensaje de WhatsApp"
+              }
+            >
+              <Text style={styles.whatsAppSecondaryText}>
+                {Platform.OS === "web" ? "Copiar mensaje" : "Copiar o compartir"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.whatsAppSkipButton}
+              onPress={() => setWhatsAppDraft(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar mensaje y continuar sin WhatsApp"
+            >
+              <Text style={styles.whatsAppSkipText}>Ahora no</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+
+      <View style={styles.searchSection}>
+        <Text style={styles.searchLabel}>Buscar una cita</Text>
+        <View style={styles.searchInputRow}>
+          <AppIcon
+            name={{ ios: "magnifyingglass", android: "search", web: "search" }}
+            size={19}
+            color={COLORS.textMuted}
+          />
+
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Nombre, celular, fecha, hora o #ID"
+            placeholderTextColor={COLORS.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            importantForAutofill="no"
+            returnKeyType="search"
+            accessibilityLabel="Buscar citas"
+            accessibilityHint="Busca por nombre, celular, fecha, hora, servicio o identificador"
+            accessibilityState={{ busy: querying }}
+          />
+
+          {searchQuery ? (
+            <Pressable
+              style={styles.clearSearchButton}
+              onPress={() => setSearchQuery("")}
+              accessibilityRole="button"
+              accessibilityLabel="Limpiar búsqueda"
+            >
+              <AppIcon
+                name={{ ios: "xmark.circle.fill", android: "cancel", web: "cancel" }}
+                size={20}
+                color={COLORS.textMuted}
+              />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -785,7 +1459,9 @@ export default function AdminAppointmentsScreen() {
                   styles.filterButton,
                   active &&
                     styles.activeFilterButton,
+                  networkBusy && styles.disabledButton,
                 ]}
+                disabled={networkBusy}
                 onPress={() =>
                   handleFilterPress(filter.value)
                 }
@@ -793,6 +1469,7 @@ export default function AdminAppointmentsScreen() {
                 accessibilityLabel={`${filter.label}, ${getFilterCount(filter.value)}`}
                 accessibilityState={{
                   selected: active,
+                  disabled: networkBusy,
                 }}
                 hitSlop={4}
               >
@@ -827,7 +1504,32 @@ export default function AdminAppointmentsScreen() {
         )}
       </ScrollView>
 
-      {error ? (
+      {displayingPreviousData && !syncWarning ? (
+        <View
+          style={[styles.noticeCard, styles.warningNotice]}
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.noticeContent}>
+            <Text style={styles.noticeTitle}>
+              Actualizando la vista
+            </Text>
+            <Text style={styles.noticeText}>
+              La lista todavía muestra {getSectionTitle().toLowerCase()} de la consulta anterior.
+            </Text>
+          </View>
+
+          {querying ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : null}
+        </View>
+      ) : null}
+
+      {loading && !hasLoaded ? (
+        <View style={styles.loadingCard} accessibilityLiveRegion="polite">
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Cargando citas…</Text>
+        </View>
+      ) : error ? (
         <View
           style={
             styles.messageCard
@@ -855,9 +1557,7 @@ export default function AdminAppointmentsScreen() {
             }
             accessibilityRole="button"
             accessibilityLabel="Intentar cargar las citas nuevamente"
-            onPress={() =>
-              loadAppointments(true)
-            }
+            onPress={() => void loadAppointments("initial")}
           >
             <Text
               style={
@@ -875,6 +1575,8 @@ export default function AdminAppointmentsScreen() {
               resultsOffsetRef.current =
                 event.nativeEvent.layout.y;
             }}
+            style={styles.resultsHeading}
+            accessibilityLiveRegion="polite"
           >
           <Text
             style={
@@ -882,6 +1584,13 @@ export default function AdminAppointmentsScreen() {
             }
           >
             {getSectionTitle()}
+          </Text>
+
+          <Text style={styles.resultsCount}>
+            {pagination?.total ?? filteredAppointments.length}{" "}
+            {(pagination?.total ?? filteredAppointments.length) === 1
+              ? "resultado"
+              : "resultados"}
           </Text>
           </View>
 
@@ -913,7 +1622,7 @@ export default function AdminAppointmentsScreen() {
                   styles.emptyTitle
                 }
               >
-                Nada por aquí
+                {normalizedQuery ? "Sin coincidencias" : "Nada por aquí"}
               </Text>
 
               <Text
@@ -921,16 +1630,17 @@ export default function AdminAppointmentsScreen() {
                   styles.emptyText
                 }
               >
-                No hay citas con este
-                estado actualmente.
+                {getEmptyMessage()}
               </Text>
             </View>
           ) : (
             filteredAppointments.map(
               (appointment, index) => {
                 const processing =
-                  processingId ===
-                  appointment.id;
+                  processingIds.has(appointment.id);
+
+                const actionsDisabled =
+                  processing || networkBusy || displayingPreviousData;
 
                 const statusStyle =
                   getStatusStyle(
@@ -938,8 +1648,8 @@ export default function AdminAppointmentsScreen() {
                   );
 
                 const operationalView =
-                  statusFilter === "PENDING" ||
-                  statusFilter === "ACCEPTED";
+                  loadedQuery.status === "PENDING" ||
+                  loadedQuery.status === "ACCEPTED";
 
                 const startsNewDay =
                   operationalView &&
@@ -947,21 +1657,29 @@ export default function AdminAppointmentsScreen() {
                     filteredAppointments[index - 1].date !==
                       appointment.date);
 
+                const dayAppointmentCount = startsNewDay
+                  ? filteredAppointments.filter(
+                      (item) => item.date === appointment.date
+                    ).length
+                  : 0;
+
                 const expanded =
                   expandedAppointmentId === appointment.id;
 
-                const appointmentTimestamp =
-                  new Date(
-                    `${appointment.date}T${appointment.time}:00-06:00`
-                  ).getTime();
+                const appointmentIsPast =
+                  isPastAppointment(appointment);
 
                 const canComplete =
-                  appointment.canComplete ??
-                  Date.now() >= appointmentTimestamp;
+                  appointment.canComplete === true ||
+                  appointmentIsPast;
 
                 const canAdminCancel =
-                  appointment.canAdminCancel ??
-                  Date.now() < appointmentTimestamp;
+                  appointment.canAdminCancel !== false &&
+                  !appointmentIsPast;
+
+                const pendingExpired =
+                  appointment.status === "PENDING" &&
+                  !canAcceptAppointment(appointment);
 
                 return (
                   <Fragment key={appointment.id}>
@@ -972,12 +1690,8 @@ export default function AdminAppointmentsScreen() {
                       </Text>
 
                       <Text style={styles.dayHeaderCount}>
-                        {
-                          filteredAppointments.filter(
-                            (item) => item.date === appointment.date
-                          ).length
-                        }{" "}
-                        citas
+                        {dayAppointmentCount}{" "}
+                        {dayAppointmentCount === 1 ? "cita" : "citas"}
                       </Text>
                     </View>
                   )}
@@ -1033,6 +1747,9 @@ export default function AdminAppointmentsScreen() {
                             }
                           </Text>
 
+                          <Text style={styles.requestAge}>
+                            {getRequestAge(appointment.createdAt)} · #{appointment.id}
+                          </Text>
                         </View>
                       </View>
 
@@ -1185,6 +1902,34 @@ export default function AdminAppointmentsScreen() {
                           <Text style={styles.phone}>
                             {appointment.phone}
                           </Text>
+
+                          <View style={styles.phoneActions}>
+                            <Pressable
+                              style={styles.phoneAction}
+                              onPress={() => void handleCall(appointment.phone)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Llamar a ${appointment.firstName}`}
+                            >
+                              <Text style={styles.phoneActionText}>Llamar</Text>
+                            </Pressable>
+
+                            <Pressable
+                              style={styles.phoneAction}
+                              onPress={() => void handleCopyPhone(appointment.phone)}
+                              accessibilityRole="button"
+                              accessibilityLabel={
+                                Platform.OS === "web"
+                                  ? "Copiar número del cliente"
+                                  : "Compartir o copiar número del cliente"
+                              }
+                            >
+                              <Text style={styles.phoneActionText}>
+                                {Platform.OS === "web"
+                                  ? "Copiar"
+                                  : "Copiar o compartir"}
+                              </Text>
+                            </Pressable>
+                          </View>
                         </View>
                       </View>
                     )}
@@ -1229,99 +1974,107 @@ export default function AdminAppointmentsScreen() {
                       </Text>
                     </Pressable>
 
-                    {appointment.status ===
-                      "PENDING" && (
-                      <View
-                        style={[
-                          styles.actionsContainer,
-                          Platform.OS === "web" &&
-                            styles.webActionsContainer,
-                        ]}
-                      >
-                        <Pressable
-                          style={[
-                            styles.acceptButton,
-                            Platform.OS === "web" &&
-                              styles.webRequestButton,
-                            processing &&
-                              styles.disabledButton,
-                          ]}
-                          disabled={
-                            processing
-                          }
-                          accessibilityRole="button"
-                          accessibilityLabel="Aceptar cita"
-                          accessibilityState={{
-                            disabled: processing,
-                          }}
-                          onPress={() =>
-                            handleAccept(
-                              appointment.id
-                            )
-                          }
-                        >
-                          <AppIcon
-                            name={{
-                              ios: "checkmark",
-                              android: "check",
-                              web: "check",
-                            }}
-                            size={18}
-                            color={COLORS.onPrimary}
-                          />
-
-                          <Text
-                            style={
-                              styles.acceptButtonText
-                            }
+                    {appointment.status === "PENDING" && (
+                      <>
+                        {pendingExpired ? (
+                          <View
+                            style={styles.expiredRequest}
+                            accessibilityRole="alert"
                           >
-                            {processing
-                              ? "Procesando..."
-                              : "Aceptar"}
-                          </Text>
-                        </Pressable>
+                            <AppIcon
+                              name={{
+                                ios: "exclamationmark.triangle.fill",
+                                android: "warning",
+                                web: "warning",
+                              }}
+                              size={19}
+                              color={COLORS.danger}
+                            />
 
-                        <Pressable
+                            <View style={styles.expiredRequestContent}>
+                              <Text style={styles.expiredRequestTitle}>
+                                Solicitud vencida
+                              </Text>
+                              <Text style={styles.expiredRequestText}>
+                                La hora ya pasó. No se puede aceptar; recházala para cerrar el registro.
+                              </Text>
+                            </View>
+                          </View>
+                        ) : null}
+
+                        <View
                           style={[
-                            styles.rejectButton,
+                            styles.actionsContainer,
                             Platform.OS === "web" &&
-                              styles.webRequestButton,
-                            processing &&
-                              styles.disabledButton,
+                              styles.webActionsContainer,
                           ]}
-                          disabled={
-                            processing
-                          }
-                          accessibilityRole="button"
-                          accessibilityLabel="Rechazar cita"
-                          accessibilityState={{
-                            disabled: processing,
-                          }}
-                          onPress={() =>
-                            handleReject(
-                              appointment.id
-                            )
-                          }
                         >
-                          <AppIcon
-                            name={{
-                              ios: "xmark",
-                              android: "close",
-                              web: "close",
-                            }}
-                            size={18}
-                            color={COLORS.danger}
-                          />
+                          {!pendingExpired ? (
+                            <Pressable
+                              style={[
+                                styles.acceptButton,
+                                Platform.OS === "web" &&
+                                  styles.webRequestButton,
+                                actionsDisabled && styles.disabledButton,
+                              ]}
+                              disabled={actionsDisabled}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Aceptar cita de ${appointment.firstName} ${appointment.lastName}`}
+                              accessibilityState={{
+                                disabled: actionsDisabled,
+                                busy: processing,
+                              }}
+                              onPress={() => handleAccept(appointment)}
+                            >
+                              <AppIcon
+                                name={{
+                                  ios: "checkmark",
+                                  android: "check",
+                                  web: "check",
+                                }}
+                                size={18}
+                                color={COLORS.onPrimary}
+                              />
 
-                          <Text
-                            style={
-                              styles.rejectButtonText
-                            }
+                              <Text style={styles.acceptButtonText}>
+                                {processing ? "Procesando..." : "Aceptar"}
+                              </Text>
+                            </Pressable>
+                          ) : null}
+
+                          <Pressable
+                            style={[
+                              styles.rejectButton,
+                              Platform.OS === "web" &&
+                                styles.webRequestButton,
+                              pendingExpired && styles.expiredRejectButton,
+                              actionsDisabled && styles.disabledButton,
+                            ]}
+                            disabled={actionsDisabled}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Rechazar cita de ${appointment.firstName} ${appointment.lastName}`}
+                            accessibilityState={{
+                              disabled: actionsDisabled,
+                              busy: processing,
+                            }}
+                            onPress={() => handleReject(appointment)}
                           >
-                            Rechazar
-                          </Text>
-                        </Pressable>
-                      </View>
+                            <AppIcon
+                              name={{
+                                ios: "xmark",
+                                android: "close",
+                                web: "close",
+                              }}
+                              size={18}
+                              color={COLORS.danger}
+                            />
+
+                            <Text style={styles.rejectButtonText}>
+                              {processing ? "Procesando..." : "Rechazar"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </>
                     )}
 
                     {appointment.status ===
@@ -1345,16 +2098,17 @@ export default function AdminAppointmentsScreen() {
                               styles.completeButton,
                               Platform.OS === "web" &&
                                 styles.webManagementButton,
-                              processing && styles.disabledButton,
+                              actionsDisabled && styles.disabledButton,
                             ]}
-                            disabled={processing}
+                            disabled={actionsDisabled}
                             accessibilityRole="button"
                             accessibilityLabel="Marcar cita como completada"
                             accessibilityState={{
-                              disabled: processing,
+                              disabled: actionsDisabled,
+                              busy: processing,
                             }}
                             onPress={() =>
-                              handleComplete(appointment.id)
+                              handleComplete(appointment)
                             }
                           >
                             <AppIcon
@@ -1390,16 +2144,17 @@ export default function AdminAppointmentsScreen() {
                                 styles.adminCancelButton,
                                 Platform.OS === "web" &&
                                   styles.webManagementButton,
-                                processing && styles.disabledButton,
+                                actionsDisabled && styles.disabledButton,
                               ]}
-                              disabled={processing}
+                              disabled={actionsDisabled}
                               accessibilityRole="button"
                               accessibilityLabel="Cancelar cita administrativamente"
                               accessibilityState={{
-                                disabled: processing,
+                                disabled: actionsDisabled,
+                                busy: processing,
                               }}
                               onPress={() =>
-                                confirmAdminCancel(appointment.id)
+                                confirmAdminCancel(appointment)
                               }
                             >
                               <AppIcon
@@ -1431,6 +2186,40 @@ export default function AdminAppointmentsScreen() {
         </>
       )}
 
+      {pagination?.hasMore && !displayingPreviousData ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.loadMoreButton,
+            pressed && styles.buttonPressed,
+            networkBusy && styles.disabledButton,
+          ]}
+          onPress={() =>
+            void loadAppointments(
+              "silent",
+              pagination.page + 1,
+              true
+            )
+          }
+          disabled={networkBusy}
+          accessibilityRole="button"
+          accessibilityLabel="Cargar más citas"
+          accessibilityState={{
+            disabled: networkBusy,
+            busy: loadingMore,
+          }}
+        >
+          {loadingMore ? (
+            <ActivityIndicator
+              size="small"
+              color={COLORS.primary}
+            />
+          ) : null}
+          <Text style={styles.loadMoreButtonText}>
+            {loadingMore ? "Cargando…" : "Cargar más"}
+          </Text>
+        </Pressable>
+      ) : null}
+
       <BackButton fallbackHref="/admin" />
     </ScrollView>
   );
@@ -1448,6 +2237,29 @@ const styles =
         SPACING.xl,
       paddingBottom:
         SPACING.xxl,
+    },
+
+    loadMoreButton: {
+      minHeight: 48,
+      width: "100%",
+      maxWidth: 460,
+      alignSelf: "center",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.sm,
+      marginTop: SPACING.lg,
+      paddingHorizontal: SPACING.md,
+      borderWidth: 1,
+      borderColor: COLORS.borderStrong,
+      borderRadius: RADIUS.md,
+      backgroundColor: COLORS.surface,
+    },
+
+    loadMoreButtonText: {
+      color: COLORS.text,
+      fontSize: FONT.body,
+      fontWeight: "800",
     },
 
     centerContainer: {
@@ -1571,6 +2383,245 @@ const styles =
       alignItems: "center",
     },
 
+    dataStatusRow: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: SPACING.md,
+      marginTop: -SPACING.md,
+      marginBottom: SPACING.lg,
+    },
+
+    updatedText: {
+      flex: 1,
+      color: COLORS.textMuted,
+      fontSize: FONT.caption,
+    },
+
+    refreshButton: {
+      width: 44,
+      height: 44,
+      borderRadius: RADIUS.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+    },
+
+    buttonPressed: {
+      opacity: 0.65,
+    },
+
+    noticeCard: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.sm,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
+      borderWidth: 1,
+    },
+
+    successNotice: {
+      backgroundColor: COLORS.successBackground,
+      borderColor: "#B9DEC9",
+    },
+
+    errorNotice: {
+      backgroundColor: COLORS.dangerBackground,
+      borderColor: "#F0C7C2",
+    },
+
+    warningNotice: {
+      backgroundColor: COLORS.warningBackground,
+      borderColor: COLORS.accentSoft,
+    },
+
+    noticeContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    noticeTitle: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      fontWeight: "800",
+      marginBottom: 3,
+    },
+
+    noticeText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+    },
+
+    noticeAction: {
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: SPACING.sm,
+    },
+
+    noticeActionText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    noticeDismiss: {
+      width: 44,
+      height: 44,
+      marginTop: -SPACING.sm,
+      marginRight: -SPACING.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    whatsAppCard: {
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: "#B9DEC9",
+      borderRadius: RADIUS.xl,
+      padding: SPACING.lg,
+      marginBottom: SPACING.xl,
+    },
+
+    whatsAppHeading: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    whatsAppIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: RADIUS.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: COLORS.successBackground,
+      marginRight: SPACING.sm,
+    },
+
+    whatsAppHeadingContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    whatsAppTitle: {
+      color: COLORS.text,
+      fontSize: FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
+      fontWeight: "800",
+    },
+
+    whatsAppHint: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      marginTop: 3,
+    },
+
+    whatsAppPreview: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      lineHeight: 21,
+      backgroundColor: COLORS.primarySoft,
+      borderRadius: RADIUS.md,
+      padding: SPACING.md,
+      marginTop: SPACING.md,
+    },
+
+    whatsAppActions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+
+    whatsAppPrimaryButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primary,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+    },
+
+    whatsAppPrimaryText: {
+      color: COLORS.onPrimary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    whatsAppSecondaryButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+    },
+
+    whatsAppSecondaryText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    whatsAppSkipButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: SPACING.sm,
+    },
+
+    whatsAppSkipText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      fontWeight: "700",
+    },
+
+    searchSection: {
+      marginBottom: SPACING.lg,
+    },
+
+    searchLabel: {
+      color: COLORS.text,
+      fontSize: FONT.subheading,
+      fontWeight: "700",
+      marginBottom: SPACING.sm,
+    },
+
+    searchInputRow: {
+      minHeight: 48,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.borderStrong,
+      borderRadius: RADIUS.pill,
+      paddingLeft: SPACING.md,
+      paddingRight: SPACING.xs,
+    },
+
+    searchInput: {
+      flex: 1,
+      minWidth: 0,
+      color: COLORS.text,
+      fontSize: FONT.body,
+      paddingVertical: SPACING.sm,
+    },
+
+    clearSearchButton: {
+      width: 44,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+    },
+
     filterLabel: {
       fontSize:
         FONT.subheading,
@@ -1583,9 +2634,8 @@ const styles =
     filterScroll: {
       flexGrow: 0,
       flexShrink: 0,
-      height: 42,
-      marginBottom:
-        SPACING.xl,
+      height: 44,
+      marginBottom: SPACING.sm,
     },
 
     filterContainer: {
@@ -1595,7 +2645,7 @@ const styles =
     },
 
     filterButton: {
-      minHeight: 42,
+      minHeight: 44,
       flexDirection: "row",
       alignItems: "center",
       gap: SPACING.xs,
@@ -1654,14 +2704,27 @@ const styles =
       color: COLORS.onPrimary,
     },
 
+    resultsHeading: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+
     sectionTitle: {
       fontSize:
         FONT.subheading,
       fontFamily: FONT_FAMILY.display,
       fontWeight: "700",
       color: COLORS.text,
-      marginBottom:
-        SPACING.md,
+      flex: 1,
+      minWidth: 0,
+    },
+
+    resultsCount: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
     },
 
     dayHeader: {
@@ -1709,6 +2772,7 @@ const styles =
 
     detailContent: {
       flex: 1,
+      minWidth: 0,
     },
 
     detailLabel: {
@@ -1722,6 +2786,7 @@ const styles =
       flexDirection: "row",
       alignItems: "center",
       alignSelf: "flex-start",
+      minHeight: 44,
       gap: SPACING.xs,
       marginTop: SPACING.md,
       paddingHorizontal: SPACING.md,
@@ -1756,6 +2821,7 @@ const styles =
 
     cardTopRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent:
         "space-between",
       alignItems:
@@ -1766,7 +2832,10 @@ const styles =
     clientInfo: {
       flexDirection: "row",
       alignItems: "center",
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 180,
+      minWidth: 0,
     },
 
     avatar: {
@@ -1791,6 +2860,7 @@ const styles =
 
     clientTextBlock: {
       flex: 1,
+      minWidth: 0,
     },
 
     clientName: {
@@ -1801,6 +2871,12 @@ const styles =
       marginBottom: 3,
     },
 
+    requestAge: {
+      color: COLORS.textMuted,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+    },
+
     phone: {
       fontSize:
         FONT.small,
@@ -1808,8 +2884,30 @@ const styles =
         COLORS.textSecondary,
     },
 
+    phoneActions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+      marginTop: SPACING.sm,
+    },
+
+    phoneAction: {
+      minHeight: 44,
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      paddingHorizontal: SPACING.md,
+    },
+
+    phoneActionText: {
+      color: COLORS.primary,
+      fontSize: FONT.caption,
+      fontWeight: "800",
+    },
+
     statusBadge: {
       flexShrink: 0,
+      marginLeft: "auto",
       borderRadius:
         RADIUS.pill,
       paddingHorizontal:
@@ -1864,11 +2962,14 @@ const styles =
 
     infoRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: SPACING.lg,
     },
 
     infoBlock: {
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 130,
       minWidth: 0,
       backgroundColor: COLORS.primarySoft,
       borderRadius: RADIUS.lg,
@@ -1894,9 +2995,44 @@ const styles =
 
     actionsContainer: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: SPACING.sm,
       marginTop:
         SPACING.lg,
+    },
+
+    expiredRequest: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.sm,
+      backgroundColor: COLORS.dangerBackground,
+      borderRadius: RADIUS.md,
+      padding: SPACING.md,
+      marginTop: SPACING.lg,
+    },
+
+    expiredRequestContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    expiredRequestTitle: {
+      color: COLORS.danger,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    expiredRequestText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      marginTop: 3,
+    },
+
+    expiredRejectButton: {
+      flexGrow: 0,
+      flexBasis: "auto",
+      minWidth: 150,
     },
 
     webActionsContainer: {
@@ -1953,13 +3089,24 @@ const styles =
       flexShrink: 0,
       flexBasis: "auto",
       minWidth: 110,
-      minHeight: 42,
+      minHeight: 44,
       justifyContent: "center",
       borderRadius:
         RADIUS.pill,
       paddingHorizontal:
         SPACING.md,
       paddingVertical: 9,
+    },
+
+    loadingCard: {
+      minHeight: 180,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.xl,
     },
 
     acceptedActionsSection: {

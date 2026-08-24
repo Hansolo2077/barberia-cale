@@ -18,6 +18,9 @@ export default function AppIcon({
       name={name}
       size={size}
       tintColor={color}
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no"
     />
   );
 }

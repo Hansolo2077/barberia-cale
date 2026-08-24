@@ -1,10 +1,19 @@
-import { useRouter } from "expo-router";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import {
+    Fragment,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import {
     ActivityIndicator,
+    Linking,
     Platform,
     Pressable,
+    RefreshControl,
     ScrollView,
+    Share,
     StyleSheet,
     Text,
     TextInput,
@@ -15,16 +24,25 @@ import {
     formatDisplayDate,
     formatDisplayTime,
 } from "../../utils/date-format";
+import {
+    addDaysToIso,
+    getBusinessTodayIso,
+    isValidIsoDate,
+} from "../../utils/business-date";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import {
     AdminAppointment,
+    AppointmentStatusCounts,
     getAdminSchedule,
 } from "../../api/admin.api";
+import type { Pagination } from "../../api/appointments.api";
+import { ApiError } from "../../api/api-client";
 
 import BackButton from "../../components/BackButton";
 import AppIcon from "../../components/AppIcon";
+import WebDateInput from "../../components/WebDateInput";
 
 import {
     COLORS,
@@ -37,12 +55,95 @@ import {
 import { useAuth } from "../../context/AuthContext";
 
 type StatusFilter =
-  | "ALL"
   | "PENDING"
   | "ACCEPTED"
   | "COMPLETED"
-  | "REJECTED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "REJECTED";
+
+const MAX_RANGE_DAYS = 93;
+const SCHEDULE_PAGE_SIZE = 50;
+
+type ScheduleQuery = {
+  status: StatusFilter;
+  search: string;
+};
+
+type ScheduleLoadMode =
+  | "initial"
+  | "query"
+  | "refresh"
+  | "silent"
+  | "loadMore";
+
+type ScheduleRequest = ScheduleQuery & {
+  startDate: string;
+  endDate: string;
+  page: number;
+  mode: ScheduleLoadMode;
+  preservePages: boolean;
+};
+
+function parseValidDate(dateText: string) {
+  if (!isValidIsoDate(dateText)) {
+    return null;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function validateDateRange(startDateText: string, endDateText: string) {
+  const startDate = parseValidDate(startDateText);
+  const endDate = parseValidDate(endDateText);
+
+  if (!startDate || !endDate) {
+    return "Elige fechas reales en formato AAAA-MM-DD.";
+  }
+
+  if (startDate.getTime() > endDate.getTime()) {
+    return "La fecha inicial no puede ser posterior a la fecha final.";
+  }
+
+  const inclusiveDays =
+    Math.floor(
+      (Date.UTC(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate()
+      ) -
+        Date.UTC(
+          startDate.getFullYear(),
+          startDate.getMonth(),
+          startDate.getDate()
+        )) /
+        86_400_000
+    ) + 1;
+
+  if (inclusiveDays > MAX_RANGE_DAYS) {
+    return `Consulta un máximo de ${MAX_RANGE_DAYS} días por vez.`;
+  }
+
+  return "";
+}
 
 function formatDate(date: Date) {
   const year = date.getFullYear();
@@ -58,19 +159,16 @@ function formatDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
 export default function AdminScheduleScreen() {
   const router = useRouter();
   const { token } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
+  const hasLoadedRef = useRef(false);
+
+  const initialDateText = getBusinessTodayIso();
 
   const initialStartDate =
-    new Date();
+    parseValidDate(initialDateText) ?? new Date();
 
   const initialEndDate =
     initialStartDate;
@@ -89,28 +187,28 @@ export default function AdminScheduleScreen() {
     startDateText,
     setStartDateText,
   ] = useState(
-    formatDate(initialStartDate)
+    initialDateText
   );
 
   const [
     endDateText,
     setEndDateText,
   ] = useState(
-    formatDate(initialEndDate)
+    initialDateText
   );
 
   const [
     appliedStartDateText,
     setAppliedStartDateText,
   ] = useState(
-    formatDate(initialStartDate)
+    initialDateText
   );
 
   const [
     appliedEndDateText,
     setAppliedEndDateText,
   ] = useState(
-    formatDate(initialEndDate)
+    initialDateText
   );
 
   const [
@@ -150,121 +248,437 @@ export default function AdminScheduleScreen() {
   const [loading, setLoading] =
     useState(true);
 
+  const [hasLoaded, setHasLoaded] =
+    useState(false);
+
+  const [currentTime, setCurrentTime] =
+    useState(() => Date.now());
+
+  const [refreshing, setRefreshing] =
+    useState(false);
+
   const [error, setError] =
     useState("");
 
+  const [syncWarning, setSyncWarning] =
+    useState("");
+
+  const [rangeError, setRangeError] =
+    useState("");
+
+  const [lastUpdated, setLastUpdated] =
+    useState<Date | null>(null);
+
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [appliedSearchQuery, setAppliedSearchQuery] =
+    useState("");
+
+  const [statusCounts, setStatusCounts] =
+    useState<AppointmentStatusCounts>({});
+
+  const [pagination, setPagination] =
+    useState<Pagination | null>(null);
+
+  const [loadingMore, setLoadingMore] =
+    useState(false);
+
+  const [contactNotice, setContactNotice] =
+    useState("");
+
+  const appliedRangeRef = useRef({
+    startDate: initialDateText,
+    endDate: initialDateText,
+  });
+
+  const appliedQueryRef = useRef<ScheduleQuery>({
+    status: "PENDING",
+    search: "",
+  });
+
+  const desiredQueryRef = useRef<ScheduleQuery>({
+    status: "PENDING",
+    search: "",
+  });
+
+  const desiredRequestRef = useRef<ScheduleRequest>({
+    startDate: initialDateText,
+    endDate: initialDateText,
+    status: "PENDING",
+    search: "",
+    page: 1,
+    mode: "initial",
+    preservePages: false,
+  });
+
+  const loadedPageRef = useRef(1);
+  const requestSequenceRef = useRef(0);
+
   useEffect(() => {
-    if (token) {
-      loadSchedule();
-    }
-  }, [token]);
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30_000);
 
-  async function loadSchedule(
-    customStartDate?: string,
-    customEndDate?: string
-  ) {
-    if (!token) {
-      return;
-    }
+    return () => clearInterval(timer);
+  }, []);
 
-    const startDate =
-      customStartDate ||
-      startDateText;
+  const loadSchedule = useCallback(
+    async (
+      startDate: string,
+      endDate: string,
+      mode: ScheduleLoadMode = "query",
+      options?: {
+        page?: number;
+        query?: ScheduleQuery;
+        preservePages?: boolean;
+      }
+    ) => {
+      if (!token) {
+        return false;
+      }
 
-    const endDate =
-      customEndDate ||
-      endDateText;
+      const validationMessage = validateDateRange(startDate, endDate);
 
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(
-        startDate
-      ) ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(
-        endDate
-      )
-    ) {
-      setError(
-        "Ingresa fechas válidas en formato AAAA-MM-DD."
-      );
+      if (validationMessage) {
+        setRangeError(validationMessage);
+        return false;
+      }
 
-      setLoading(false);
-      return;
-    }
+      const page = options?.page ?? 1;
+      const query = options?.query ?? appliedQueryRef.current;
+      const normalizedQuery: ScheduleQuery = {
+        status: query.status,
+        search: query.search.trim(),
+      };
+      const sameAppliedRequest =
+        hasLoadedRef.current &&
+        startDate === appliedRangeRef.current.startDate &&
+        endDate === appliedRangeRef.current.endDate &&
+        normalizedQuery.status === appliedQueryRef.current.status &&
+        normalizedQuery.search === appliedQueryRef.current.search;
+      const preservePages =
+        options?.preservePages ??
+        (mode === "silent" && page === 1 && sameAppliedRequest);
+      const pagesToPreserve = preservePages
+        ? loadedPageRef.current
+        : 1;
+      const requestSequence = ++requestSequenceRef.current;
 
-    if (startDate > endDate) {
-      setError(
-        "La fecha inicial no puede ser posterior a la fecha final."
-      );
+      desiredQueryRef.current = normalizedQuery;
 
-      setLoading(false);
-      return;
-    }
+      desiredRequestRef.current = {
+        startDate,
+        endDate,
+        ...normalizedQuery,
+        page,
+        mode,
+        preservePages,
+      };
 
-    try {
-      setLoading(true);
-      setError("");
+      try {
+        if (mode === "initial") {
+          setLoading(true);
+        }
 
-      const result =
-        await getAdminSchedule(
+        if (mode === "query" || mode === "refresh") {
+          setRefreshing(true);
+        }
+
+        if (mode === "loadMore") {
+          setLoadingMore(true);
+        }
+
+        setRangeError("");
+        setError("");
+        setSyncWarning("");
+
+        const firstResult = await getAdminSchedule(
           token,
           startDate,
-          endDate
+          endDate,
+          {
+            page,
+            pageSize: SCHEDULE_PAGE_SIZE,
+            status: normalizedQuery.status,
+            search: normalizedQuery.search,
+          }
         );
 
-      setAppointments(
-        result.appointments
-      );
+        const lastPageToPreserve =
+          mode !== "loadMore" && page === 1
+            ? Math.min(pagesToPreserve, firstResult.pagination.totalPages)
+            : page;
 
-      setAppliedStartDateText(startDate);
-      setAppliedEndDateText(endDate);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo cargar la agenda."
+        const additionalResults =
+          mode !== "loadMore" &&
+          page === 1 &&
+          lastPageToPreserve > 1
+            ? await Promise.all(
+                Array.from(
+                  { length: lastPageToPreserve - 1 },
+                  (_, index) =>
+                    getAdminSchedule(token, startDate, endDate, {
+                      page: index + 2,
+                      pageSize: SCHEDULE_PAGE_SIZE,
+                      status: normalizedQuery.status,
+                      search: normalizedQuery.search,
+                    })
+                )
+              )
+            : [];
+
+        if (requestSequence !== requestSequenceRef.current) {
+          return false;
+        }
+
+        const pageResults = [firstResult, ...additionalResults];
+        const resultPagination =
+          pageResults[pageResults.length - 1].pagination;
+        const knownResultIds = new Set<number>();
+        const resultAppointments = pageResults
+          .flatMap((result) => result.appointments)
+          .filter((appointment) => {
+            if (knownResultIds.has(appointment.id)) {
+              return false;
+            }
+
+            knownResultIds.add(appointment.id);
+            return true;
+          });
+
+        if (mode === "loadMore") {
+          setAppointments((currentAppointments) => {
+            const knownIds = new Set(
+              currentAppointments.map((appointment) => appointment.id)
+            );
+
+            return [
+              ...currentAppointments,
+              ...resultAppointments.filter(
+                (appointment) => !knownIds.has(appointment.id)
+              ),
+            ];
+          });
+        } else {
+          setAppointments(resultAppointments);
+        }
+
+        setStatusCounts(firstResult.statusCounts ?? {});
+        setPagination(resultPagination);
+        loadedPageRef.current = resultPagination.page;
+        setStatusFilter(normalizedQuery.status);
+        setAppliedSearchQuery(normalizedQuery.search);
+        appliedQueryRef.current = normalizedQuery;
+        setAppliedStartDateText(startDate);
+        setAppliedEndDateText(endDate);
+        appliedRangeRef.current = { startDate, endDate };
+        setLastUpdated(new Date());
+        hasLoadedRef.current = true;
+        setHasLoaded(true);
+        return true;
+      } catch (loadError) {
+        const message =
+          loadError instanceof Error
+            ? loadError.message
+            : "No se pudo cargar la agenda.";
+
+        if (requestSequence !== requestSequenceRef.current) {
+          return false;
+        }
+
+        if (
+          loadError instanceof ApiError &&
+          loadError.code === "UNAUTHORIZED"
+        ) {
+          return false;
+        }
+
+        if (mode === "loadMore") {
+          setSyncWarning(
+            `No se pudieron cargar más registros. ${message}`
+          );
+        } else if (hasLoadedRef.current) {
+          setSyncWarning(
+            `Mostramos los últimos datos disponibles. ${message}`
+          );
+        } else {
+          setError(message);
+        }
+
+        return false;
+      } finally {
+        if (requestSequence === requestSequenceRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [token]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const appliedRange = appliedRangeRef.current;
+      void loadSchedule(
+        appliedRange.startDate,
+        appliedRange.endDate,
+        hasLoadedRef.current ? "silent" : "initial"
       );
-    } finally {
-      setLoading(false);
+    }, [loadSchedule])
+  );
+
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      return;
     }
+
+    const normalizedSearch = searchQuery.trim();
+
+    if (normalizedSearch === appliedSearchQuery) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      const appliedRange = appliedRangeRef.current;
+
+      void loadSchedule(
+        appliedRange.startDate,
+        appliedRange.endDate,
+        "query",
+        {
+          page: 1,
+          query: {
+            status: desiredQueryRef.current.status,
+            search: normalizedSearch,
+          },
+        }
+      );
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [appliedSearchQuery, loadSchedule, searchQuery]);
+
+  async function selectStatusFilter(filter: StatusFilter) {
+    const desiredSearch = searchQuery.trim();
+    const alreadyDesired =
+      filter === desiredQueryRef.current.status &&
+      desiredSearch === desiredQueryRef.current.search;
+
+    if (alreadyDesired || loading || refreshing || loadingMore) {
+      return;
+    }
+
+    const appliedRange = appliedRangeRef.current;
+    setExpandedAppointmentId(null);
+
+    await loadSchedule(
+      appliedRange.startDate,
+      appliedRange.endDate,
+      "query",
+      {
+        page: 1,
+        query: {
+          status: filter,
+          search: desiredSearch,
+        },
+      }
+    );
   }
 
-  function selectPreset(
+  function retryLastRequest() {
+    const request = desiredRequestRef.current;
+    const retryMode: ScheduleLoadMode =
+      request.mode === "loadMore" ? "loadMore" : "refresh";
+
+    void loadSchedule(
+      request.startDate,
+      request.endDate,
+      retryMode,
+      {
+        page: request.page,
+        query: {
+          status: request.status,
+          search: request.search,
+        },
+        preservePages: request.preservePages,
+      }
+    );
+  }
+
+  function loadMoreAppointments() {
+    if (
+      !pagination?.hasMore ||
+      loading ||
+      refreshing ||
+      loadingMore
+    ) {
+      return;
+    }
+
+    const appliedRange = appliedRangeRef.current;
+
+    void loadSchedule(
+      appliedRange.startDate,
+      appliedRange.endDate,
+      "loadMore",
+      {
+        page: pagination.page + 1,
+        query: appliedQueryRef.current,
+      }
+    );
+  }
+
+  async function selectPreset(
     preset: "TODAY" | "TOMORROW" | "WEEK"
   ) {
-    const today = new Date();
-    const start =
+    const todayText = getBusinessTodayIso();
+    const formattedStart =
       preset === "TOMORROW"
-        ? addDays(today, 1)
-        : today;
-    const end =
+        ? addDaysToIso(todayText, 1)
+        : todayText;
+    const formattedEnd =
       preset === "WEEK"
-        ? addDays(today, 6)
-        : start;
-    const formattedStart = formatDate(start);
-    const formattedEnd = formatDate(end);
+        ? addDaysToIso(todayText, 6)
+        : formattedStart;
+    const start = parseValidDate(formattedStart) ?? new Date();
+    const end = parseValidDate(formattedEnd) ?? start;
 
-    setActivePreset(preset);
     setShowCustomRange(false);
     setSelectedStartDate(start);
     setSelectedEndDate(end);
     setStartDateText(formattedStart);
     setEndDateText(formattedEnd);
-    setStatusFilter("PENDING");
     setExpandedAppointmentId(null);
     setShouldScrollResults(true);
-    void loadSchedule(formattedStart, formattedEnd);
+    const loaded = await loadSchedule(
+      formattedStart,
+      formattedEnd,
+      "query"
+    );
+
+    if (loaded) {
+      setActivePreset(preset);
+    }
   }
 
-  function consultCustomRange() {
-    setActivePreset("CUSTOM");
-    setStatusFilter("PENDING");
+  async function consultCustomRange() {
     setExpandedAppointmentId(null);
     setShouldScrollResults(true);
-    void loadSchedule();
+    const loaded = await loadSchedule(
+      startDateText,
+      endDateText,
+      "query"
+    );
+
+    if (loaded) {
+      setActivePreset("CUSTOM");
+    }
   }
 
   function handleResultsLayout(y: number) {
-    if (!shouldScrollResults || loading) {
+    if (!shouldScrollResults || loading || refreshing) {
       return;
     }
 
@@ -286,6 +700,7 @@ export default function AdminScheduleScreen() {
     }
 
     setSelectedStartDate(date);
+    setRangeError("");
 
     const formattedDate =
       formatDate(date);
@@ -321,6 +736,7 @@ export default function AdminScheduleScreen() {
     }
 
     setSelectedEndDate(date);
+    setRangeError("");
 
     setEndDateText(
       formatDate(date)
@@ -360,7 +776,7 @@ export default function AdminScheduleScreen() {
           background:
             COLORS.warningBackground,
           text:
-            COLORS.warning,
+            "#7A4C00",
         };
 
       case "ACCEPTED":
@@ -411,31 +827,47 @@ export default function AdminScheduleScreen() {
       label: "Confirmadas",
     },
     {
-      value: "ALL",
-      label: "Todas",
-    },
-    {
       value: "COMPLETED",
       label: "Completadas",
-    },
-    {
-      value: "REJECTED",
-      label: "Rechazadas",
     },
     {
       value: "CANCELLED",
       label: "Canceladas",
     },
+    {
+      value: "REJECTED",
+      label: "Rechazadas",
+    },
   ];
 
-  const filteredAppointments =
-    statusFilter === "ALL"
-      ? appointments
-      : appointments.filter(
-          (appointment) =>
-            appointment.status ===
-            statusFilter
-        );
+  const normalizedQuery = appliedSearchQuery
+    .trim()
+    .toLocaleLowerCase("es-NI");
+
+  const filteredAppointments = appointments
+    .filter(
+      (appointment) => appointment.status === statusFilter
+    )
+    .filter((appointment) => {
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return [
+        `#${appointment.id}`,
+        appointment.firstName,
+        appointment.lastName,
+        appointment.phone,
+        appointment.service,
+        appointment.date,
+        appointment.time,
+        formatDisplayDate(appointment.date),
+        formatDisplayTime(appointment.time),
+      ]
+        .join(" ")
+        .toLocaleLowerCase("es-NI")
+        .includes(normalizedQuery);
+    });
 
   const dayAppointmentCounts =
     filteredAppointments.reduce<Record<string, number>>(
@@ -448,28 +880,110 @@ export default function AdminScheduleScreen() {
       {}
     );
 
-  const pendingCount =
-    appointments.filter(
-      (appointment) =>
-        appointment.status ===
-        "PENDING"
-    ).length;
+  const pendingCount = statusCounts.PENDING ?? 0;
 
-  const acceptedCount =
-    appointments.filter(
-      (appointment) =>
-        appointment.status ===
-        "ACCEPTED"
-    ).length;
+  const acceptedCount = statusCounts.ACCEPTED ?? 0;
 
-  function getFilterCount(filter: StatusFilter) {
-    if (filter === "ALL") {
-      return appointments.length;
+  const totalRecordCount = Object.values(statusCounts).reduce(
+    (total, count) => total + (count ?? 0),
+    0
+  );
+
+  const activeCount = pendingCount + acceptedCount;
+
+  const isBusy = loading || refreshing || loadingMore;
+
+  const draftRangeChanged =
+    startDateText !== appliedStartDateText ||
+    endDateText !== appliedEndDateText;
+
+  const draftSearchChanged =
+    searchQuery.trim() !== appliedSearchQuery;
+
+  const updatedLabel = lastUpdated
+    ? `Actualizado a las ${lastUpdated.toLocaleTimeString("es-NI", {
+        hour: "numeric",
+        minute: "2-digit",
+      })}`
+    : "Aún no se ha actualizado";
+
+  function getRequestAge(createdAt: string) {
+    const createdTimestamp = new Date(createdAt).getTime();
+
+    if (!Number.isFinite(createdTimestamp)) {
+      return "Fecha de solicitud no disponible";
     }
 
-    return appointments.filter(
-      (appointment) => appointment.status === filter
-    ).length;
+    const hours = Math.max(
+      0,
+      Math.floor((currentTime - createdTimestamp) / 3_600_000)
+    );
+
+    if (hours < 1) {
+      return "Solicitada hace menos de una hora";
+    }
+
+    if (hours < 24) {
+      return `Solicitada hace ${hours} ${hours === 1 ? "hora" : "horas"}`;
+    }
+
+    const days = Math.floor(hours / 24);
+    return `Solicitada hace ${days} ${days === 1 ? "día" : "días"}`;
+  }
+
+  function getEmptyMessage() {
+    if (normalizedQuery) {
+      return "No encontramos registros que coincidan con la búsqueda, el período y el estado.";
+    }
+
+    return `No existen citas ${getStatusText(statusFilter).toLowerCase()}s en el período consultado.`;
+  }
+
+  async function shareOrCopyPhone(phone: string) {
+    try {
+      if (
+        Platform.OS === "web" &&
+        typeof navigator !== "undefined" &&
+        navigator.clipboard
+      ) {
+        await navigator.clipboard.writeText(phone);
+        setContactNotice("Número copiado al portapapeles.");
+        return;
+      }
+
+      await Share.share({ message: phone });
+    } catch {
+      setContactNotice(`No se pudo copiar. Número: ${phone}`);
+    }
+  }
+
+  async function callClient(phone: string) {
+    try {
+      await Linking.openURL(`tel:${phone.replace(/\s/g, "")}`);
+    } catch {
+      setContactNotice(`No se pudo iniciar la llamada. Marca ${phone}.`);
+    }
+  }
+
+  function openAppointmentInManagement(appointment: AdminAppointment) {
+    if (
+      appointment.status !== "PENDING" &&
+      appointment.status !== "ACCEPTED"
+    ) {
+      return;
+    }
+
+    router.push({
+      pathname: "/admin/appointments",
+      params: {
+        query: `#${appointment.id}`,
+        status: appointment.status,
+      },
+    });
+  }
+
+  function getFilterCount(filter: StatusFilter) {
+    return statusCounts[filter] ?? 0;
   }
 
   return (
@@ -477,6 +991,21 @@ export default function AdminScheduleScreen() {
       ref={scrollViewRef}
       contentContainerStyle={
         styles.container
+      }
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            const appliedRange = appliedRangeRef.current;
+            void loadSchedule(
+              appliedRange.startDate,
+              appliedRange.endDate,
+              "refresh"
+            );
+          }}
+          colors={[COLORS.primary]}
+          tintColor={COLORS.primary}
+        />
       }
       showsVerticalScrollIndicator={
         false
@@ -551,14 +1080,14 @@ export default function AdminScheduleScreen() {
                   styles.presetButton,
                   active && styles.activePresetButton,
                 ]}
-                disabled={loading}
+                disabled={isBusy}
                 accessibilityRole="button"
                 accessibilityLabel={`Consultar agenda de ${preset.label.toLowerCase()}`}
                 accessibilityState={{
                   selected: active,
-                  disabled: loading,
+                  disabled: isBusy,
                 }}
-                onPress={() => selectPreset(preset.value)}
+                onPress={() => void selectPreset(preset.value)}
               >
                 <Text
                   style={[
@@ -574,14 +1103,18 @@ export default function AdminScheduleScreen() {
         </View>
 
         <Pressable
-          style={styles.customRangeToggle}
+          style={[
+            styles.customRangeToggle,
+            isBusy && styles.disabledButton,
+          ]}
+          disabled={isBusy}
           accessibilityRole="button"
           accessibilityState={{
             expanded: showCustomRange,
+            disabled: isBusy,
           }}
           onPress={() => {
             setShowCustomRange((current) => !current);
-            setActivePreset("CUSTOM");
           }}
         >
           <AppIcon
@@ -611,17 +1144,16 @@ export default function AdminScheduleScreen() {
         {Platform.OS ===
         "web" ? (
           <>
-            <TextInput
-              style={styles.input}
-              accessibilityLabel="Fecha inicial"
-              value={
-                startDateText
-              }
-              onChangeText={
-                setStartDateText
-              }
-              placeholder="AAAA-MM-DD"
-              maxLength={10}
+            <WebDateInput
+              label="Fecha inicial"
+              value={startDateText}
+              disabled={isBusy}
+              hasError={Boolean(rangeError)}
+              describedBy={rangeError ? "schedule-range-error" : undefined}
+              onChange={(value) => {
+                setStartDateText(value);
+                setRangeError("");
+              }}
             />
 
             <Text
@@ -629,17 +1161,20 @@ export default function AdminScheduleScreen() {
                 styles.helperText
               }
             >
-              Formato: AAAA-MM-DD
+              Elige una fecha o usa el formato AAAA-MM-DD.
             </Text>
           </>
         ) : (
           <>
             <Pressable
-              style={
-                styles.dateButton
-              }
+              style={[
+                styles.dateButton,
+                isBusy && styles.disabledButton,
+              ]}
+              disabled={isBusy}
               accessibilityRole="button"
               accessibilityLabel={`Elegir fecha inicial, ${formatDisplayDate(startDateText)}`}
+              accessibilityState={{ disabled: isBusy }}
               onPress={() =>
                 setShowStartPicker(
                   true
@@ -651,7 +1186,7 @@ export default function AdminScheduleScreen() {
                   styles.dateButtonText
                 }
               >
-                {startDateText}
+                {formatDisplayDate(startDateText)}
               </Text>
             </Pressable>
 
@@ -682,15 +1217,17 @@ export default function AdminScheduleScreen() {
         {Platform.OS ===
         "web" ? (
           <>
-            <TextInput
-              style={styles.input}
-              accessibilityLabel="Fecha final"
+            <WebDateInput
+              label="Fecha final"
               value={endDateText}
-              onChangeText={
-                setEndDateText
-              }
-              placeholder="AAAA-MM-DD"
-              maxLength={10}
+              minimumDate={startDateText || undefined}
+              disabled={isBusy}
+              hasError={Boolean(rangeError)}
+              describedBy={rangeError ? "schedule-range-error" : undefined}
+              onChange={(value) => {
+                setEndDateText(value);
+                setRangeError("");
+              }}
             />
 
             <Text
@@ -698,17 +1235,20 @@ export default function AdminScheduleScreen() {
                 styles.helperText
               }
             >
-              Formato: AAAA-MM-DD
+              Elige una fecha o usa el formato AAAA-MM-DD.
             </Text>
           </>
         ) : (
           <>
             <Pressable
-              style={
-                styles.dateButton
-              }
+              style={[
+                styles.dateButton,
+                isBusy && styles.disabledButton,
+              ]}
+              disabled={isBusy}
               accessibilityRole="button"
               accessibilityLabel={`Elegir fecha final, ${formatDisplayDate(endDateText)}`}
+              accessibilityState={{ disabled: isBusy }}
               onPress={() =>
                 setShowEndPicker(
                   true
@@ -720,7 +1260,7 @@ export default function AdminScheduleScreen() {
                   styles.dateButtonText
                 }
               >
-                {endDateText}
+                {formatDisplayDate(endDateText)}
               </Text>
             </Pressable>
 
@@ -747,24 +1287,40 @@ export default function AdminScheduleScreen() {
             styles.rangeHelper
           }
         >
-          Para consultar un solo día,
-          utiliza la misma fecha inicial
-          y final.
+          Para un solo día, usa la misma fecha inicial y final. Puedes consultar hasta {MAX_RANGE_DAYS} días.
         </Text>
+
+        {draftRangeChanged && !rangeError ? (
+          <Text style={styles.draftRangeNotice} accessibilityLiveRegion="polite">
+            Tienes cambios sin aplicar. La lista todavía muestra el último período consultado.
+          </Text>
+        ) : null}
+
+        {rangeError ? (
+          <Text
+            nativeID="schedule-range-error"
+            style={styles.rangeError}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="assertive"
+          >
+            {rangeError}
+          </Text>
+        ) : null}
 
         <Pressable
           style={[
             styles.searchButton,
-            loading &&
+            isBusy &&
               styles.disabledButton,
           ]}
-          disabled={loading}
+          disabled={isBusy}
           accessibilityRole="button"
           accessibilityLabel="Consultar agenda del rango seleccionado"
           accessibilityState={{
-            disabled: loading,
+            disabled: isBusy,
+            busy: isBusy,
           }}
-          onPress={consultCustomRange}
+          onPress={() => void consultCustomRange()}
         >
           <AppIcon
             name={{
@@ -781,7 +1337,7 @@ export default function AdminScheduleScreen() {
               styles.searchButtonText
             }
           >
-            {loading
+            {isBusy
               ? "Consultando..."
               : "Consultar agenda"}
           </Text>
@@ -790,7 +1346,89 @@ export default function AdminScheduleScreen() {
         )}
       </View>
 
-      {loading ? (
+      <View style={styles.dataStatusRow}>
+        <Text style={styles.updatedText}>{updatedLabel}</Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.refreshButton,
+            pressed && styles.buttonPressed,
+          ]}
+          disabled={isBusy}
+          onPress={() => {
+            const appliedRange = appliedRangeRef.current;
+            void loadSchedule(
+              appliedRange.startDate,
+              appliedRange.endDate,
+              "refresh"
+            );
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Actualizar el período aplicado"
+          accessibilityState={{ disabled: isBusy, busy: isBusy }}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <AppIcon
+              name={{
+                ios: "arrow.clockwise",
+                android: "refresh",
+                web: "refresh",
+              }}
+              size={19}
+              color={COLORS.primary}
+            />
+          )}
+        </Pressable>
+      </View>
+
+      {syncWarning ? (
+        <View
+          style={[styles.inlineNotice, styles.warningNotice]}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.inlineNoticeContent}>
+            <Text style={styles.inlineNoticeTitle}>
+              No pudimos actualizar la agenda
+            </Text>
+            <Text style={styles.inlineNoticeText}>{syncWarning}</Text>
+          </View>
+
+          <Pressable
+            style={styles.inlineNoticeAction}
+            onPress={retryLastRequest}
+            accessibilityRole="button"
+            accessibilityLabel="Reintentar actualización de agenda"
+          >
+            <Text style={styles.inlineNoticeActionText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {contactNotice ? (
+        <View
+          style={[styles.inlineNotice, styles.successNotice]}
+          accessibilityLiveRegion="polite"
+        >
+          <Text style={styles.inlineNoticeText}>{contactNotice}</Text>
+          <Pressable
+            style={styles.noticeDismiss}
+            onPress={() => setContactNotice("")}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar mensaje"
+          >
+            <AppIcon
+              name={{ ios: "xmark", android: "close", web: "close" }}
+              size={18}
+              color={COLORS.textSecondary}
+            />
+          </Pressable>
+        </View>
+      ) : null}
+
+      {loading && !hasLoaded ? (
         <View
           style={
             styles.loadingContainer
@@ -831,6 +1469,22 @@ export default function AdminScheduleScreen() {
           >
             {error}
           </Text>
+
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => {
+              const appliedRange = appliedRangeRef.current;
+              void loadSchedule(
+                appliedRange.startDate,
+                appliedRange.endDate,
+                "initial"
+              );
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Intentar consultar la agenda nuevamente"
+          >
+            <Text style={styles.retryButtonText}>Intentar nuevamente</Text>
+          </Pressable>
         </View>
       ) : (
         <View
@@ -868,21 +1522,21 @@ export default function AdminScheduleScreen() {
             </View>
 
             <Text style={styles.periodNarrative}>
-              {appointments.length === 0
-                ? "La agenda está despejada para este período."
-                : appointments.length === 1
-                  ? "Hay una cita programada en este período."
-                  : `Hay ${appointments.length} citas programadas en este período.`}
+              {totalRecordCount === 0
+                ? "No hay registros de citas en este período."
+                : totalRecordCount === 1
+                  ? `Hay 1 registro; ${activeCount} ${activeCount === 1 ? "cita activa" : "citas activas"}.`
+                  : `Hay ${totalRecordCount} registros; ${activeCount} ${activeCount === 1 ? "cita activa" : "citas activas"}.`}
             </Text>
 
             <View style={styles.summaryMetrics}>
               <View style={styles.summaryMetric}>
                 <Text style={styles.summaryMetricValue}>
-                  {appointments.length}
+                  {totalRecordCount}
                 </Text>
 
                 <Text style={styles.summaryMetricLabel}>
-                  Total
+                  Registros
                 </Text>
               </View>
 
@@ -920,9 +1574,7 @@ export default function AdminScheduleScreen() {
             horizontal
             style={styles.filterScroll}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={
-              styles.filterContainer
-            }
+            contentContainerStyle={styles.filterContainer}
           >
             {filters.map(
               (filter) => {
@@ -939,16 +1591,15 @@ export default function AdminScheduleScreen() {
                       styles.filterButton,
                       active &&
                         styles.activeFilterButton,
+                      isBusy && styles.disabledButton,
                     ]}
-                    onPress={() =>
-                      setStatusFilter(
-                        filter.value
-                      )
-                    }
+                    disabled={isBusy}
+                    onPress={() => void selectStatusFilter(filter.value)}
                     accessibilityRole="tab"
                     accessibilityLabel={`${filter.label}, ${getFilterCount(filter.value)}`}
                     accessibilityState={{
                       selected: active,
+                      disabled: isBusy,
                     }}
                     hitSlop={4}
                   >
@@ -983,10 +1634,75 @@ export default function AdminScheduleScreen() {
             )}
           </ScrollView>
 
+          <View style={styles.searchSection}>
+            <Text style={styles.searchLabel}>Buscar en este período</Text>
+
+            <View style={styles.searchInputRow}>
+              <AppIcon
+                name={{
+                  ios: "magnifyingglass",
+                  android: "search",
+                  web: "search",
+                }}
+                size={19}
+                color={COLORS.textMuted}
+              />
+
+              <TextInput
+                style={styles.appointmentSearchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Nombre, celular, servicio, fecha u hora"
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+                importantForAutofill="no"
+                returnKeyType="search"
+                editable={!isBusy}
+                accessibilityLabel="Buscar dentro de la agenda"
+                accessibilityState={{ disabled: isBusy }}
+              />
+
+              {searchQuery ? (
+                <Pressable
+                  style={styles.clearSearchButton}
+                  disabled={isBusy}
+                  onPress={() => setSearchQuery("")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Limpiar búsqueda"
+                  accessibilityState={{ disabled: isBusy }}
+                >
+                  <AppIcon
+                    name={{
+                      ios: "xmark.circle.fill",
+                      android: "cancel",
+                      web: "cancel",
+                    }}
+                    size={20}
+                    color={COLORS.textMuted}
+                  />
+                </Pressable>
+              ) : null}
+            </View>
+
+            {draftSearchChanged ? (
+              <Text
+                style={styles.searchProgressText}
+                accessibilityLiveRegion="polite"
+              >
+                {refreshing
+                  ? "Buscando en todos los registros del período..."
+                  : "La búsqueda se aplicará automáticamente."}
+              </Text>
+            ) : null}
+          </View>
+
           <View
             style={
               styles.resultsHeader
             }
+            accessibilityLiveRegion="polite"
           >
             <Text
               style={
@@ -1001,11 +1717,8 @@ export default function AdminScheduleScreen() {
                 styles.resultsCount
               }
             >
-              {
-                filteredAppointments.length
-              }{" "}
-              {filteredAppointments.length ===
-              1
+              {pagination?.total ?? filteredAppointments.length}{" "}
+              {(pagination?.total ?? filteredAppointments.length) === 1
                 ? "resultado"
                 : "resultados"}
             </Text>
@@ -1047,9 +1760,7 @@ export default function AdminScheduleScreen() {
                   styles.messageText
                 }
               >
-                No existen citas que
-                coincidan con este
-                período y estado.
+                {getEmptyMessage()}
               </Text>
             </View>
           ) : (
@@ -1078,7 +1789,9 @@ export default function AdminScheduleScreen() {
 
                       <Text style={styles.dayHeaderCount}>
                         {dayAppointmentCounts[appointment.date]}{" "}
-                        citas
+                        {dayAppointmentCounts[appointment.date] === 1
+                          ? "cita mostrada"
+                          : "citas mostradas"}
                       </Text>
                     </View>
                   )}
@@ -1112,6 +1825,10 @@ export default function AdminScheduleScreen() {
                             <Text style={styles.clientName}>
                               {appointment.firstName}{" "}
                               {appointment.lastName}
+                            </Text>
+
+                            <Text style={styles.requestAge}>
+                              {getRequestAge(appointment.createdAt)} · #{appointment.id}
                             </Text>
                           </View>
                         </View>
@@ -1179,6 +1896,34 @@ export default function AdminScheduleScreen() {
                             <Text style={styles.phone}>
                               {appointment.phone}
                             </Text>
+
+                            <View style={styles.phoneActions}>
+                              <Pressable
+                                style={styles.phoneAction}
+                                onPress={() => void callClient(appointment.phone)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Llamar a ${appointment.firstName}`}
+                              >
+                                <Text style={styles.phoneActionText}>Llamar</Text>
+                              </Pressable>
+
+                              <Pressable
+                                style={styles.phoneAction}
+                                onPress={() => void shareOrCopyPhone(appointment.phone)}
+                                accessibilityRole="button"
+                                accessibilityLabel={
+                                  Platform.OS === "web"
+                                    ? "Copiar número del cliente"
+                                    : "Compartir o copiar número del cliente"
+                                }
+                              >
+                                <Text style={styles.phoneActionText}>
+                                  {Platform.OS === "web"
+                                    ? "Copiar"
+                                    : "Copiar o compartir"}
+                                </Text>
+                              </Pressable>
+                            </View>
                           </View>
                         </View>
                       )}
@@ -1222,6 +1967,29 @@ export default function AdminScheduleScreen() {
                             : "Ver detalles"}
                         </Text>
                       </Pressable>
+
+                      {(appointment.status === "PENDING" ||
+                        appointment.status === "ACCEPTED") && (
+                        <Pressable
+                          style={styles.manageAppointmentButton}
+                          onPress={() => openAppointmentInManagement(appointment)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Gestionar cita de ${appointment.firstName} ${appointment.lastName}`}
+                        >
+                          <AppIcon
+                            name={{
+                              ios: "arrow.up.right.square",
+                              android: "open_in_new",
+                              web: "open_in_new",
+                            }}
+                            size={18}
+                            color={COLORS.primary}
+                          />
+                          <Text style={styles.manageAppointmentText}>
+                            Gestionar cita
+                          </Text>
+                        </Pressable>
+                      )}
                     </View>
                   </View>
                   </Fragment>
@@ -1229,6 +1997,47 @@ export default function AdminScheduleScreen() {
               }
             )
           )}
+
+          {filteredAppointments.length > 0 && pagination?.hasMore ? (
+            <View style={styles.loadMoreSection}>
+              <Text style={styles.loadMoreText}>
+                Mostrando {appointments.length} de {pagination.total} resultados.
+              </Text>
+
+              <Pressable
+                style={[
+                  styles.loadMoreButton,
+                  isBusy && styles.disabledButton,
+                ]}
+                disabled={isBusy}
+                onPress={loadMoreAppointments}
+                accessibilityRole="button"
+                accessibilityLabel={`Cargar más citas. Se muestran ${appointments.length} de ${pagination.total}`}
+                accessibilityState={{
+                  disabled: isBusy,
+                  busy: loadingMore,
+                }}
+              >
+                {loadingMore ? (
+                  <ActivityIndicator size="small" color={COLORS.onPrimary} />
+                ) : (
+                  <AppIcon
+                    name={{
+                      ios: "arrow.down.circle",
+                      android: "expand_more",
+                      web: "expand_more",
+                    }}
+                    size={19}
+                    color={COLORS.onPrimary}
+                  />
+                )}
+
+                <Text style={styles.loadMoreButtonText}>
+                  {loadingMore ? "Cargando..." : "Cargar más"}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -1390,6 +2199,7 @@ const styles =
     customRangeToggle: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: 44,
       gap: SPACING.xs,
       alignSelf: "flex-start",
       marginTop: SPACING.md,
@@ -1429,7 +2239,7 @@ const styles =
         COLORS.background,
       borderWidth: 1,
       borderColor:
-        COLORS.border,
+        COLORS.borderStrong,
       borderRadius:
         RADIUS.md,
       paddingHorizontal:
@@ -1446,7 +2256,7 @@ const styles =
         COLORS.background,
       borderWidth: 1,
       borderColor:
-        COLORS.border,
+        COLORS.borderStrong,
       borderRadius:
         RADIUS.md,
       paddingHorizontal:
@@ -1482,6 +2292,28 @@ const styles =
         SPACING.lg,
     },
 
+    draftRangeNotice: {
+      color: COLORS.primary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      fontWeight: "700",
+      backgroundColor: COLORS.primarySoft,
+      borderRadius: RADIUS.md,
+      padding: SPACING.sm,
+      marginTop: SPACING.sm,
+    },
+
+    rangeError: {
+      color: COLORS.danger,
+      fontSize: FONT.small,
+      lineHeight: 20,
+      fontWeight: "700",
+      backgroundColor: COLORS.dangerBackground,
+      borderRadius: RADIUS.md,
+      padding: SPACING.sm,
+      marginTop: SPACING.sm,
+    },
+
     searchButton: {
       flexDirection: "row",
       justifyContent: "center",
@@ -1507,6 +2339,97 @@ const styles =
       opacity: 0.6,
     },
 
+    dataStatusRow: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: SPACING.md,
+      marginTop: -SPACING.md,
+      marginBottom: SPACING.lg,
+    },
+
+    updatedText: {
+      flex: 1,
+      color: COLORS.textMuted,
+      fontSize: FONT.caption,
+    },
+
+    refreshButton: {
+      width: 44,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+    },
+
+    buttonPressed: {
+      opacity: 0.65,
+    },
+
+    inlineNotice: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.sm,
+      borderWidth: 1,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+
+    warningNotice: {
+      backgroundColor: COLORS.warningBackground,
+      borderColor: COLORS.accentSoft,
+    },
+
+    successNotice: {
+      backgroundColor: COLORS.successBackground,
+      borderColor: "#B9DEC9",
+    },
+
+    inlineNoticeContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    inlineNoticeTitle: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      fontWeight: "800",
+      marginBottom: 3,
+    },
+
+    inlineNoticeText: {
+      flex: 1,
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+    },
+
+    inlineNoticeAction: {
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: SPACING.sm,
+    },
+
+    inlineNoticeActionText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    noticeDismiss: {
+      width: 44,
+      height: 44,
+      marginTop: -SPACING.sm,
+      marginRight: -SPACING.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
     loadingContainer: {
       alignItems: "center",
       paddingVertical: 50,
@@ -1524,6 +2447,23 @@ const styles =
       borderRadius: RADIUS.lg,
       padding: SPACING.lg,
       marginBottom: SPACING.xl,
+    },
+
+    retryButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      backgroundColor: COLORS.primary,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.lg,
+      marginTop: SPACING.lg,
+    },
+
+    retryButtonText: {
+      color: COLORS.onPrimary,
+      fontSize: FONT.small,
+      fontWeight: "800",
     },
 
     periodSummaryHeader: {
@@ -1616,8 +2556,8 @@ const styles =
     filterScroll: {
       flexGrow: 0,
       flexShrink: 0,
-      height: 44,
-      marginBottom: SPACING.xl,
+      height: 46,
+      marginBottom: SPACING.sm,
     },
 
     filterContainer: {
@@ -1629,7 +2569,7 @@ const styles =
     },
 
     filterButton: {
-      height: 42,
+      minHeight: 44,
       flexDirection: "row",
       alignItems: "center",
       gap: SPACING.xs,
@@ -1688,6 +2628,53 @@ const styles =
       color: COLORS.onPrimary,
     },
 
+    searchSection: {
+      marginBottom: SPACING.xl,
+    },
+
+    searchLabel: {
+      color: COLORS.text,
+      fontSize: FONT.small,
+      fontWeight: "800",
+      marginBottom: SPACING.sm,
+    },
+
+    searchInputRow: {
+      minHeight: 48,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.borderStrong,
+      borderRadius: RADIUS.pill,
+      paddingLeft: SPACING.md,
+      paddingRight: SPACING.xs,
+    },
+
+    appointmentSearchInput: {
+      flex: 1,
+      minWidth: 0,
+      color: COLORS.text,
+      fontSize: FONT.body,
+      paddingVertical: SPACING.sm,
+    },
+
+    clearSearchButton: {
+      width: 44,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+    },
+
+    searchProgressText: {
+      color: COLORS.textMuted,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      marginTop: SPACING.xs,
+    },
+
     resultsHeader: {
       flexDirection: "row",
       justifyContent:
@@ -1742,6 +2729,7 @@ const styles =
 
     detailContent: {
       flex: 1,
+      minWidth: 0,
     },
 
     detailLabel: {
@@ -1755,6 +2743,7 @@ const styles =
       flexDirection: "row",
       alignItems: "center",
       alignSelf: "flex-start",
+      minHeight: 44,
       gap: SPACING.xs,
       marginTop: SPACING.md,
       paddingHorizontal: SPACING.md,
@@ -1911,6 +2900,13 @@ const styles =
         COLORS.text,
     },
 
+    requestAge: {
+      color: COLORS.textMuted,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      marginTop: 3,
+    },
+
     serviceRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -1944,6 +2940,77 @@ const styles =
         FONT.small,
       color:
         COLORS.textSecondary,
+    },
+
+    phoneActions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+      marginTop: SPACING.sm,
+    },
+
+    phoneAction: {
+      minHeight: 44,
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primarySoft,
+      paddingHorizontal: SPACING.md,
+    },
+
+    phoneActionText: {
+      color: COLORS.primary,
+      fontSize: FONT.caption,
+      fontWeight: "800",
+    },
+
+    manageAppointmentButton: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      gap: SPACING.xs,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+      paddingHorizontal: SPACING.md,
+      marginTop: SPACING.sm,
+    },
+
+    manageAppointmentText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    loadMoreSection: {
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginTop: SPACING.lg,
+      marginBottom: SPACING.lg,
+    },
+
+    loadMoreText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      textAlign: "center",
+    },
+
+    loadMoreButton: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.xs,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primary,
+      paddingHorizontal: SPACING.xl,
+      paddingVertical: SPACING.sm,
+    },
+
+    loadMoreButtonText: {
+      color: COLORS.onPrimary,
+      fontSize: FONT.small,
+      fontWeight: "800",
     },
 
     messageBox: {

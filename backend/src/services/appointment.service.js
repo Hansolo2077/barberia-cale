@@ -1,5 +1,17 @@
 const db = require("../database/db");
 
+const {
+  BUSINESS_TIME_ZONE,
+} = require("../utils/date");
+
+const BOOKING_POLICY = Object.freeze({
+  minLeadHours: 24,
+  maxActivePerDay: 1,
+  maxActiveInSevenDays: 2,
+  cancellationWindowMinutes: 60,
+  businessTimeZone: BUSINESS_TIME_ZONE,
+});
+
 const AVAILABLE_TIMES = [
   "08:00",
   "09:00",
@@ -13,16 +25,81 @@ const AVAILABLE_TIMES = [
   "17:00",
 ];
 
+async function getBookingEligibility(
+  queryable,
+  userId,
+  date
+) {
+  const result = await queryable.query(
+    `
+      WITH candidate_windows AS (
+        SELECT window_start::date AS window_start
+        FROM generate_series(
+          $2::date - INTERVAL '6 days',
+          $2::date,
+          INTERVAL '1 day'
+        ) AS generated_window(window_start)
+      ),
+      window_counts AS (
+        SELECT
+          w.window_start,
+          COUNT(a.id)::int AS active_count
+        FROM candidate_windows w
+        LEFT JOIN appointments a
+          ON a.user_id = $1
+          AND a.status IN ('PENDING', 'ACCEPTED')
+          AND a.appointment_date BETWEEN
+            w.window_start
+            AND (w.window_start + INTERVAL '6 days')
+        GROUP BY w.window_start
+      )
+      SELECT
+        (
+          SELECT COUNT(*)::int
+          FROM appointments daily
+          WHERE daily.user_id = $1
+            AND daily.appointment_date = $2::date
+            AND daily.status IN ('PENDING', 'ACCEPTED')
+        ) AS "activeOnDate",
+        COALESCE(MAX(active_count), 0)::int
+          AS "activeInSevenDays"
+      FROM window_counts
+    `,
+    [userId, date]
+  );
+
+  const counts = result.rows[0];
+  const activeOnDate = counts.activeOnDate;
+  const activeInSevenDays = counts.activeInSevenDays;
+
+  return {
+    allowed:
+      activeOnDate < BOOKING_POLICY.maxActivePerDay &&
+      activeInSevenDays < BOOKING_POLICY.maxActiveInSevenDays,
+    reason:
+      activeOnDate >= BOOKING_POLICY.maxActivePerDay
+        ? "Ya tienes una cita activa para este día."
+        : activeInSevenDays >= BOOKING_POLICY.maxActiveInSevenDays
+          ? "Ya alcanzaste el máximo de dos citas activas dentro de cualquier período de siete días."
+          : null,
+    activeOnDate,
+    activeInSevenDays,
+  };
+}
+
 /*
  * Devuelve los horarios disponibles
  * para una fecha.
  */
-async function getAvailability(date) {
+async function getAvailability(
+  date,
+  userId
+) {
   const cutoffResult = await db.query(`
     SELECT
       TO_CHAR(
-        (NOW() AT TIME ZONE 'America/Managua') + INTERVAL '1 day',
-        'YYYY-MM-DD HH24:MI'
+        (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}') + INTERVAL '1 day',
+        'YYYY-MM-DD HH24:MI:SS.US'
       ) AS cutoff
   `);
 
@@ -55,14 +132,124 @@ async function getAvailability(date) {
     )
   );
 
-  return AVAILABLE_TIMES.map(
+  const times = AVAILABLE_TIMES.map(
     (time) => ({
       time,
       available:
         !occupiedTimes.has(time) &&
-        `${date} ${time}` >= bookingCutoff,
+        `${date} ${time}:00.000000` >= bookingCutoff,
     })
   );
+
+  let eligibility = {
+    allowed: true,
+    reason: null,
+    activeOnDate: 0,
+    activeInSevenDays: 0,
+  };
+
+  if (userId) {
+    eligibility = await getBookingEligibility(
+      db,
+      userId,
+      date
+    );
+  }
+
+  return {
+    times,
+    eligibility,
+    policy: BOOKING_POLICY,
+  };
+}
+
+async function getNextAvailableDate(
+  startDate,
+  userId,
+  searchDays = 60
+) {
+  const nextResult = await db.query(
+    `
+      WITH candidate_dates AS (
+        SELECT candidate::date AS appointment_date
+        FROM generate_series(
+          $1::date,
+          $1::date + ($2::int - 1) * INTERVAL '1 day',
+          INTERVAL '1 day'
+        ) AS candidate
+      ),
+      candidate_times AS (
+        SELECT unnest($3::time[]) AS appointment_time
+      )
+      SELECT
+        TO_CHAR(d.appointment_date, 'YYYY-MM-DD') AS date
+      FROM candidate_dates d
+      CROSS JOIN candidate_times t
+      LEFT JOIN appointments a
+        ON a.appointment_date = d.appointment_date
+        AND a.appointment_time = t.appointment_time
+        AND a.status IN ('PENDING', 'ACCEPTED')
+      WHERE a.id IS NULL
+        AND (d.appointment_date + t.appointment_time) >=
+          (
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            + INTERVAL '1 day'
+          )
+
+        AND NOT EXISTS (
+          SELECT 1
+          FROM appointments own_day
+          WHERE own_day.user_id = $4
+            AND own_day.appointment_date = d.appointment_date
+            AND own_day.status IN ('PENDING', 'ACCEPTED')
+        )
+
+        AND NOT EXISTS (
+          SELECT 1
+          FROM generate_series(
+            d.appointment_date - INTERVAL '6 days',
+            d.appointment_date,
+            INTERVAL '1 day'
+          ) AS candidate_window(window_start)
+          WHERE (
+            SELECT COUNT(*)
+            FROM appointments own_window
+            WHERE own_window.user_id = $4
+              AND own_window.status IN ('PENDING', 'ACCEPTED')
+              AND own_window.appointment_date BETWEEN
+                candidate_window.window_start::date
+                AND (
+                  candidate_window.window_start::date
+                  + INTERVAL '6 days'
+                )
+          ) >= ${BOOKING_POLICY.maxActiveInSevenDays}
+        )
+
+      ORDER BY d.appointment_date, t.appointment_time
+      LIMIT 1
+    `,
+    [startDate, searchDays, AVAILABLE_TIMES, userId]
+  );
+
+  if (nextResult.rows.length === 0) {
+    return {
+      date: null,
+      times: [],
+      eligibility: null,
+      policy: BOOKING_POLICY,
+    };
+  }
+
+  const date = nextResult.rows[0].date;
+  const availability = await getAvailability(
+    date,
+    userId
+  );
+
+  return {
+    date,
+    ...availability,
+  };
 }
 
 /*
@@ -97,14 +284,26 @@ async function createAppointment({
     throw error;
   }
 
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Serializa las reservas de un mismo cliente. El índice parcial sigue
+    // resolviendo la competencia entre clientes por el mismo horario.
+    await client.query(
+      "SELECT pg_advisory_xact_lock($1::bigint)",
+      [userId]
+    );
+
   const leadTimeResult =
-    await db.query(
+    await client.query(
       `
         SELECT
           (
             $1::date + $2::time
           ) >= (
-            (NOW() AT TIME ZONE 'America/Managua')
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
             + INTERVAL '1 day'
           ) AS allowed
       `,
@@ -121,96 +320,20 @@ async function createAppointment({
     throw error;
   }
 
-  /*
-   * Máximo 1 cita activa
-   * por día.
-   */
-  const dailyResult =
-    await db.query(
-      `
-        SELECT
-          COUNT(*)::int AS count
-
-        FROM appointments
-
-        WHERE user_id = $1
-
-          AND appointment_date = $2
-
-          AND status IN (
-            'PENDING',
-            'ACCEPTED'
-          )
-      `,
-      [
-        userId,
-        date,
-      ]
+  const bookingEligibility =
+    await getBookingEligibility(
+      client,
+      userId,
+      date
     );
 
-  const dailyCount =
-    dailyResult.rows[0].count;
-
-  if (dailyCount >= 1) {
+  if (!bookingEligibility.allowed) {
     const error = new Error(
-      "Solo puedes tener una cita activa por día."
+      bookingEligibility.reason ||
+        "No puedes crear otra cita dentro de este período."
     );
 
     error.statusCode = 409;
-
-    throw error;
-  }
-
-  /*
-   * Máximo 2 citas activas
-   * dentro de una ventana móvil
-   * de 7 días.
-   *
-   * Ejemplo:
-   * Si la nueva cita es para el día 21,
-   * se revisan los días 15 al 21,
-   * ambos incluidos.
-   */
-  const sevenDayResult =
-    await db.query(
-      `
-        SELECT
-          COUNT(*)::int AS count
-
-        FROM appointments
-
-        WHERE user_id = $1
-
-          AND status IN (
-            'PENDING',
-            'ACCEPTED'
-          )
-
-          AND appointment_date
-            BETWEEN
-              (
-                $2::date
-                - INTERVAL '6 days'
-              )
-              AND
-              $2::date
-      `,
-      [
-        userId,
-        date,
-      ]
-    );
-
-  const sevenDayCount =
-    sevenDayResult.rows[0].count;
-
-  if (sevenDayCount >= 2) {
-    const error = new Error(
-      "Solo puedes tener un máximo de dos citas activas dentro de un período de 7 días."
-    );
-
-    error.statusCode = 409;
-
     throw error;
   }
 
@@ -219,7 +342,7 @@ async function createAppointment({
    * siga disponible.
    */
   const existingResult =
-    await db.query(
+    await client.query(
       `
         SELECT id
 
@@ -256,7 +379,7 @@ async function createAppointment({
 
   try {
     const result =
-      await db.query(
+      await client.query(
         `
           INSERT INTO appointments (
             user_id,
@@ -303,6 +426,8 @@ async function createAppointment({
         ]
       );
 
+    await client.query("COMMIT");
+
     return result.rows[0];
   } catch (error) {
     /*
@@ -324,6 +449,19 @@ async function createAppointment({
 
     throw error;
   }
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error(
+        "ERROR REVERTIENDO RESERVA:",
+        rollbackError
+      );
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /*
@@ -331,9 +469,15 @@ async function createAppointment({
  * de un cliente.
  */
 async function getUserAppointments(
-  userId
+  userId,
+  {
+    page,
+    pageSize,
+    offset,
+  }
 ) {
-  const result = await db.query(
+  const [result, countResult] = await Promise.all([
+    db.query(
     `
       SELECT
         id,
@@ -355,35 +499,124 @@ async function getUserAppointments(
         created_at AS "createdAt",
 
         (
+          (appointment_date + appointment_time)
+          - INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+        ) AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+          AS "cancelUntil",
+
+        (
           status IN ('PENDING', 'ACCEPTED')
-          AND created_at >= NOW() - INTERVAL '1 hour'
-        ) AS "canCancel"
+          AND (appointment_date + appointment_time) >= (
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            + INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+          )
+        ) AS "canCancel",
+
+        (
+          appointment_date + appointment_time
+        ) <= (
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+        ) AS "isPast"
 
       FROM appointments
 
       WHERE user_id = $1
 
       ORDER BY
-        appointment_date DESC,
-        appointment_time DESC
-    `,
-    [userId]
-  );
+        CASE
+          WHEN status IN ('PENDING', 'ACCEPTED')
+            AND (appointment_date + appointment_time) >
+              (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          THEN 0
+          ELSE 1
+        END ASC,
 
-  return result.rows;
+        CASE
+          WHEN status IN ('PENDING', 'ACCEPTED')
+            AND (appointment_date + appointment_time) >
+              (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          THEN appointment_date
+        END ASC,
+
+        CASE
+          WHEN status IN ('PENDING', 'ACCEPTED')
+            AND (appointment_date + appointment_time) >
+              (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          THEN appointment_time
+        END ASC,
+
+        appointment_date DESC,
+        appointment_time DESC,
+        created_at DESC
+
+      LIMIT $2
+      OFFSET $3
+    `,
+    [userId, pageSize, offset]
+    ),
+    db.query(
+      `
+        SELECT COUNT(*)::int AS total
+        FROM appointments
+        WHERE user_id = $1
+      `,
+      [userId]
+    ),
+  ]);
+
+  return {
+    appointments: result.rows,
+    total: countResult.rows[0].total,
+    page,
+    pageSize,
+  };
 }
 
 /*
  * Cancelación realizada
  * por el cliente.
  *
- * El cliente solo dispone de una hora
- * desde que creó la cita.
+ * El cliente puede cancelar una cita PENDING o ACCEPTED
+ * hasta una hora antes de su fecha y hora de inicio.
+ * La comparación es inclusiva: exactamente 60 minutos
+ * antes todavía se permite la cancelación.
  */
 async function cancelAppointment(
   userId,
   appointmentId
 ) {
+  const cancelResult = await db.query(
+    `
+      UPDATE appointments
+      SET status = 'CANCELLED'
+      WHERE id = $1
+        AND user_id = $2
+        AND status IN ('PENDING', 'ACCEPTED')
+        AND (appointment_date + appointment_time) >= (
+          (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          + INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+        )
+      RETURNING
+        id,
+        user_id AS "userId",
+        service,
+        TO_CHAR(appointment_date, 'YYYY-MM-DD') AS date,
+        TO_CHAR(appointment_time, 'HH24:MI') AS time,
+        status,
+        created_at AS "createdAt",
+        (
+          (appointment_date + appointment_time)
+          - INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+        ) AT TIME ZONE '${BUSINESS_TIME_ZONE}' AS "cancelUntil",
+        FALSE AS "canCancel"
+    `,
+    [appointmentId, userId]
+  );
+
+  if (cancelResult.rows.length > 0) {
+    return cancelResult.rows[0];
+  }
+
   const result = await db.query(
     `
       SELECT
@@ -393,7 +626,12 @@ async function cancelAppointment(
         appointment_date,
         appointment_time,
         status,
-        created_at
+        created_at,
+        (appointment_date + appointment_time) >= (
+          (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          + INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+        )
+          AS "canCancel"
 
       FROM appointments
 
@@ -438,27 +676,9 @@ async function cancelAppointment(
     throw error;
   }
 
-  const createdAt =
-    new Date(
-      appointment.created_at
-    );
-
-  const now =
-    new Date();
-
-  const elapsedMilliseconds =
-    now.getTime() -
-    createdAt.getTime();
-
-  const oneHour =
-    60 * 60 * 1000;
-
-  if (
-    elapsedMilliseconds >
-    oneHour
-  ) {
+  if (!appointment.canCancel) {
     const error = new Error(
-      "Ya no se puede cancelar esta cita. El plazo de cancelación expiró."
+      "Ya no se puede cancelar esta cita. Debes cancelarla al menos una hora antes de su inicio."
     );
 
     error.statusCode = 400;
@@ -466,48 +686,61 @@ async function cancelAppointment(
     throw error;
   }
 
-  const updateResult =
-    await db.query(
-      `
-        UPDATE appointments
+  const error = new Error(
+    "La cita cambió mientras intentabas cancelarla. Actualiza e inténtalo nuevamente."
+  );
 
-        SET status = 'CANCELLED'
+  error.statusCode = 409;
+  throw error;
+}
 
-        WHERE id = $1
+function getAdminSearchCriteria(search) {
+  const normalizedSearch = search.trim();
+  const idMatch = normalizedSearch.match(/^#?(\d+)$/);
+  let searchedId = null;
 
-        RETURNING
-          id,
+  if (idMatch) {
+    const parsedId = BigInt(idMatch[1]);
+    const maxPostgresBigInt = 9_223_372_036_854_775_807n;
 
-          user_id AS "userId",
+    searchedId =
+      parsedId > 0n && parsedId <= maxPostgresBigInt
+        ? parsedId.toString()
+        : "-1";
+  }
+  const textSearch = normalizedSearch.startsWith("#")
+    ? ""
+    : normalizedSearch;
 
-          service,
-
-          TO_CHAR(
-            appointment_date,
-            'YYYY-MM-DD'
-          ) AS date,
-
-          TO_CHAR(
-            appointment_time,
-            'HH24:MI'
-          ) AS time,
-
-          status,
-
-          created_at AS "createdAt"
-      `,
-      [appointmentId]
-    );
-
-  return updateResult.rows[0];
+  return {
+    searchedId,
+    textSearch,
+  };
 }
 
 /*
  * Devuelve todas las citas
  * para administración.
  */
-async function getAllAppointments() {
-  const result = await db.query(
+async function getAllAppointments({
+  page,
+  pageSize,
+  offset,
+  status = null,
+  search = "",
+  upcomingOnly = false,
+}) {
+  const {
+    searchedId,
+    textSearch,
+  } = getAdminSearchCriteria(search);
+
+  const [
+    result,
+    countResult,
+    statusCountResult,
+  ] = await Promise.all([
+    db.query(
     `
       SELECT
         a.id,
@@ -529,14 +762,25 @@ async function getAllAppointments() {
         (
           a.appointment_date + a.appointment_time
         ) <= (
-          NOW() AT TIME ZONE 'America/Managua'
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
         ) AS "canComplete",
 
         (
           a.appointment_date + a.appointment_time
         ) > (
-          NOW() AT TIME ZONE 'America/Managua'
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
         ) AS "canAdminCancel",
+
+        (
+          a.status = 'PENDING'
+          AND (a.appointment_date + a.appointment_time) >
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+        ) AS "canAccept",
+
+        (
+          (a.appointment_date + a.appointment_time) <=
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+        ) AS "isPast",
 
         a.created_at
           AS "createdAt",
@@ -557,13 +801,145 @@ async function getAllAppointments() {
       INNER JOIN users u
         ON a.user_id = u.id
 
-      ORDER BY
-        a.appointment_date DESC,
-        a.appointment_time DESC
-    `
-  );
+      WHERE ($1::text IS NULL OR a.status = $1)
+        AND (
+          ($2::bigint IS NOT NULL AND a.id = $2::bigint)
+          OR (
+            $3::text <> ''
+            AND CONCAT_WS(
+              ' ',
+              u.first_name,
+              u.last_name,
+              u.phone,
+              a.service,
+              TO_CHAR(a.appointment_date, 'YYYY-MM-DD'),
+              TO_CHAR(a.appointment_time, 'HH24:MI')
+            ) ILIKE '%' || $3 || '%'
+          )
+          OR ($2::bigint IS NULL AND $3::text = '')
+        )
+        AND (
+          $4::boolean = FALSE
+          OR (
+            a.status IN ('PENDING', 'ACCEPTED')
+            AND (a.appointment_date + a.appointment_time) >
+              (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          )
+        )
 
-  return result.rows;
+      ORDER BY
+        CASE
+          WHEN a.status IN ('PENDING', 'ACCEPTED') THEN 0
+          ELSE 1
+        END ASC,
+
+        CASE
+          WHEN a.status IN ('PENDING', 'ACCEPTED')
+          THEN a.appointment_date
+        END ASC,
+
+        CASE
+          WHEN a.status IN ('PENDING', 'ACCEPTED')
+          THEN a.appointment_time
+        END ASC,
+
+        a.appointment_date DESC,
+        a.appointment_time DESC,
+        a.created_at DESC
+
+      LIMIT $5
+      OFFSET $6
+    `,
+    [
+      status,
+      searchedId,
+      textSearch,
+      upcomingOnly,
+      pageSize,
+      offset,
+    ]
+    ),
+    db.query(
+      `
+        SELECT COUNT(*)::int AS total
+        FROM appointments a
+        INNER JOIN users u ON a.user_id = u.id
+        WHERE ($1::text IS NULL OR a.status = $1)
+          AND (
+            ($2::bigint IS NOT NULL AND a.id = $2::bigint)
+            OR (
+              $3::text <> ''
+              AND CONCAT_WS(
+                ' ',
+                u.first_name,
+                u.last_name,
+                u.phone,
+                a.service,
+                TO_CHAR(a.appointment_date, 'YYYY-MM-DD'),
+                TO_CHAR(a.appointment_time, 'HH24:MI')
+              ) ILIKE '%' || $3 || '%'
+            )
+            OR ($2::bigint IS NULL AND $3::text = '')
+          )
+          AND (
+            $4::boolean = FALSE
+            OR (
+              a.status IN ('PENDING', 'ACCEPTED')
+              AND (a.appointment_date + a.appointment_time) >
+                (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            )
+          )
+      `,
+      [status, searchedId, textSearch, upcomingOnly]
+    ),
+    db.query(
+      `
+        SELECT
+          a.status,
+          COUNT(*)::int AS count
+        FROM appointments a
+        INNER JOIN users u ON a.user_id = u.id
+        WHERE (
+          ($1::bigint IS NOT NULL AND a.id = $1::bigint)
+          OR (
+            $2::text <> ''
+            AND CONCAT_WS(
+              ' ',
+              u.first_name,
+              u.last_name,
+              u.phone,
+              a.service,
+              TO_CHAR(a.appointment_date, 'YYYY-MM-DD'),
+              TO_CHAR(a.appointment_time, 'HH24:MI')
+            ) ILIKE '%' || $2 || '%'
+          )
+          OR ($1::bigint IS NULL AND $2::text = '')
+        )
+        AND (
+          $3::boolean = FALSE
+          OR (
+            a.status IN ('PENDING', 'ACCEPTED')
+            AND (a.appointment_date + a.appointment_time) >
+              (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          )
+        )
+        GROUP BY a.status
+      `,
+      [searchedId, textSearch, upcomingOnly]
+    ),
+  ]);
+
+  return {
+    appointments: result.rows,
+    total: countResult.rows[0].total,
+    page,
+    pageSize,
+    statusCounts: Object.fromEntries(
+      statusCountResult.rows.map(
+        (item) => [item.status, item.count]
+      )
+    ),
+  };
 }
 
 /*
@@ -576,7 +952,13 @@ async function acceptAppointment(
     `
       SELECT
         id,
-        status
+        status,
+
+        (
+          appointment_date + appointment_time
+        ) > (
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+        ) AS "isFuture"
 
       FROM appointments
 
@@ -613,6 +995,16 @@ async function acceptAppointment(
     throw error;
   }
 
+  if (!appointment.isFuture) {
+    const error = new Error(
+      "Esta solicitud venció porque la hora de la cita ya pasó."
+    );
+
+    error.statusCode = 409;
+
+    throw error;
+  }
+
   const updateResult =
     await db.query(
       `
@@ -622,6 +1014,12 @@ async function acceptAppointment(
 
         WHERE id = $1
           AND status = 'PENDING'
+
+          AND (
+            appointment_date + appointment_time
+          ) > (
+            NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+          )
 
         RETURNING
           id,
@@ -764,9 +1162,27 @@ async function rejectAppointment(
  */
 async function getAppointmentsByDateRange(
   startDate,
-  endDate
+  endDate,
+  {
+    page,
+    pageSize,
+    offset,
+    status = null,
+    search = "",
+    upcomingOnly = false,
+  }
 ) {
-  const result = await db.query(
+  const {
+    searchedId,
+    textSearch,
+  } = getAdminSearchCriteria(search);
+
+  const [
+    result,
+    countResult,
+    statusCountResult,
+  ] = await Promise.all([
+    db.query(
     `
       SELECT
         a.id,
@@ -784,6 +1200,29 @@ async function getAppointmentsByDateRange(
         ) AS time,
 
         a.status,
+
+        (
+          a.appointment_date + a.appointment_time
+        ) <= (
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+        ) AS "canComplete",
+
+        (
+          a.appointment_date + a.appointment_time
+        ) > (
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+        ) AS "canAdminCancel",
+
+        (
+          a.status = 'PENDING'
+          AND (a.appointment_date + a.appointment_time) >
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+        ) AS "canAccept",
+
+        (
+          (a.appointment_date + a.appointment_time) <=
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+        ) AS "isPast",
 
         a.created_at
           AS "createdAt",
@@ -807,17 +1246,149 @@ async function getAppointmentsByDateRange(
       WHERE a.appointment_date
         BETWEEN $1 AND $2
 
+        AND ($3::text IS NULL OR a.status = $3)
+
+        AND (
+          ($4::bigint IS NOT NULL AND a.id = $4::bigint)
+          OR (
+            $5::text <> ''
+            AND CONCAT_WS(
+              ' ',
+              u.first_name,
+              u.last_name,
+              u.phone,
+              a.service,
+              TO_CHAR(a.appointment_date, 'YYYY-MM-DD'),
+              TO_CHAR(a.appointment_time, 'HH24:MI')
+            ) ILIKE '%' || $5 || '%'
+          )
+          OR ($4::bigint IS NULL AND $5::text = '')
+        )
+
+        AND (
+          $6::boolean = FALSE
+          OR (
+            a.status IN ('PENDING', 'ACCEPTED')
+            AND (a.appointment_date + a.appointment_time) >
+              (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+          )
+        )
+
       ORDER BY
         a.appointment_date ASC,
-        a.appointment_time ASC
+        a.appointment_time ASC,
+        a.created_at ASC
+
+      LIMIT $7
+      OFFSET $8
     `,
     [
       startDate,
       endDate,
+      status,
+      searchedId,
+      textSearch,
+      upcomingOnly,
+      pageSize,
+      offset,
     ]
-  );
+    ),
+    db.query(
+      `
+        SELECT COUNT(*)::int AS total
+        FROM appointments a
+        INNER JOIN users u ON a.user_id = u.id
+        WHERE a.appointment_date BETWEEN $1 AND $2
+          AND ($3::text IS NULL OR a.status = $3)
+          AND (
+            ($4::bigint IS NOT NULL AND a.id = $4::bigint)
+            OR (
+              $5::text <> ''
+              AND CONCAT_WS(
+                ' ',
+                u.first_name,
+                u.last_name,
+                u.phone,
+                a.service,
+                TO_CHAR(a.appointment_date, 'YYYY-MM-DD'),
+                TO_CHAR(a.appointment_time, 'HH24:MI')
+              ) ILIKE '%' || $5 || '%'
+            )
+            OR ($4::bigint IS NULL AND $5::text = '')
+          )
+          AND (
+            $6::boolean = FALSE
+            OR (
+              a.status IN ('PENDING', 'ACCEPTED')
+              AND (a.appointment_date + a.appointment_time) >
+                (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            )
+          )
+      `,
+      [
+        startDate,
+        endDate,
+        status,
+        searchedId,
+        textSearch,
+        upcomingOnly,
+      ]
+    ),
+    db.query(
+      `
+        SELECT
+          a.status,
+          COUNT(*)::int AS count
+        FROM appointments a
+        INNER JOIN users u ON a.user_id = u.id
+        WHERE a.appointment_date BETWEEN $1 AND $2
+          AND (
+            ($3::bigint IS NOT NULL AND a.id = $3::bigint)
+            OR (
+              $4::text <> ''
+              AND CONCAT_WS(
+                ' ',
+                u.first_name,
+                u.last_name,
+                u.phone,
+                a.service,
+                TO_CHAR(a.appointment_date, 'YYYY-MM-DD'),
+                TO_CHAR(a.appointment_time, 'HH24:MI')
+              ) ILIKE '%' || $4 || '%'
+            )
+            OR ($3::bigint IS NULL AND $4::text = '')
+          )
+          AND (
+            $5::boolean = FALSE
+            OR (
+              a.status IN ('PENDING', 'ACCEPTED')
+              AND (a.appointment_date + a.appointment_time) >
+                (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            )
+          )
+        GROUP BY a.status
+      `,
+      [
+        startDate,
+        endDate,
+        searchedId,
+        textSearch,
+        upcomingOnly,
+      ]
+    ),
+  ]);
 
-  return result.rows;
+  return {
+    appointments: result.rows,
+    total: countResult.rows[0].total,
+    page,
+    pageSize,
+    statusCounts: Object.fromEntries(
+      statusCountResult.rows.map(
+        (item) => [item.status, item.count]
+      )
+    ),
+  };
 }
 
 /*
@@ -844,7 +1415,7 @@ async function cancelAppointmentByAdmin(
         (
           NOW()
           AT TIME ZONE
-          'America/Managua'
+          '${BUSINESS_TIME_ZONE}'
         )
         AS "isFuture"
 
@@ -911,7 +1482,7 @@ async function cancelAppointmentByAdmin(
           (
             NOW()
             AT TIME ZONE
-            'America/Managua'
+            '${BUSINESS_TIME_ZONE}'
           )
 
         RETURNING
@@ -977,7 +1548,7 @@ async function completeAppointment(
         (
           NOW()
           AT TIME ZONE
-          'America/Managua'
+          '${BUSINESS_TIME_ZONE}'
         )
         AS "canComplete"
 
@@ -1046,7 +1617,7 @@ async function completeAppointment(
           (
             NOW()
             AT TIME ZONE
-            'America/Managua'
+            '${BUSINESS_TIME_ZONE}'
           )
 
         RETURNING
@@ -1089,7 +1660,10 @@ async function completeAppointment(
 }
 
 module.exports = {
+  BOOKING_POLICY,
+  getAdminSearchCriteria,
   getAvailability,
+  getNextAvailableDate,
   createAppointment,
   getUserAppointments,
   cancelAppointment,

@@ -7,20 +7,40 @@ const {
   authenticateToken,
 } = require("../middleware/auth.middleware");
 
-router.post("/register", authController.register);
+const {
+  createRateLimiter,
+} = require("../middleware/rate-limit.middleware");
 
-router.post("/login", authController.login);
+const loginLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 20,
+  message:
+    "Demasiados intentos de acceso. Espera 15 minutos antes de reintentar.",
+});
 
-module.exports = router;
+const registerLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 10,
+  message:
+    "Se alcanzó el límite temporal de registros. Inténtalo más tarde.",
+});
+
+router.post(
+  "/register",
+  registerLimiter,
+  authController.register
+);
+
+router.post(
+  "/login",
+  loginLimiter,
+  authController.login
+);
 
 router.get(
   "/me",
   authenticateToken,
-  (req, res) => {
-    res.json({
-      success: true,
-      message: "Token válido.",
-      user: req.user,
-    });
-  }
+  authController.me
 );
+
+module.exports = router;

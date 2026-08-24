@@ -36,7 +36,7 @@ async function registerUser({
   }
 
   const passwordHash =
-    bcrypt.hashSync(
+    await bcrypt.hash(
       password,
       10
     );
@@ -78,7 +78,7 @@ async function registerUser({
       insertResult.rows[0];
 
     return {
-      id: user.id,
+      id: Number(user.id),
       firstName:
         user.first_name,
       lastName:
@@ -134,11 +134,39 @@ async function findUserByPhone(
   return result.rows[0];
 }
 
-function verifyPassword(
+async function findPublicUserById(
+  userId
+) {
+  const result = await db.query(
+    `
+      SELECT
+        id,
+        first_name AS "firstName",
+        last_name AS "lastName",
+        phone,
+        role
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [userId]
+  );
+
+  const user = result.rows[0];
+
+  return user
+    ? {
+        ...user,
+        id: Number(user.id),
+      }
+    : null;
+}
+
+async function verifyPassword(
   password,
   passwordHash
 ) {
-  return bcrypt.compareSync(
+  return bcrypt.compare(
     password,
     passwordHash
   );
@@ -147,5 +175,6 @@ function verifyPassword(
 module.exports = {
   registerUser,
   findUserByPhone,
+  findPublicUserById,
   verifyPassword,
 };

@@ -1,11 +1,7 @@
 import {
+  Redirect,
   Tabs,
-  useRouter,
 } from "expo-router";
-
-import {
-  useEffect,
-} from "react";
 
 import {
   ActivityIndicator,
@@ -29,48 +25,13 @@ import {
 } from "../../constants/app-theme";
 
 export default function ClientLayout() {
-  const router =
-    useRouter();
-
   const insets =
     useSafeAreaInsets();
-
-    console.log(
-  "ANDROID SAFE AREA:",
-  insets
-);
 
   const {
     user,
     loading,
   } = useAuth();
-
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    if (!user) {
-      router.replace(
-        "/auth/login"
-      );
-
-      return;
-    }
-
-    if (
-      user.role ===
-      "ADMIN"
-    ) {
-      router.replace(
-        "/admin"
-      );
-    }
-  }, [
-    loading,
-    user,
-    router,
-  ]);
 
   if (loading) {
     return (
@@ -78,9 +39,12 @@ export default function ClientLayout() {
         style={
           styles.container
         }
+        accessibilityLiveRegion="polite"
       >
         <ActivityIndicator
           size="large"
+          color={COLORS.primary}
+          accessibilityLabel="Cargando sesión"
         />
 
         <Text
@@ -95,11 +59,13 @@ export default function ClientLayout() {
   }
 
   if (
-    !user ||
-    user.role !==
-      "CLIENT"
+    !user
   ) {
-    return null;
+    return <Redirect href="/auth/login" />;
+  }
+
+  if (user.role !== "CLIENT") {
+    return <Redirect href="/admin" />;
   }
 
   return (

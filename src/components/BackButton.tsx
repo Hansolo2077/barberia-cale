@@ -46,6 +46,8 @@ export default function BackButton({
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint="Regresa a la pantalla anterior"
+      hitSlop={iconOnly ? 4 : 0}
     >
       <AppIcon
         name={{
@@ -93,9 +95,9 @@ const styles = StyleSheet.create({
   },
 
   iconOnlyButton: {
-    width: 40,
-    height: 40,
-    maxWidth: 40,
+    width: 44,
+    height: 44,
+    maxWidth: 44,
     alignSelf: "auto",
     paddingVertical: 0,
     paddingHorizontal: 0,

@@ -1,10 +1,10 @@
 import {
-    useFocusEffect,
     useRouter,
 } from "expo-router";
 
 import {
     useCallback,
+    useEffect,
     useRef,
     useState,
 } from "react";
@@ -16,7 +16,6 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     View,
 } from "react-native";
 
@@ -24,11 +23,14 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 import BackButton from "../../components/BackButton";
 import AppIcon from "../../components/AppIcon";
+import WebDateInput from "../../components/WebDateInput";
 
 import {
     createAppointment,
     getAvailability,
+    getNextAvailability,
 } from "../../api/appointments.api";
+import { ApiError } from "../../api/api-client";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -38,6 +40,15 @@ import {
 } from "../../utils/date-format";
 
 import { showMessage } from "../../utils/show-message";
+import {
+    addDaysToIso,
+    getBusinessTodayIso,
+    isValidIsoDate,
+} from "../../utils/business-date";
+import {
+    BUSINESS,
+    type BookingPolicy,
+} from "../../constants/business";
 
 import {
     COLORS,
@@ -51,6 +62,20 @@ type TimeSlot = {
   time: string;
   available: boolean;
 };
+
+function isUnauthorizedError(error: unknown) {
+  return error instanceof ApiError && error.code === "UNAUTHORIZED";
+}
+
+type BookingEligibility = {
+  allowed: boolean;
+  reason: string | null;
+  activeOnDate: number;
+  activeInSevenDays: number;
+};
+
+const DEFAULT_POLICY: BookingPolicy =
+  BUSINESS.bookingPolicy;
 
 function formatDate(date: Date) {
   const year =
@@ -68,34 +93,40 @@ function formatDate(date: Date) {
 }
 
 function getTomorrowDate() {
-  const parts = new Intl.DateTimeFormat(
-    "en-CA",
-    {
-      timeZone: "America/Managua",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }
-  ).formatToParts(new Date());
-
-  const values = Object.fromEntries(
-    parts.map((part) => [part.type, part.value])
-  );
+  const [year, month, day] = addDaysToIso(
+    getBusinessTodayIso(),
+    1
+  ).split("-").map(Number);
 
   return new Date(
-    Number(values.year),
-    Number(values.month) - 1,
-    Number(values.day) + 1,
+    year,
+    month - 1,
+    day,
     12
   );
 }
 
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
+function parseDateText(value: string) {
+  if (!isValidIsoDate(value)) {
+    return null;
+  }
 
-  result.setDate(result.getDate() + days);
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
 
-  return result;
+function getDateError(value: string) {
+  const parsed = parseDateText(value);
+
+  if (!parsed) {
+    return "Selecciona una fecha válida.";
+  }
+
+  if (value < addDaysToIso(getBusinessTodayIso(), 1)) {
+    return "Selecciona una fecha con al menos un día de anticipación.";
+  }
+
+  return "";
 }
 
 export default function AppointmentScreen() {
@@ -107,6 +138,12 @@ export default function AppointmentScreen() {
 
   const scrollViewRef =
     useRef<ScrollView>(null);
+
+  const availabilityRequestRef =
+    useRef(0);
+
+  const initializedRef =
+    useRef(false);
 
   const initialDate =
     getTomorrowDate();
@@ -140,15 +177,28 @@ export default function AppointmentScreen() {
     null
   );
 
+  const [loadedDate, setLoadedDate] =
+    useState<string | null>(null);
+
+  const [dateError, setDateError] =
+    useState("");
+
+  const [availabilityError, setAvailabilityError] =
+    useState("");
+
+  const [eligibility, setEligibility] =
+    useState<BookingEligibility | null>(null);
+
+  const [policy, setPolicy] =
+    useState<BookingPolicy>(DEFAULT_POLICY);
+
+  const [showingRecommendation, setShowingRecommendation] =
+    useState(false);
+
   const [
     loading,
     setLoading,
   ] = useState(false);
-
-  const [
-    recommendationError,
-    setRecommendationError,
-  ] = useState("");
 
   const [
     hasRequestedTimes,
@@ -160,9 +210,28 @@ export default function AppointmentScreen() {
     setBooking,
   ] = useState(false);
 
+  const bookingInFlightRef = useRef(false);
+
+  function invalidateAvailability() {
+    availabilityRequestRef.current += 1;
+    setLoading(false);
+    setLoadedDate(null);
+    setTimes([]);
+    setSelectedTime(null);
+    setEligibility(null);
+    setAvailabilityError("");
+    setHasRequestedTimes(false);
+    setShowingRecommendation(false);
+  }
+
   async function handleSearch(
-    customDate?: string
+    customDate = dateText,
+    allowWhileBooking = false
   ) {
+    if (booking && !allowWhileBooking) {
+      return;
+    }
+
     if (!token) {
       showMessage(
         "Sesión no disponible",
@@ -172,127 +241,143 @@ export default function AppointmentScreen() {
       return;
     }
 
-    const date =
-      customDate || dateText;
+    const validationError = getDateError(customDate);
 
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(
-        date
-      )
-    ) {
-      showMessage(
-        "Fecha inválida",
-        "Ingresa una fecha válida en formato AAAA-MM-DD."
-      );
-
+    if (validationError) {
+      setDateError(validationError);
+      setHasRequestedTimes(false);
       return;
     }
 
+    const requestId = availabilityRequestRef.current + 1;
+    availabilityRequestRef.current = requestId;
+
     try {
+      setDateError("");
+      setAvailabilityError("");
+      setShowingRecommendation(false);
       setHasRequestedTimes(true);
       setLoading(true);
-
-      setSelectedTime(
-        null
-      );
+      setLoadedDate(null);
+      setSelectedTime(null);
       setTimes([]);
 
       const result =
         await getAvailability(
           token,
-          date
+          customDate
         );
 
-      setTimes(
-        result.times
-      );
+      if (requestId !== availabilityRequestRef.current) {
+        return;
+      }
+
+      setLoadedDate(customDate);
+      setTimes(result.times ?? []);
+      setEligibility(result.eligibility ?? null);
+      setPolicy(result.policy ?? DEFAULT_POLICY);
     } catch (error) {
+      if (requestId !== availabilityRequestRef.current) {
+        return;
+      }
+
       const message =
         error instanceof Error
           ? error.message
           : "No se pudo consultar la disponibilidad.";
 
-      showMessage(
-        "No se pudo consultar",
-        message
-      );
+      setLoadedDate(null);
+      setTimes([]);
+      setEligibility(null);
+      setAvailabilityError(message);
     } finally {
-      setLoading(false);
+      if (requestId === availabilityRequestRef.current) {
+        setLoading(false);
+      }
     }
   }
 
-  async function loadNextAvailableDate() {
+  const loadNextAvailableDate = useCallback(async (
+    startDate = formatDate(getTomorrowDate())
+  ) => {
+    if (bookingInFlightRef.current) {
+      return;
+    }
+
     if (!token) {
       return;
     }
 
+    const validationError = getDateError(startDate);
+
+    if (validationError) {
+      setDateError(validationError);
+      return;
+    }
+
+    const requestId = availabilityRequestRef.current + 1;
+    availabilityRequestRef.current = requestId;
+
     try {
-      setHasRequestedTimes(false);
+      setHasRequestedTimes(true);
       setLoading(true);
-      setRecommendationError("");
+      setDateError("");
+      setAvailabilityError("");
       setSelectedTime(null);
+      setLoadedDate(null);
+      setTimes([]);
 
-      const firstCandidate = getTomorrowDate();
+      const result = await getNextAvailability(token, startDate);
 
-      for (let offset = 0; offset < 60; offset += 1) {
-        const candidate = addDays(firstCandidate, offset);
-        const formatted = formatDate(candidate);
-        let result;
-
-        try {
-          result = await getAvailability(token, formatted);
-        } catch (error) {
-          const status = (
-            error as Error & { status?: number }
-          ).status;
-
-          if (status === 400) {
-            continue;
-          }
-
-          throw error;
-        }
-
-        if (
-          result.times.some(
-            (slot: TimeSlot) => slot.available
-          )
-        ) {
-          setSelectedDate(candidate);
-          setDateText(formatted);
-          setTimes(result.times);
-          return;
-        }
+      if (requestId !== availabilityRequestRef.current) {
+        return;
       }
 
-      setTimes([]);
-      setRecommendationError(
-        "No encontramos horarios disponibles en los próximos 60 días."
-      );
+      if (!result.date) {
+        setAvailabilityError(
+          "No encontramos horarios disponibles en los próximos 60 días."
+        );
+        return;
+      }
+
+      const parsed = parseDateText(result.date);
+
+      if (parsed) {
+        setSelectedDate(parsed);
+      }
+
+      setDateText(result.date);
+      setLoadedDate(result.date);
+      setTimes(result.times ?? []);
+      setEligibility(result.eligibility ?? null);
+      setPolicy(result.policy ?? DEFAULT_POLICY);
+      setShowingRecommendation(result.date !== startDate);
     } catch (error) {
+      if (requestId !== availabilityRequestRef.current) {
+        return;
+      }
+
       const message =
         error instanceof Error
           ? error.message
           : "No se pudo buscar la siguiente fecha disponible.";
 
       setTimes([]);
-      setRecommendationError(
-        message
-      );
+      setLoadedDate(null);
+      setAvailabilityError(message);
     } finally {
-      setLoading(false);
-    }
-  }
-
-  useFocusEffect(
-    useCallback(() => {
-      if (token) {
-        void loadNextAvailableDate();
+      if (requestId === availabilityRequestRef.current) {
+        setLoading(false);
       }
-    }, [
-      token,
-    ])
-  );
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && !initializedRef.current) {
+      initializedRef.current = true;
+      void loadNextAvailableDate();
+    }
+  }, [loadNextAvailableDate, token]);
 
   function handleDateChange(
     event: unknown,
@@ -302,17 +387,14 @@ export default function AppointmentScreen() {
       false
     );
 
-    if (!date) {
+    if (!date || booking) {
       return;
     }
 
     setSelectedDate(
       date
     );
-    setRecommendationError("");
-    setHasRequestedTimes(false);
-    setTimes([]);
-    setSelectedTime(null);
+    invalidateAvailability();
 
     const formatted =
       formatDate(date);
@@ -326,7 +408,46 @@ export default function AppointmentScreen() {
     );
   }
 
+  function handleDateTextChange(value: string) {
+    if (booking) {
+      return;
+    }
+
+    const nextValue = value.slice(0, 10);
+
+    setDateText(nextValue);
+    setDateError("");
+    invalidateAvailability();
+
+    const parsed = parseDateText(nextValue);
+
+    if (parsed) {
+      setSelectedDate(parsed);
+      void handleSearch(nextValue);
+    } else if (nextValue.length === 10) {
+      setDateError("Selecciona una fecha válida.");
+    }
+  }
+
+  function handleNextDay() {
+    if (booking) {
+      return;
+    }
+
+    const baseDate = isValidIsoDate(loadedDate ?? dateText)
+      ? (loadedDate ?? dateText)
+      : formatDate(getTomorrowDate());
+    const nextDate = addDaysToIso(baseDate, 1);
+
+    setDateText(nextDate);
+    void loadNextAvailableDate(nextDate);
+  }
+
   function handleTimeSelect(time: string) {
+    if (booking) {
+      return;
+    }
+
     setSelectedTime(time);
   }
 
@@ -338,6 +459,10 @@ export default function AppointmentScreen() {
   }
 
   async function handleBook() {
+    if (bookingInFlightRef.current) {
+      return;
+    }
+
     if (!token) {
       showMessage(
         "Sesión no disponible",
@@ -356,6 +481,27 @@ export default function AppointmentScreen() {
       return;
     }
 
+    if (!loadedDate || loadedDate !== dateText) {
+      setSelectedTime(null);
+      showMessage(
+        "Actualiza los horarios",
+        "La fecha cambió después de consultar. Vuelve a elegir un horario para la fecha actual."
+      );
+      return;
+    }
+
+    if (eligibility?.allowed === false) {
+      showMessage(
+        "No puedes reservar este día",
+        eligibility.reason ?? "Revisa las reglas de reserva."
+      );
+      return;
+    }
+
+    const bookingDate = loadedDate;
+    const bookingTime = selectedTime;
+    bookingInFlightRef.current = true;
+
     try {
       setBooking(true);
 
@@ -363,29 +509,29 @@ export default function AppointmentScreen() {
         token,
         {
           service:
-            "Corte de cabello",
+            BUSINESS.service.name,
 
           date:
-            dateText,
+            bookingDate,
 
           time:
-            selectedTime,
+            bookingTime,
         }
       );
 
-      showMessage(
-        "Cita solicitada",
-        `Tu cita para ${formatDisplayDate(
-          dateText
-        )} a las ${formatDisplayTime(
-          selectedTime
-        )} fue registrada y está pendiente de confirmación.`
-      );
-
-      router.replace(
-        "/client"
-      );
+      router.replace({
+        pathname: "/client",
+        params: {
+          reservation: "success",
+          date: bookingDate,
+          time: bookingTime,
+        },
+      });
     } catch (error) {
+      if (isUnauthorizedError(error)) {
+        return;
+      }
+
       const message =
         error instanceof Error
           ? error.message
@@ -395,10 +541,22 @@ export default function AppointmentScreen() {
         "No se pudo agendar",
         message
       );
+
+      // La regla pudo cambiar en paralelo y un timeout puede ocurrir después
+      // de crear. Reconsultamos siempre para reflejar el estado del servidor.
+      setSelectedTime(null);
+      void handleSearch(bookingDate, true);
     } finally {
+      bookingInFlightRef.current = false;
       setBooking(false);
     }
   }
+
+  const availableCount = times.filter(
+    (slot) => slot.available
+  ).length;
+
+  const canChooseTime = eligibility?.allowed !== false;
 
   return (
     <ScrollView
@@ -429,6 +587,7 @@ export default function AppointmentScreen() {
           style={
             styles.title
           }
+          accessibilityRole="header"
         >
           Agendar cita
         </Text>
@@ -477,7 +636,7 @@ export default function AppointmentScreen() {
               styles.serviceName
             }
           >
-            Corte de cabello
+            {BUSINESS.service.name}
           </Text>
 
           <Text
@@ -485,9 +644,25 @@ export default function AppointmentScreen() {
               styles.serviceMeta
             }
           >
-            50 min · Reserva por bloques de 1 hora
+            {BUSINESS.service.durationMinutes} min · Reserva por bloques de {BUSINESS.slotMinutes} min
           </Text>
         </View>
+      </View>
+
+      <View style={styles.rulesCard}>
+        <Text style={styles.rulesTitle} accessibilityRole="header">
+          Reglas de reserva
+        </Text>
+
+        <Text style={styles.ruleText}>
+          • Reserva con al menos {policy.minLeadHours} horas reales de anticipación.
+        </Text>
+        <Text style={styles.ruleText}>
+          • Máximo {policy.maxActivePerDay} cita activa por día y {policy.maxActiveInSevenDays} dentro de 7 días.
+        </Text>
+        <Text style={styles.ruleText}>
+          • Puedes cancelar con al menos {policy.cancellationWindowMinutes} minutos de anticipación.
+        </Text>
       </View>
 
       <View
@@ -515,33 +690,32 @@ export default function AppointmentScreen() {
 
         {Platform.OS ===
         "web" ? (
-          <>
-            <TextInput
-              style={
-                styles.input
-              }
-              value={
-                dateText
-              }
-              onChangeText={
-                setDateText
-              }
-              placeholder="AAAA-MM-DD"
-              maxLength={10}
-            />
-
-          </>
+          <WebDateInput
+            value={dateText}
+            label="Fecha de la cita"
+            minimumDate={formatDate(getTomorrowDate())}
+            disabled={booking}
+            hasError={Boolean(dateError)}
+            describedBy={dateError ? "appointment-date-error" : undefined}
+            onChange={handleDateTextChange}
+          />
         ) : (
           <>
             <Pressable
-              style={
-                styles.dateButton
-              }
+              style={[
+                styles.dateButton,
+                booking && styles.disabledButton,
+              ]}
+              disabled={booking}
               onPress={() =>
                 setShowDatePicker(
                   true
                 )
               }
+              accessibilityRole="button"
+              accessibilityLabel={`Fecha seleccionada: ${formatDisplayDate(dateText)}`}
+              accessibilityHint="Abre el calendario"
+              accessibilityState={{ disabled: booking }}
             >
               <View>
                 <Text
@@ -603,29 +777,53 @@ export default function AppointmentScreen() {
           />
 
           <Text style={styles.helperText}>
-            Reserva con al menos 24 horas de anticipación.
+            Al elegir una fecha, cargaremos sus horarios automáticamente.
           </Text>
         </View>
 
-        {recommendationError ? (
-          <Text style={styles.recommendationError}>
-            {recommendationError}
+        {dateError ? (
+          <Text
+            nativeID="appointment-date-error"
+            style={styles.recommendationError}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+          >
+            {dateError}
           </Text>
+        ) : null}
+
+        {showingRecommendation && loadedDate ? (
+          <View
+            style={styles.recommendationNotice}
+            accessibilityLiveRegion="polite"
+          >
+            <Text style={styles.recommendationNoticeText}>
+              Te mostramos la próxima fecha con espacio: {formatDisplayDate(loadedDate)}.
+            </Text>
+          </View>
         ) : null}
 
         <Pressable
           style={[
             styles.searchButton,
 
-            loading &&
+            (loading || booking) &&
               styles.disabledButton,
           ]}
           onPress={() =>
             handleSearch()
           }
-          disabled={
-            loading
+          disabled={loading || booking}
+          accessibilityRole="button"
+          accessibilityLabel={
+            loadedDate === dateText
+              ? "Actualizar horarios disponibles"
+              : "Ver horarios disponibles"
           }
+          accessibilityState={{
+            disabled: loading || booking,
+            busy: loading || booking,
+          }}
         >
           <Text
             style={
@@ -634,7 +832,9 @@ export default function AppointmentScreen() {
           >
             {loading
               ? "Consultando..."
-              : "Ver horarios disponibles"}
+              : loadedDate === dateText
+                ? "Actualizar horarios"
+                : "Ver horarios disponibles"}
           </Text>
         </Pressable>
       </View>
@@ -663,6 +863,44 @@ export default function AppointmentScreen() {
             Buscando horarios...
           </Text>
         </View>
+      ) : availabilityError ? (
+        <View
+          style={styles.availabilityErrorCard}
+          accessibilityRole="alert"
+          onLayout={(event) =>
+            scrollToSection(event.nativeEvent.layout.y)
+          }
+        >
+          <Text style={styles.availabilityErrorTitle}>
+            No pudimos consultar los horarios
+          </Text>
+
+          <Text style={styles.availabilityErrorText}>
+            {availabilityError}
+          </Text>
+
+          <View style={styles.recoveryActions}>
+            <Pressable
+              style={styles.retryAvailabilityButton}
+              accessibilityRole="button"
+              onPress={() => void handleSearch(dateText)}
+            >
+              <Text style={styles.retryAvailabilityText}>
+                Reintentar
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.nextDaySecondaryButton}
+              accessibilityRole="button"
+              onPress={handleNextDay}
+            >
+              <Text style={styles.nextDaySecondaryText}>
+                Buscar otra fecha
+              </Text>
+            </Pressable>
+          </View>
+        </View>
       ) : times.length >
         0 ? (
         <View
@@ -688,10 +926,21 @@ export default function AppointmentScreen() {
               </Text>
 
               <Text style={styles.stepDescription}>
-                Toca uno de los horarios disponibles.
+                Horarios para {loadedDate ? formatDisplayDate(loadedDate) : "la fecha elegida"}.
               </Text>
             </View>
           </View>
+
+          {eligibility?.allowed === false && (
+            <View style={styles.eligibilityNotice} accessibilityRole="alert">
+              <Text style={styles.eligibilityTitle}>
+                No puedes reservar esta fecha
+              </Text>
+              <Text style={styles.eligibilityText}>
+                {eligibility.reason}
+              </Text>
+            </View>
+          )}
 
           <View
             style={
@@ -704,25 +953,30 @@ export default function AppointmentScreen() {
                   selectedTime ===
                   slot.time;
 
+                const selectable =
+                  slot.available && canChooseTime && !booking;
+
                 return (
                   <Pressable
                     key={
                       slot.time
                     }
                     disabled={
-                      !slot.available
+                      !selectable
                     }
                     accessibilityRole="button"
                     accessibilityLabel={`${formatDisplayTime(
                       slot.time
                     )}, ${
                       slot.available
-                        ? "disponible"
+                        ? canChooseTime
+                          ? "disponible"
+                          : "no elegible para esta fecha"
                         : "ocupado"
                     }`}
                     accessibilityState={{
                       selected,
-                      disabled: !slot.available,
+                      disabled: !selectable,
                     }}
                     onPress={() =>
                       handleTimeSelect(
@@ -732,7 +986,7 @@ export default function AppointmentScreen() {
                     style={[
                       styles.timeButton,
 
-                      !slot.available &&
+                      !selectable &&
                         styles.unavailableTime,
 
                       selected &&
@@ -743,7 +997,7 @@ export default function AppointmentScreen() {
                       style={[
                         styles.timeText,
 
-                        !slot.available &&
+                        !selectable &&
                           styles.unavailableText,
 
                         selected &&
@@ -781,6 +1035,24 @@ export default function AppointmentScreen() {
               }
             )}
           </View>
+
+          {availableCount === 0 && (
+            <View style={styles.noAvailableNotice}>
+              <Text style={styles.noAvailableText}>
+                Todos los horarios de este día están ocupados.
+              </Text>
+
+              <Pressable
+                style={styles.nextAvailableButton}
+                accessibilityRole="button"
+                onPress={handleNextDay}
+              >
+                <Text style={styles.nextAvailableButtonText}>
+                  Buscar la próxima fecha disponible
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       ) : (
         <View
@@ -810,6 +1082,16 @@ export default function AppointmentScreen() {
           <Text style={styles.emptyTimesText}>
             Prueba con otra fecha y encontraremos un espacio para ti.
           </Text>
+
+          <Pressable
+            style={styles.nextAvailableButton}
+            accessibilityRole="button"
+            onPress={handleNextDay}
+          >
+            <Text style={styles.nextAvailableButtonText}>
+              Buscar la próxima fecha disponible
+            </Text>
+          </Pressable>
         </View>
       ))}
 
@@ -869,7 +1151,7 @@ export default function AppointmentScreen() {
               </Text>
 
               <Text style={styles.summaryServiceName}>
-                Corte de cabello
+                {BUSINESS.service.name}
               </Text>
             </View>
           </View>
@@ -891,7 +1173,9 @@ export default function AppointmentScreen() {
               </Text>
 
               <Text style={styles.summaryDetailValue}>
-                {formatDisplayDate(dateText)}
+                {loadedDate
+                  ? formatDisplayDate(loadedDate)
+                  : "Fecha por actualizar"}
               </Text>
             </View>
 
@@ -924,8 +1208,14 @@ export default function AppointmentScreen() {
                 styles.disabledButton,
             ]}
             disabled={
-              booking
+              booking || !loadedDate || !canChooseTime
             }
+            accessibilityRole="button"
+            accessibilityLabel={booking ? "Agendando cita" : "Confirmar cita"}
+            accessibilityState={{
+              disabled: booking || !loadedDate || !canChooseTime,
+              busy: booking,
+            }}
             onPress={
               handleBook
             }
@@ -1078,6 +1368,29 @@ const styles =
         COLORS.textSecondary,
     },
 
+    rulesCard: {
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
+      marginBottom: SPACING.xl,
+    },
+
+    rulesTitle: {
+      color: COLORS.text,
+      fontSize: FONT.body,
+      fontWeight: "800",
+      marginBottom: SPACING.sm,
+    },
+
+    ruleText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      lineHeight: 21,
+      marginBottom: 4,
+    },
+
     section: {
       marginBottom:
         SPACING.xl,
@@ -1130,23 +1443,6 @@ const styles =
         COLORS.textSecondary,
     },
 
-    input: {
-      backgroundColor:
-        COLORS.surface,
-      borderWidth: 1,
-      borderColor:
-        COLORS.accentSoft,
-      borderRadius:
-        RADIUS.md,
-      paddingHorizontal:
-        SPACING.md,
-      paddingVertical: 14,
-      fontSize:
-        FONT.body,
-      color:
-        COLORS.text,
-    },
-
     dateButton: {
       flexDirection: "row",
       justifyContent:
@@ -1156,7 +1452,7 @@ const styles =
         COLORS.surface,
       borderWidth: 1,
       borderColor:
-        COLORS.accentSoft,
+        COLORS.borderStrong,
       borderRadius:
         RADIUS.md,
       paddingHorizontal:
@@ -1205,6 +1501,20 @@ const styles =
       fontWeight: "600",
     },
 
+    recommendationNotice: {
+      backgroundColor: COLORS.successBackground,
+      borderRadius: RADIUS.md,
+      padding: SPACING.sm,
+      marginTop: SPACING.sm,
+    },
+
+    recommendationNoticeText: {
+      color: COLORS.success,
+      fontSize: FONT.small,
+      lineHeight: 20,
+      fontWeight: "600",
+    },
+
     searchButton: {
       backgroundColor:
         COLORS.primary,
@@ -1244,6 +1554,62 @@ const styles =
         SPACING.sm,
       color:
         COLORS.textSecondary,
+    },
+
+    availabilityErrorCard: {
+      backgroundColor: COLORS.dangerBackground,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.lg,
+      marginBottom: SPACING.xl,
+    },
+
+    availabilityErrorTitle: {
+      color: COLORS.danger,
+      fontSize: FONT.body,
+      fontWeight: "800",
+      marginBottom: SPACING.xs,
+    },
+
+    availabilityErrorText: {
+      color: COLORS.danger,
+      fontSize: FONT.small,
+      lineHeight: 20,
+    },
+
+    recoveryActions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+
+    retryAvailabilityButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      backgroundColor: COLORS.primary,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.lg,
+    },
+
+    retryAvailabilityText: {
+      color: COLORS.onPrimary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    nextDaySecondaryButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.lg,
+    },
+
+    nextDaySecondaryText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
     },
 
     emptyTimes: {
@@ -1289,6 +1655,56 @@ const styles =
         COLORS.textSecondary,
       textAlign: "center",
       maxWidth: 330,
+    },
+
+    eligibilityNotice: {
+      backgroundColor: COLORS.warningBackground,
+      borderRadius: RADIUS.md,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+
+    eligibilityTitle: {
+      color: COLORS.warning,
+      fontSize: FONT.small,
+      fontWeight: "800",
+      marginBottom: 3,
+    },
+
+    eligibilityText: {
+      color: COLORS.warning,
+      fontSize: FONT.small,
+      lineHeight: 20,
+    },
+
+    noAvailableNotice: {
+      alignItems: "center",
+      marginTop: SPACING.md,
+    },
+
+    noAvailableText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      lineHeight: 20,
+      textAlign: "center",
+    },
+
+    nextAvailableButton: {
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.lg,
+      marginTop: SPACING.md,
+    },
+
+    nextAvailableButtonText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+      textAlign: "center",
     },
 
     timesContainer: {

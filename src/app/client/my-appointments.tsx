@@ -5,6 +5,7 @@ import {
 import {
     useCallback,
     useEffect,
+    useRef,
     useState,
 } from "react";
 import {
@@ -12,6 +13,7 @@ import {
     Alert,
     Platform,
     Pressable,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -19,6 +21,11 @@ import {
 } from "react-native";
 
 import { showMessage } from "../../utils/show-message";
+import { BUSINESS } from "../../constants/business";
+import {
+  isAppointmentPast,
+  isAtLeastMinutesBeforeAppointment,
+} from "../../utils/business-date";
 
 
 
@@ -26,6 +33,7 @@ import {
     cancelAppointment,
     getMyAppointments,
 } from "../../api/appointments.api";
+import { ApiError } from "../../api/api-client";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -57,12 +65,64 @@ type Appointment = {
     | "CANCELLED"
     | "COMPLETED";
   createdAt: string;
+  cancelUntil?: string;
   canCancel?: boolean;
+  isPast?: boolean;
+};
+
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
 };
 
 type AppointmentView =
   | "UPCOMING"
   | "HISTORY";
+
+type LoadMode = "refresh" | "more" | "background";
+
+function isUnauthorizedError(error: unknown) {
+  return error instanceof ApiError && error.code === "UNAUTHORIZED";
+}
+
+function appointmentDateTimeKey(appointment: Appointment) {
+  return `${appointment.date}T${appointment.time.slice(0, 5)}`;
+}
+
+function getCancellationDeadline(appointment: Appointment) {
+  const [year, month, day] = appointment.date
+    .split("-")
+    .map(Number);
+  const [hour, minute] = appointment.time
+    .slice(0, 5)
+    .split(":")
+    .map(Number);
+
+  return new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      hour,
+      minute - BUSINESS.bookingPolicy.cancellationWindowMinutes
+    )
+  );
+}
+
+function formatCancellationDeadline(appointment: Appointment) {
+  return new Intl.DateTimeFormat(BUSINESS.locale, {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(getCancellationDeadline(appointment));
+}
 
 export default function MyAppointmentsScreen() {
   const router = useRouter();
@@ -82,11 +142,29 @@ export default function MyAppointmentsScreen() {
       "UPCOMING"
     );
 
-  const [loading, setLoading] =
+  const [initialLoading, setInitialLoading] =
     useState(true);
+
+  const [refreshing, setRefreshing] =
+    useState(false);
+
+  const [loadingMore, setLoadingMore] =
+    useState(false);
 
   const [error, setError] =
     useState("");
+
+  const [lastUpdated, setLastUpdated] =
+    useState<Date | null>(null);
+
+  const [pagination, setPagination] =
+    useState<Pagination>({
+      page: 1,
+      pageSize: 100,
+      total: 0,
+      totalPages: 1,
+      hasMore: false,
+    });
 
   const [
     cancellingId,
@@ -94,8 +172,16 @@ export default function MyAppointmentsScreen() {
   ] =
     useState<number | null>(null);
 
+  const cancellationInFlightRef = useRef<number | null>(null);
+
   const [currentTime, setCurrentTime] =
-    useState(Date.now());
+    useState(() => Date.now());
+
+  const loadRequestRef = useRef(0);
+  const loadModeRef = useRef<{
+    requestId: number;
+    mode: LoadMode;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -105,41 +191,113 @@ export default function MyAppointmentsScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  useFocusEffect(
-  useCallback(() => {
-    if (token) {
-      loadAppointments();
-    }
-  }, [token])
-);
-
-  async function loadAppointments() {
+  const loadAppointments = useCallback(async (
+    page = 1,
+    mode: LoadMode = "refresh"
+  ) => {
     if (!token) {
       return;
     }
 
+    // Las acciones visibles se serializan. Una reconciliación de fondo puede
+    // reemplazar una lectura anterior porque refleja una mutación más reciente.
+    if (
+      mode !== "background" &&
+      loadModeRef.current &&
+      loadModeRef.current.mode !== "background"
+    ) {
+      return;
+    }
+
+    const requestId = loadRequestRef.current + 1;
+    loadRequestRef.current = requestId;
+    loadModeRef.current = { requestId, mode };
+
     try {
-      setLoading(true);
+      if (mode === "refresh") {
+        setRefreshing(true);
+      } else if (mode === "more") {
+        setLoadingMore(true);
+      }
+
       setError("");
 
       const result =
         await getMyAppointments(
-          token
+          token,
+          {
+            page,
+            pageSize: 100,
+          }
         );
 
-      setAppointments(
-        result.appointments
+      const incoming = (result.appointments ?? []) as Appointment[];
+
+      if (requestId !== loadRequestRef.current) {
+        return;
+      }
+
+      setAppointments((current) => {
+        if (page === 1) {
+          return incoming;
+        }
+
+        const byId = new Map(
+          [...current, ...incoming].map((appointment) => [
+            appointment.id,
+            appointment,
+          ])
+        );
+
+        return [...byId.values()];
+      });
+
+      setPagination(
+        result.pagination ?? {
+          page,
+          pageSize: 100,
+          total: incoming.length,
+          totalPages: 1,
+          hasMore: false,
+        }
       );
+      setLastUpdated(new Date());
     } catch (error) {
+      if (requestId !== loadRequestRef.current) {
+        return;
+      }
+
+      if (isUnauthorizedError(error)) {
+        return;
+      }
+
       setError(
         error instanceof Error
           ? error.message
           : "No se pudieron cargar tus citas."
       );
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestRef.current) {
+        loadModeRef.current = null;
+        setInitialLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
+      }
     }
-  }
+  }, [token]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (token) {
+        void loadAppointments(1, "refresh");
+      }
+
+      return () => {
+        loadRequestRef.current += 1;
+        loadModeRef.current = null;
+      };
+    }, [loadAppointments, token])
+  );
 
   function getStatusText(
     status: Appointment["status"]
@@ -213,10 +371,36 @@ export default function MyAppointmentsScreen() {
   }
 
   function confirmCancel(
-    appointmentId: number
+    appointment: Appointment
   ) {
+    if (cancellationInFlightRef.current !== null) {
+      return;
+    }
+
+    if (
+      !isAtLeastMinutesBeforeAppointment(
+        appointment.date,
+        appointment.time,
+        BUSINESS.bookingPolicy.cancellationWindowMinutes
+      )
+    ) {
+      showMessage(
+        "Ya no se puede cancelar",
+        "Debes cancelar la cita con al menos una hora de anticipación.",
+        { kind: "error" }
+      );
+      void loadAppointments(1, "background");
+      return;
+    }
+
     const message =
-      "¿Estás seguro de que deseas cancelar esta cita? El horario quedará disponible para otro cliente.";
+      `¿Deseas cancelar ${appointment.service} del ${formatDisplayDate(
+        appointment.date
+      )} a las ${formatDisplayTime(
+        appointment.time
+      )}? Tu plazo de cancelación termina ${formatCancellationDeadline(
+        appointment
+      )}. El horario quedará disponible para otro cliente.`;
 
     if (Platform.OS !== "web") {
       Alert.alert(
@@ -232,7 +416,7 @@ export default function MyAppointmentsScreen() {
             style: "destructive",
             onPress: () =>
               handleCancel(
-                appointmentId
+                appointment.id
               ),
           },
         ]
@@ -245,16 +429,18 @@ export default function MyAppointmentsScreen() {
       typeof window.confirm === "function" &&
       window.confirm(message)
     ) {
-      void handleCancel(appointmentId);
+      void handleCancel(appointment.id);
     }
   }
 
   async function handleCancel(
   appointmentId: number
 ) {
-  if (!token) {
+  if (!token || cancellationInFlightRef.current !== null) {
     return;
   }
+
+  cancellationInFlightRef.current = appointmentId;
 
   try {
     setCancellingId(
@@ -263,18 +449,35 @@ export default function MyAppointmentsScreen() {
 
     setError("");
 
-    await cancelAppointment(
+    const result = await cancelAppointment(
       token,
       appointmentId
     );
 
-    await loadAppointments();
+    setAppointments((current) =>
+      current.map((appointment) =>
+        appointment.id === appointmentId
+          ? {
+              ...appointment,
+              ...(result.appointment ?? {}),
+              status: "CANCELLED",
+              canCancel: false,
+            }
+          : appointment
+      )
+    );
 
     showMessage(
       "Cita cancelada",
       "La cita fue cancelada correctamente."
     );
+
+    void loadAppointments(1, "background");
   } catch (error) {
+    if (isUnauthorizedError(error)) {
+      return;
+    }
+
     const message =
       error instanceof Error
         ? error.message
@@ -284,42 +487,70 @@ export default function MyAppointmentsScreen() {
       "No se pudo cancelar",
       message
     );
+
+    // El servidor pudo completar la cancelación antes de un timeout o
+    // rechazarla por un cambio de estado. Reconciliamos ambos escenarios.
+    void loadAppointments(1, "background");
   } finally {
-    setCancellingId(null);
+    if (cancellationInFlightRef.current === appointmentId) {
+      cancellationInFlightRef.current = null;
+    }
+
+    setCancellingId((current) =>
+      current === appointmentId ? null : current
+    );
   }
 }
 
-  const upcomingAppointments =
-    appointments.filter(
-      (appointment) =>
-        appointment.status ===
-          "PENDING" ||
-        appointment.status ===
-          "ACCEPTED"
+  const isPast = (appointment: Appointment) =>
+    appointment.isPast === true ||
+    isAppointmentPast(
+      appointment.date,
+      appointment.time,
+      new Date(currentTime)
     );
 
+  const upcomingAppointments =
+    appointments
+      .filter(
+        (appointment) =>
+          (appointment.status === "PENDING" ||
+            appointment.status === "ACCEPTED") &&
+          !isPast(appointment)
+      )
+      .sort((a, b) =>
+        appointmentDateTimeKey(a).localeCompare(appointmentDateTimeKey(b))
+      );
+
   const historyAppointments =
-    appointments.filter(
-      (appointment) =>
-        appointment.status ===
-          "COMPLETED" ||
-        appointment.status ===
-          "REJECTED" ||
-        appointment.status ===
-          "CANCELLED"
-    );
+    appointments
+      .filter(
+        (appointment) =>
+          appointment.status === "COMPLETED" ||
+          appointment.status === "REJECTED" ||
+          appointment.status === "CANCELLED" ||
+          isPast(appointment)
+      )
+      .sort((a, b) =>
+        appointmentDateTimeKey(b).localeCompare(appointmentDateTimeKey(a))
+      );
 
   const visibleAppointments =
     selectedView === "UPCOMING"
       ? upcomingAppointments
       : historyAppointments;
 
-  if (loading) {
+  const listBusy = refreshing || loadingMore;
+
+  if (initialLoading && appointments.length === 0) {
     return (
       <View
         style={
           styles.centerContainer
         }
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel="Cargando tus citas"
       >
         <ActivityIndicator
           size="large"
@@ -342,6 +573,14 @@ export default function MyAppointmentsScreen() {
       contentContainerStyle={
         styles.container
       }
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => void loadAppointments(1, "refresh")}
+          tintColor={COLORS.primary}
+          colors={[COLORS.primary]}
+        />
+      }
       showsVerticalScrollIndicator={
         false
       }
@@ -354,7 +593,7 @@ export default function MyAppointmentsScreen() {
             TU AGENDA
           </Text>
 
-          <Text style={styles.title}>
+          <Text style={styles.title} accessibilityRole="header">
             Mis citas
           </Text>
 
@@ -369,11 +608,46 @@ export default function MyAppointmentsScreen() {
           </Text>
         </View>
 
-        <BackButton
-          iconOnly
-          fallbackHref="/client"
-        />
+        <View style={styles.headerActions}>
+          <BackButton
+            iconOnly
+            fallbackHref="/client"
+          />
+
+          <Pressable
+            style={styles.refreshButton}
+            disabled={listBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Actualizar mis citas"
+            accessibilityState={{ disabled: listBusy, busy: listBusy }}
+            onPress={() => void loadAppointments(1, "refresh")}
+          >
+            {refreshing ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <AppIcon
+                name={{
+                  ios: "arrow.clockwise",
+                  android: "refresh",
+                  web: "refresh",
+                }}
+                size={20}
+                color={COLORS.primary}
+              />
+            )}
+          </Pressable>
+        </View>
       </View>
+
+      {lastUpdated ? (
+        <Text style={styles.lastUpdatedText} accessibilityLiveRegion="polite">
+          Actualizado a las {new Intl.DateTimeFormat(BUSINESS.locale, {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }).format(lastUpdated)}
+        </Text>
+      ) : null}
 
       <View
         style={
@@ -474,7 +748,22 @@ export default function MyAppointmentsScreen() {
         </Pressable>
       </View>
 
-      {error ? (
+      {error && appointments.length > 0 ? (
+        <View style={styles.inlineError} accessibilityRole="alert">
+          <Text style={styles.inlineErrorText}>
+            No pudimos actualizar la lista. Tus citas anteriores siguen visibles.
+          </Text>
+          <Pressable
+            style={styles.inlineRetryButton}
+            accessibilityRole="button"
+            onPress={() => void loadAppointments(1, "refresh")}
+          >
+            <Text style={styles.inlineRetryText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {error && appointments.length === 0 ? (
         <View
           style={
             styles.messageCard
@@ -501,8 +790,9 @@ export default function MyAppointmentsScreen() {
               styles.retryButton
             }
             onPress={
-              loadAppointments
+              () => void loadAppointments(1, "refresh")
             }
+            accessibilityRole="button"
           >
             <Text
               style={
@@ -563,8 +853,22 @@ export default function MyAppointmentsScreen() {
             {selectedView ===
             "UPCOMING"
               ? "Cuando reserves tu próximo corte, aparecerá aquí."
-              : "Las citas completadas, rechazadas o canceladas aparecerán aquí."}
+              : "Las citas anteriores, completadas, rechazadas o canceladas aparecerán aquí."}
           </Text>
+
+          {pagination.hasMore && (
+            <Pressable
+              style={styles.loadMoreButton}
+              disabled={listBusy}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: listBusy, busy: listBusy }}
+              onPress={() => void loadAppointments(pagination.page + 1, "more")}
+            >
+              <Text style={styles.loadMoreButtonText}>
+                {loadingMore ? "Cargando…" : "Buscar en más citas"}
+              </Text>
+            </Pressable>
+          )}
 
           {selectedView ===
             "UPCOMING" && (
@@ -577,6 +881,7 @@ export default function MyAppointmentsScreen() {
                   "/client/appointment"
                 )
               }
+              accessibilityRole="button"
             >
               <Text
                 style={
@@ -594,6 +899,7 @@ export default function MyAppointmentsScreen() {
             style={
               styles.sectionTitle
             }
+            accessibilityRole="header"
           >
             {selectedView ===
             "UPCOMING"
@@ -614,21 +920,29 @@ export default function MyAppointmentsScreen() {
                 appointment.status ===
                   "ACCEPTED";
 
+              const appointmentIsPast =
+                isPast(appointment);
+
               const cancellationExpired =
-                currentTime >
-                  new Date(
-                    appointment.createdAt
-                  ).getTime() +
-                    60 * 60 * 1000 ||
+                !isAtLeastMinutesBeforeAppointment(
+                  appointment.date,
+                  appointment.time,
+                  BUSINESS.bookingPolicy.cancellationWindowMinutes,
+                  new Date(currentTime)
+                ) ||
                 appointment.canCancel === false;
 
               const canCancel =
                 hasCancellableStatus &&
+                !appointmentIsPast &&
                 !cancellationExpired;
 
               const isCancelling =
                 cancellingId ===
                 appointment.id;
+
+              const cancellationInProgress =
+                cancellingId !== null;
 
               return (
                 <View
@@ -789,20 +1103,20 @@ export default function MyAppointmentsScreen() {
                       style={[
                         styles.cancelButton,
 
-                        isCancelling &&
+                        cancellationInProgress &&
                           styles.disabledButton,
                       ]}
                       disabled={
-                        isCancelling
+                        cancellationInProgress
                       }
                       accessibilityRole="button"
                       accessibilityLabel={`Cancelar cita de ${appointment.service}`}
                       accessibilityState={{
-                        disabled: isCancelling,
+                        disabled: cancellationInProgress,
                       }}
                       onPress={() =>
                         confirmCancel(
-                          appointment.id
+                          appointment
                         )
                       }
                     >
@@ -828,8 +1142,25 @@ export default function MyAppointmentsScreen() {
                     </Pressable>
                   )}
 
+                  {canCancel && (
+                    <View style={styles.cancellationDeadlineNotice}>
+                      <AppIcon
+                        name={{
+                          ios: "info.circle",
+                          android: "info",
+                          web: "info",
+                        }}
+                        size={18}
+                        color={COLORS.primary}
+                      />
+                      <Text style={styles.cancellationDeadlineText}>
+                        Puedes cancelar hasta {formatCancellationDeadline(appointment)}, una hora antes de la cita.
+                      </Text>
+                    </View>
+                  )}
+
                   {appointment.status ===
-                    "PENDING" && (
+                    "PENDING" && !appointmentIsPast && (
                     <View
                       style={
                         styles.infoNotice
@@ -856,7 +1187,7 @@ export default function MyAppointmentsScreen() {
                   )}
 
                   {appointment.status ===
-                    "ACCEPTED" && (
+                    "ACCEPTED" && !appointmentIsPast && (
                     <View
                       style={
                         styles.confirmedNotice
@@ -883,7 +1214,8 @@ export default function MyAppointmentsScreen() {
                   )}
 
                   {hasCancellableStatus &&
-                    cancellationExpired && (
+                    cancellationExpired &&
+                    !appointmentIsPast && (
                     <View style={styles.expiredNotice}>
                       <AppIcon
                         name={{
@@ -896,13 +1228,49 @@ export default function MyAppointmentsScreen() {
                       />
 
                       <Text style={styles.expiredNoticeText}>
-                        Ya no se puede cancelar esta cita. El plazo de cancelación expiró.
+                        Ya no se puede cancelar: faltan menos de una hora para la cita.
+                      </Text>
+                    </View>
+                  )}
+
+                  {hasCancellableStatus && appointmentIsPast && (
+                    <View style={styles.expiredNotice}>
+                      <AppIcon
+                        name={{
+                          ios: "clock.badge.exclamationmark",
+                          android: "pending_actions",
+                          web: "pending_actions",
+                        }}
+                        size={18}
+                        color={COLORS.textSecondary}
+                      />
+                      <Text style={styles.expiredNoticeText}>
+                        Esta cita ya pasó y está pendiente de cierre por la barbería.
                       </Text>
                     </View>
                   )}
                 </View>
               );
             }
+          )}
+
+          {pagination.hasMore && (
+            <Pressable
+              style={styles.loadMoreButton}
+              disabled={listBusy}
+              accessibilityRole="button"
+              accessibilityLabel="Cargar más citas"
+              accessibilityState={{ disabled: listBusy, busy: listBusy }}
+              onPress={() => void loadAppointments(pagination.page + 1, "more")}
+            >
+              {loadingMore ? (
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              ) : (
+                <Text style={styles.loadMoreButtonText}>
+                  Cargar más
+                </Text>
+              )}
+            </Pressable>
           )}
 
           {selectedView ===
@@ -916,6 +1284,7 @@ export default function MyAppointmentsScreen() {
                   "/client/appointment"
                 )
               }
+              accessibilityRole="button"
             >
               <Text
                 style={
@@ -975,6 +1344,55 @@ const styles = StyleSheet.create({
 
   headerContent: {
     flex: 1,
+  },
+
+  headerActions: {
+    alignItems: "center",
+    gap: SPACING.xs,
+  },
+
+  refreshButton: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  lastUpdatedText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    marginTop: -SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+
+  inlineError: {
+    backgroundColor: COLORS.dangerBackground,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+
+  inlineErrorText: {
+    color: COLORS.danger,
+    fontSize: FONT.small,
+    lineHeight: 20,
+  },
+
+  inlineRetryButton: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    justifyContent: "center",
+  },
+
+  inlineRetryText: {
+    color: COLORS.primary,
+    fontSize: FONT.small,
+    fontWeight: "800",
   },
 
   headerAccent: {
@@ -1129,6 +1547,7 @@ const styles = StyleSheet.create({
 
   cardTopRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent:
       "space-between",
     alignItems:
@@ -1140,6 +1559,7 @@ const styles = StyleSheet.create({
 
   serviceIdentity: {
     flex: 1,
+    flexBasis: 210,
     minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
@@ -1196,12 +1616,14 @@ const styles = StyleSheet.create({
 
   bookingInfoRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap:
       SPACING.sm,
   },
 
   bookingInfoBlock: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 140,
     minWidth: 0,
     backgroundColor:
       COLORS.primarySoft,
@@ -1287,6 +1709,25 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
+  cancellationDeadlineNotice: {
+    backgroundColor: COLORS.primarySoft,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 8,
+    marginTop: SPACING.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+  },
+
+  cancellationDeadlineText: {
+    flex: 1,
+    color: COLORS.primary,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+
   cancelButton: {
     borderWidth: 1,
     borderColor:
@@ -1352,6 +1793,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop:
       SPACING.sm,
+  },
+
+  loadMoreButton: {
+    width: "100%",
+    maxWidth: 280,
+    minHeight: 46,
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+
+  loadMoreButtonText: {
+    color: COLORS.primary,
+    fontSize: FONT.small,
+    fontWeight: "800",
   },
 
   newBookingButtonText: {

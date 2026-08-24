@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../context/AuthContext";
+import { BUSINESS } from "../constants/business";
 
 import {
   COLORS,
@@ -27,7 +28,12 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={styles.loadingContainer}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel="Cargando Barbería Cale"
+      >
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
@@ -55,9 +61,11 @@ export default function HomeScreen() {
           )}
           style={styles.brandLogo}
           resizeMode="contain"
+          accessible
+          accessibilityLabel="Logotipo de Barbería Cale"
         />
 
-        <Text style={styles.brand}>
+        <Text style={styles.brand} accessibilityRole="header">
           BARBERÍA
         </Text>
 
@@ -89,6 +97,9 @@ export default function HomeScreen() {
 
         <Pressable
           style={styles.primaryButton}
+          accessibilityRole="button"
+          accessibilityLabel="Crear una cuenta de cliente"
+          accessibilityHint="Abre el formulario de registro"
           onPress={() =>
             router.push("/auth/register")
           }
@@ -100,6 +111,9 @@ export default function HomeScreen() {
 
         <Pressable
           style={styles.secondaryButton}
+          accessibilityRole="button"
+          accessibilityLabel="Iniciar sesión"
+          accessibilityHint="Abre el formulario de acceso"
           onPress={() =>
             router.push("/auth/login")
           }
@@ -171,6 +185,52 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
+      </View>
+
+      <View style={styles.practicalSection}>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          Antes de reservar
+        </Text>
+
+        <View style={styles.practicalCard}>
+          <View style={styles.practicalItem}>
+            <Text style={styles.practicalLabel}>HORARIO</Text>
+            <Text style={styles.practicalValue}>
+              Atendemos de 8:00 a. m. a 5:00 p. m.
+            </Text>
+          </View>
+
+          <View style={styles.practicalDivider} />
+
+          <View style={styles.practicalItem}>
+            <Text style={styles.practicalLabel}>SERVICIO</Text>
+            <Text style={styles.practicalValue}>
+              {BUSINESS.service.name} de {BUSINESS.service.durationMinutes} minutos,
+              reservado en un bloque de {BUSINESS.slotMinutes} minutos.
+            </Text>
+          </View>
+
+          <View style={styles.practicalDivider} />
+
+          <View style={styles.practicalItem}>
+            <Text style={styles.practicalLabel}>CONFIRMACIÓN</Text>
+            <Text style={styles.practicalValue}>
+              Solicita con {BUSINESS.bookingPolicy.minLeadHours} horas de anticipación.
+              La barbería confirmará tu cita.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.privacyCard}>
+        <Text style={styles.privacyTitle} accessibilityRole="header">
+          Tu cuenta, bajo tu control
+        </Text>
+
+        <Text style={styles.privacyText}>
+          Usamos tu número de celular para identificar tu cuenta y gestionar tus citas.
+          Tú decides si deseas mantener la sesión iniciada; evita hacerlo en dispositivos compartidos.
+        </Text>
       </View>
 
       <Text style={styles.footer}>
@@ -312,6 +372,61 @@ const styles = StyleSheet.create({
 
   featuresSection: {
     marginBottom: SPACING.xl,
+  },
+
+  practicalSection: {
+    marginBottom: SPACING.xl,
+  },
+
+  practicalCard: {
+    backgroundColor: COLORS.primarySoft,
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.md,
+  },
+
+  practicalItem: {
+    paddingVertical: SPACING.md,
+  },
+
+  practicalLabel: {
+    color: COLORS.primary,
+    fontSize: FONT.caption,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+
+  practicalValue: {
+    color: COLORS.text,
+    fontSize: FONT.small,
+    lineHeight: 21,
+  },
+
+  practicalDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+
+  privacyCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+
+  privacyTitle: {
+    color: COLORS.text,
+    fontSize: FONT.body,
+    fontWeight: "700",
+    marginBottom: SPACING.xs,
+  },
+
+  privacyText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.small,
+    lineHeight: 21,
   },
 
   sectionTitle: {

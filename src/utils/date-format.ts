@@ -1,3 +1,5 @@
+import { BUSINESS } from "../constants/business";
+
 export function formatDisplayDate(
   dateString: string
 ) {
@@ -13,7 +15,7 @@ export function formatDisplayDate(
   );
 
   return new Intl.DateTimeFormat(
-    "es-NI",
+    BUSINESS.locale,
     {
       weekday: "long",
       day: "numeric",
@@ -40,7 +42,7 @@ export function formatDisplayTime(
   );
 
   return new Intl.DateTimeFormat(
-    "es-NI",
+    BUSINESS.locale,
     {
       hour: "numeric",
       minute: "2-digit",

@@ -1,56 +1,57 @@
-# Welcome to your Expo app 👋
+# Barbería Cale
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil y web para reservar cortes de cabello y administrar el ciclo completo de las citas de Barbería Cale.
 
-## Get started
+## Funcionalidades
 
-1. Install dependencies
+- Registro, inicio de sesión y persistencia opcional de la sesión.
+- Consulta de disponibilidad y reserva con reglas de anticipación y frecuencia.
+- Próximas citas, historial y cancelación dentro del plazo permitido.
+- Panel ADMIN para aceptar, rechazar, cancelar y completar citas.
+- Agenda por rango, estado y búsqueda, con comunicación asistida por WhatsApp.
 
-   ```bash
-   npm install
-   ```
+## Tecnologías
 
-2. Start the app
+- Expo SDK 57, Expo Router, React Native y React Native Web.
+- API REST con Express.
+- PostgreSQL/Supabase.
+- Render para la API, Netlify para web y EAS para Android.
 
-   ```bash
-   npx expo start
-   ```
+## Ejecutar la aplicación
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Instala las dependencias y levanta Expo:
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+La aplicación usa por defecto la API publicada. Para apuntar a otra instancia, define `EXPO_PUBLIC_API_URL` con la URL completa que termina en `/api`.
 
-### Other setup steps
+## Ejecutar el backend
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Desde `backend`, instala sus dependencias y configura estas variables de entorno:
 
-## Learn more
+- `DATABASE_URL`: conexión de PostgreSQL.
+- `JWT_SECRET`: secreto robusto para firmar sesiones.
+- `CORS_ORIGINS`: orígenes web permitidos, separados por comas.
+- `PORT`: opcional; por defecto se usa `4000`.
 
-To learn more about developing your project with Expo, look at the following resources:
+Luego inicia el servidor:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+node src/server.js
+```
 
-## Join the community
+La estructura inicial de la base está en `backend/src/database/schema.sql`.
 
-Join our community of developers creating universal apps.
+## Verificación
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run lint
+npx tsc --noEmit
+cd backend
+npm test
+```
+
+Los requisitos y el alcance están en `proyecto/docs`. Los comandos habituales de Git y EAS están guardados en `how-to-git.md` y `how-to-eas.md`.

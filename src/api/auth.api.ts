@@ -1,114 +1,59 @@
-const API_URL =
-    "https://barberia-cale.onrender.com/api";
+import { apiRequest } from "./api-client";
 
 export type AuthUser = {
   id: number;
-
   firstName: string;
-
   lastName: string;
-
   phone: string;
-
-  role:
-    | "CLIENT"
-    | "ADMIN";
+  role: "CLIENT" | "ADMIN";
 };
 
 export type AuthResponse = {
   success: boolean;
-
   message: string;
-
   token: string;
-
   user: AuthUser;
 };
 
-type LoginData = {
+export type SessionValidationResponse = {
+  success: boolean;
+  user: AuthUser;
+};
+
+export type LoginData = {
   phone: string;
-
   password: string;
-
   rememberMe: boolean;
 };
 
-type RegisterData = {
+export type RegisterData = {
   firstName: string;
-
   lastName: string;
-
   phone: string;
-
   password: string;
-
   rememberMe: boolean;
 };
 
-export async function loginUser(
-  data: LoginData
-): Promise<AuthResponse> {
-  const response =
-    await fetch(
-      `${API_URL}/auth/login`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body:
-          JSON.stringify(
-            data
-          ),
-      }
-    );
-
-  const result =
-    await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message ||
-        "No se pudo iniciar sesión."
-    );
-  }
-
-  return result;
+export function loginUser(data: LoginData) {
+  return apiRequest<AuthResponse>("/auth/login", {
+    method: "POST",
+    json: data,
+  });
 }
 
-export async function registerUser(
-  data: RegisterData
-): Promise<AuthResponse> {
-  const response =
-    await fetch(
-      `${API_URL}/auth/register`,
-      {
-        method: "POST",
+export function registerUser(data: RegisterData) {
+  return apiRequest<AuthResponse>("/auth/register", {
+    method: "POST",
+    json: data,
+  });
+}
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body:
-          JSON.stringify(
-            data
-          ),
-      }
-    );
-
-  const result =
-    await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      result.message ||
-        "No se pudo crear la cuenta."
-    );
-  }
-
-  return result;
+export function validateSession(token: string) {
+  return apiRequest<SessionValidationResponse>("/auth/me", {
+    method: "GET",
+    token,
+    // La restauración decide si la sesión es inválida. Evita dos cierres
+    // simultáneos provocados por la misma respuesta.
+    notifyOnUnauthorized: false,
+  });
 }
