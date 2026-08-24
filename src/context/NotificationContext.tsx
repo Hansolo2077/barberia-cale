@@ -24,6 +24,12 @@ import {
   registerNotificationDevice,
   type NotificationDevicePlatform,
 } from "../api/notifications.api";
+import {
+  NotificationOperationTimeoutError,
+  createExpoPushTokenOptions,
+  getDevicePushTokenKey,
+  withNotificationTimeout,
+} from "../utils/notification-registration";
 import { showMessage } from "../utils/show-message";
 import { useAuth } from "./AuthContext";
 
@@ -32,12 +38,16 @@ const CATEGORY_ID = "attendance_reminder";
 const CONFIRM_ACTION_ID = "confirm_attendance";
 const PENDING_INTENT_KEY = "barberia_cale_notification_intent";
 const INTENT_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
+const DEVICE_PUSH_TOKEN_TIMEOUT_MS = 10_000;
+const EXPO_PUSH_TOKEN_TIMEOUT_MS = 12_000;
 const NOTIFICATIONS_SUPPORTED =
   Platform.OS === "android" && !isRunningInExpoGo();
 
 type NotificationsModule = typeof import("expo-notifications");
 type NotificationResponse =
   import("expo-notifications").NotificationResponse;
+type DevicePushToken =
+  import("expo-notifications").DevicePushToken;
 
 let notificationsModulePromise: Promise<NotificationsModule> | null = null;
 let notificationPresentationPromise: Promise<NotificationsModule> | null =
@@ -55,6 +65,18 @@ export type NotificationRegistrationStatus =
   | "registered"
   | "failed"
   | "unsupported";
+
+export type NotificationRegistrationStage =
+  | "permission"
+  | "device"
+  | "expo"
+  | "server"
+  | null;
+
+export type NotificationEnableResult = {
+  enabled: boolean;
+  error: string | null;
+};
 
 type NotificationIntent = {
   appointmentId: number;
@@ -81,7 +103,9 @@ type NotificationContextValue = {
   notificationsReady: boolean;
   isSupported: boolean;
   isRegistering: boolean;
-  enableNotifications: () => Promise<boolean>;
+  registrationStage: NotificationRegistrationStage;
+  registrationError: string | null;
+  enableNotifications: () => Promise<NotificationEnableResult>;
   refreshNotificationPermission: () => Promise<PermissionStatus>;
 };
 
@@ -181,6 +205,57 @@ function getProjectId() {
     : null;
 }
 
+function getErrorCode(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    typeof error.code === "string"
+  ) {
+    return error.code;
+  }
+
+  return null;
+}
+
+function getRegistrationFailureMessage(error: unknown) {
+  if (error instanceof NotificationOperationTimeoutError) {
+    return error.stage === "device"
+      ? "Android tardó demasiado en preparar este teléfono. Revisa que Google Play Services esté actualizado y vuelve a intentarlo."
+      : "El servicio de notificaciones tardó demasiado en responder. Revisa tu conexión y vuelve a intentarlo.";
+  }
+
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  const code = getErrorCode(error);
+
+  if (
+    code === "ERR_NOTIFICATIONS_NO_EXPERIENCE_ID" ||
+    code === "ERR_NOTIFICATIONS_NO_APPLICATION_ID"
+  ) {
+    return "Esta instalación no contiene la configuración completa de notificaciones. Instala la versión más reciente de Barbería Cale.";
+  }
+
+  if (code === "ERR_NOTIFICATIONS_NETWORK_ERROR") {
+    return "No pudimos conectar con el servicio de notificaciones de Expo. Revisa tu conexión e inténtalo nuevamente.";
+  }
+
+  if (code === "ERR_NOTIFICATIONS_SERVER_ERROR") {
+    return "Expo rechazó el registro de este teléfono. Instala la versión más reciente de la app y vuelve a intentarlo.";
+  }
+
+  const technicalMessage =
+    error instanceof Error ? error.message : "";
+
+  if (/firebase|fcm|google play/i.test(technicalMessage)) {
+    return "Android no pudo iniciar Firebase para las notificaciones. Instala la versión más reciente de la app y verifica Google Play Services.";
+  }
+
+  return "No pudimos terminar la activación. Revisa tu conexión y vuelve a intentarlo.";
+}
+
 async function configureNotificationPresentation() {
   if (!NOTIFICATIONS_SUPPORTED) {
     return null;
@@ -254,7 +329,13 @@ export function NotificationProvider({
   const [notificationsReady, setNotificationsReady] =
     useState(!NOTIFICATIONS_SUPPORTED);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [registrationStage, setRegistrationStage] =
+    useState<NotificationRegistrationStage>(null);
+  const [registrationError, setRegistrationError] =
+    useState<string | null>(null);
+  const registrationErrorRef = useRef<string | null>(null);
   const expoPushTokenRef = useRef<string | null>(null);
+  const nativePushTokenKeyRef = useRef<string | null>(null);
   const registeredDeviceRef = useRef<RegisteredDevice | null>(null);
   const registrationPromiseRef = useRef<RegistrationInFlight | null>(null);
   const authIdentityRef = useRef({
@@ -264,6 +345,11 @@ export function NotificationProvider({
   });
   const processingIntentRef = useRef(false);
   const handledResponsesRef = useRef(new Set<string>());
+
+  const updateRegistrationError = useCallback((message: string | null) => {
+    registrationErrorRef.current = message;
+    setRegistrationError(message);
+  }, []);
 
   useEffect(() => {
     authIdentityRef.current = {
@@ -303,7 +389,8 @@ export function NotificationProvider({
   const registerCurrentDevice = useCallback(
     async (
       requestPermission: boolean,
-      forceTokenRefresh = false
+      forceTokenRefresh = false,
+      suppliedDevicePushToken?: DevicePushToken
     ) => {
       if (
         !NOTIFICATIONS_SUPPORTED ||
@@ -313,15 +400,28 @@ export function NotificationProvider({
         return false;
       }
 
+      const suppliedTokenKey = suppliedDevicePushToken
+        ? getDevicePushTokenKey(suppliedDevicePushToken)
+        : null;
+      const canReuseRotatedTokenRegistration = () => {
+        const registeredDevice = registeredDeviceRef.current;
+
+        return (
+          suppliedTokenKey !== null &&
+          nativePushTokenKeyRef.current === suppliedTokenKey &&
+          registeredDevice?.authToken === token &&
+          registeredDevice.userId === user.id
+        );
+      };
       const currentRegistration = registrationPromiseRef.current;
 
       if (currentRegistration) {
         const currentResult = await currentRegistration.promise;
 
         if (
-          !forceTokenRefresh &&
           currentRegistration.authToken === token &&
-          currentRegistration.userId === user.id
+          currentRegistration.userId === user.id &&
+          (!forceTokenRefresh || canReuseRotatedTokenRegistration())
         ) {
           return currentResult;
         }
@@ -333,9 +433,9 @@ export function NotificationProvider({
         const nextResult = await nextRegistration.promise;
 
         if (
-          !forceTokenRefresh &&
           nextRegistration.authToken === token &&
-          nextRegistration.userId === user.id
+          nextRegistration.userId === user.id &&
+          (!forceTokenRefresh || canReuseRotatedTokenRegistration())
         ) {
           return nextResult;
         }
@@ -348,6 +448,8 @@ export function NotificationProvider({
       const registration = (async () => {
         setIsRegistering(true);
         setRegistrationStatus("registering");
+        setRegistrationStage("permission");
+        updateRegistrationError(null);
 
         try {
           const Notifications =
@@ -356,6 +458,9 @@ export function NotificationProvider({
           if (!Notifications) {
             setPermissionStatus("unsupported");
             setRegistrationStatus("unsupported");
+            updateRegistrationError(
+              "Esta instalación no admite notificaciones remotas."
+            );
             return false;
           }
 
@@ -370,6 +475,9 @@ export function NotificationProvider({
 
           if (permission.status !== "granted") {
             setRegistrationStatus("unregistered");
+            updateRegistrationError(
+              "Permite las notificaciones de Barbería Cale desde los ajustes de Android."
+            );
             return false;
           }
 
@@ -381,6 +489,7 @@ export function NotificationProvider({
             registeredDevice.userId === user.id
           ) {
             setRegistrationStatus("registered");
+            updateRegistrationError(null);
             return true;
           }
 
@@ -392,16 +501,36 @@ export function NotificationProvider({
             );
           }
 
+          setRegistrationStage("device");
+          const devicePushToken =
+            suppliedDevicePushToken ??
+            (await withNotificationTimeout(
+              Notifications.getDevicePushTokenAsync(),
+              DEVICE_PUSH_TOKEN_TIMEOUT_MS,
+              "device"
+            ));
+          const devicePushTokenKey =
+            getDevicePushTokenKey(devicePushToken);
+
+          setRegistrationStage("expo");
           const expoPushToken =
             expoPushTokenRef.current ??
             (
-              await Notifications.getExpoPushTokenAsync({
-                projectId,
-              })
+              await withNotificationTimeout(
+                Notifications.getExpoPushTokenAsync(
+                  createExpoPushTokenOptions(
+                    projectId,
+                    devicePushToken
+                  )
+                ),
+                EXPO_PUSH_TOKEN_TIMEOUT_MS,
+                "expo"
+              )
             ).data;
 
           expoPushTokenRef.current = expoPushToken;
 
+          setRegistrationStage("server");
           await registerNotificationDevice(token, {
             expoPushToken,
             platform: "android",
@@ -432,7 +561,9 @@ export function NotificationProvider({
             expoPushToken,
             platform: "android",
           };
+          nativePushTokenKeyRef.current = devicePushTokenKey;
           setRegistrationStatus("registered");
+          updateRegistrationError(null);
 
           if (
             previousDevice &&
@@ -453,8 +584,10 @@ export function NotificationProvider({
           console.warn("No se pudo registrar el dispositivo push:", error);
           setNotificationsReady(true);
           setRegistrationStatus("failed");
+          updateRegistrationError(getRegistrationFailureMessage(error));
           return false;
         } finally {
+          setRegistrationStage(null);
           setIsRegistering(false);
         }
       })();
@@ -471,11 +604,18 @@ export function NotificationProvider({
       });
       return registration;
     },
-    [token, user]
+    [token, updateRegistrationError, user]
   );
 
   const enableNotifications = useCallback(
-    () => registerCurrentDevice(true),
+    async () => {
+      const enabled = await registerCurrentDevice(true);
+
+      return {
+        enabled,
+        error: registrationErrorRef.current,
+      };
+    },
     [registerCurrentDevice]
   );
 
@@ -632,13 +772,14 @@ export function NotificationProvider({
         console.warn("No se pudo preparar el canal de recordatorios:", error);
         setNotificationsReady(true);
         setRegistrationStatus("failed");
+        updateRegistrationError(getRegistrationFailureMessage(error));
       });
 
     return () => {
       active = false;
       responseSubscription?.remove();
     };
-  }, [handleNotificationResponse]);
+  }, [handleNotificationResponse, updateRegistrationError]);
 
   useEffect(() => {
     if (!NOTIFICATIONS_SUPPORTED) {
@@ -654,13 +795,21 @@ export function NotificationProvider({
           return;
         }
 
-        pushTokenSubscription = Notifications.addPushTokenListener(() => {
-          expoPushTokenRef.current = null;
-
-          if (!authLoading && token && user?.role === "CLIENT") {
-            void registerCurrentDevice(false, true);
+        pushTokenSubscription = Notifications.addPushTokenListener(
+          (devicePushToken) => {
+            if (!authLoading && token && user?.role === "CLIENT") {
+              // SDK 57 advierte que volver a pedir el token nativo dentro de
+              // este listener dispara el listener otra vez. Reutilizar el
+              // token recibido rompe ese ciclo y registra únicamente la
+              // rotación real.
+              void registerCurrentDevice(
+                false,
+                true,
+                devicePushToken
+              );
+            }
           }
-        });
+        );
       })
       .catch((error) => {
         console.warn("No se pudo escuchar la rotación del token push:", error);
@@ -746,6 +895,9 @@ export function NotificationProvider({
     }
 
     registeredDeviceRef.current = null;
+    nativePushTokenKeyRef.current = null;
+    expoPushTokenRef.current = null;
+    updateRegistrationError(null);
     setRegistrationStatus(
       NOTIFICATIONS_SUPPORTED ? "unregistered" : "unsupported"
     );
@@ -755,7 +907,7 @@ export function NotificationProvider({
     }).catch(() => {
       // Cerrar sesión debe seguir funcionando aunque el dispositivo esté sin red.
     });
-  }, [token, user?.id]);
+  }, [token, updateRegistrationError, user?.id]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -770,6 +922,8 @@ export function NotificationProvider({
       notificationsReady,
       isSupported: NOTIFICATIONS_SUPPORTED,
       isRegistering,
+      registrationStage,
+      registrationError,
       enableNotifications,
       refreshNotificationPermission,
     }),
@@ -778,6 +932,8 @@ export function NotificationProvider({
       isRegistering,
       notificationsReady,
       permissionStatus,
+      registrationError,
+      registrationStage,
       refreshNotificationPermission,
       registrationStatus,
     ]

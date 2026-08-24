@@ -1,0 +1,172 @@
+@startuml
+title Barbería Cale — Recordatorios automáticos, manuales y confirmación
+
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam sequenceLifeLineBorderColor #743B2F
+skinparam sequenceParticipantBorderColor #743B2F
+skinparam sequenceGroupBorderColor #9A7C70
+skinparam sequenceGroupBackgroundColor #FFF8ED
+autonumber
+
+actor Administrador as admin
+actor Cliente as client
+participant "App ADMIN\nappointments.tsx" as adminui
+participant "API Express\nRender" as api
+participant "admin-reminder\ncontroller + service" as adminreminder
+participant "pg_cron + pg_net\n(cada minuto)" as cron
+participant "Edge Function\nbright-endpoint" as worker
+participant "PostgREST\nschema reminder_api" as rest
+database "PostgreSQL" as db
+participant "Expo Push Service" as expo
+participant "FCM / Android" as fcm
+participant "NotificationContext" as context
+participant "AuthContext" as auth
+participant "appointments.api.ts" as appointmentapi
+
+== A. Solicitud manual desde ADMIN ==
+admin -> adminui : Consulta resumen o pulsa\nrecordar una cita / lote
+adminui -> api : GET summary o POST queue\nBearer JWT ADMIN
+api -> db : authenticateToken: usuario y rol vigentes
+db --> api : ADMIN
+api -> adminreminder : Control de rol + rate limit\n(2 lotes/min; 10 individuales/min)
+adminreminder -> db : Clasificar ACCEPTED futuras sin confirmación:\njob activo, cooldown 15 min, dispositivo activo
+
+alt Recordatorio individual no elegible
+  db --> adminreminder : motivo (sin dispositivo, cooldown,\njob activo, estado/tiempo)
+  adminreminder --> adminui : 404 / 409 / 422
+else Elegible
+  adminreminder -> db : INSERT appointment_notification_jobs\nkind ATTENDANCE_REMINDER\nsource ADMIN_MANUAL\nstatus QUEUED
+  note right of db
+    Índice parcial: un job QUEUED/CLAIMED
+    por appointment_id + kind.
+    El lote inserta como máximo 100.
+  end note
+  db --> adminreminder : job o resumen de cola
+  adminreminder --> adminui : 202 Accepted
+  adminui --> admin : "Recordatorio en cola"
+end
+
+== B. Ejecución del worker: primero cola manual ==
+cron -> worker : POST /functions/v1/bright-endpoint\nx-cron-secret desde Vault
+worker -> worker : Validar método y secreto
+worker -> rest : RPC claim_manual_appointment_reminders(UUID, 5)
+rest -> db : SECURITY DEFINER + service_role\nSKIP LOCKED, lease 15 min, attempts + 1
+db --> worker : hasta 5 jobs CLAIMED
+
+loop Por cada job manual reclamado
+  worker -> rest : RPC revalidate_manual...()
+  rest -> db : Verificar ACCEPTED, futura, sin confirmación,\nsin claim automático reciente
+  db --> worker : elegible / cambió
+  alt Ya no elegible
+    worker -> rest : mark_manual...skipped(código)
+    rest -> db : status SKIPPED + completed_at
+  else Elegible
+    worker -> rest : get_manual_reminder_device_tokens()
+    rest -> db : Tokens activos del dueño (máx. 100)
+    db --> worker : id + ExpoPushToken[]
+    worker -> worker : Crear payload kind=appointment_reminder,\nversion=1, appointmentId, expiration,\nchannelId y categoryId
+    worker -> expo : POST push/send (un lote por cita, timeout 10 s)
+    expo --> worker : tickets por dispositivo
+    opt Ticket DeviceNotRegistered
+      worker -> rest : deactivate_manual_reminder_device_token()
+      rest -> db : active = false si el claim sigue vigente
+    end
+    alt Expo acepta al menos un dispositivo y sigue elegible
+      worker -> rest : mark_manual...sent(acceptedDevices)
+      rest -> db : status SENT + sent_at + completed_at
+    else Fallo transitorio
+      worker -> rest : release_manual...claim(error)
+      rest -> db : QUEUED con backoff 30 s / 2 min\no FAILED al tercer intento
+    end
+  end
+end
+
+== C. Recordatorio automático una hora antes ==
+worker -> rest : RPC claim_due_appointment_reminders(UUID, 5)
+rest -> db : Seleccionar ACCEPTED, futura, sin confirmación,\nsin reminder_sent_at, vencimiento <= NOW,\nsin manual reciente/activo; SKIP LOCKED
+note right of db
+  El vencimiento es appointment_at - 1 hora <= NOW.
+  reminder_claimed_at + reminder_claim_token forman el lease.
+end note
+db --> worker : hasta 5 citas reclamadas
+
+loop Por cada cita automática
+  worker -> rest : revalidate_appointment_reminder_claim()
+  rest -> db : Heartbeat y revalidación de estado/tiempo
+  worker -> rest : get_claimed_appointment_device_tokens()
+  rest -> db : Tokens activos del CLIENT
+  db --> worker : ExpoPushToken[]
+  worker -> expo : title "Tu cita es en una hora"\ndata validada + collapseId/tag
+  expo --> worker : tickets
+  opt DeviceNotRegistered
+    worker -> rest : deactivate_claimed_device_token()
+    rest -> db : active = false
+  end
+  alt >= 1 ticket aceptado y claim válido
+    worker -> rest : mark_appointment_reminder_sent()
+    rest -> db : reminder_sent_at = NOW\nlimpiar claim
+  else Sin token, cambio de estado o error
+    worker -> rest : release_appointment_reminder_claim()
+    rest -> db : limpiar lease para omitir/reintentar
+  end
+end
+
+expo -> fcm : Entregar mensajes Android
+fcm -> context : Canal appointment-reminders-v1\nCategoría attendance_reminder
+
+== D. Apertura y confirmación desde la notificación ==
+client -> fcm : Toca cuerpo o acción\nconfirm_attendance
+fcm -> context : NotificationResponse
+
+alt Aplicación abierta/en segundo plano
+  context -> context : addNotificationResponseReceivedListener
+else Inicio en frío / proceso terminado
+  context -> context : getLastNotificationResponse()\ny clearLastNotificationResponse()
+end
+
+context -> context : Validar kind=appointment_reminder,\nversion=1 y appointmentId entero positivo
+context -> context : Persistir intención sin JWT/PII\nen AsyncStorage; caduca en 24 h
+context -> auth : Consultar sesión restaurada
+
+alt Sin sesión válida
+  context -> context : Conservar intención
+  context -> auth : router.replace(/auth/login)
+  client -> auth : Inicia sesión posteriormente
+  auth --> context : CLIENT + JWT vigente
+else Sesión ADMIN
+  context --> client : Pedir cuenta CLIENT; conservar intención
+else Sesión CLIENT válida
+end
+
+context -> context : router.push(/client/my-appointments,\nappointmentId, intent=attendance)
+
+alt Toque normal en el cuerpo
+  context -> context : Eliminar intención; no mutar cita
+else Acción confirm_attendance
+  context -> appointmentapi : confirmAttendance(jwt, appointmentId)
+  appointmentapi -> api : PATCH /api/appointments/:id/confirm-attendance
+  api -> db : JWT → usuario vigente → requireClient
+  api -> db : UPDATE propio, status ACCEPTED y futura\nclient_attendance_confirmed_at = COALESCE(..., NOW)\nlimpiar claim automático
+  note right of db
+    Operación idempotente.
+    El trigger marca SKIPPED jobs manuales
+    QUEUED/CLAIMED que ya no son elegibles.
+  end note
+  alt Confirmación aceptada o ya confirmada
+    db --> api : cita con attendanceStatus CONFIRMED
+    api --> context : 200
+    context -> context : Eliminar intención y mostrar éxito
+  else Rechazo definitivo 400/403/404/409
+    api --> context : ApiError
+    context -> context : Eliminar intención y mostrar motivo
+  else Red/servidor temporal
+    api --> context : error recuperable
+    context -> context : Conservar intención para reintento
+  end
+end
+
+caption El cron procesa manuales y automáticos en cada ejecución; los claims, revalidaciones e índices evitan despachos concurrentes sobre la misma cita.
+@enduml

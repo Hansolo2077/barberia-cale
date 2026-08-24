@@ -1,0 +1,58 @@
+@startuml
+title Barbería Cale — Contexto del sistema actual
+
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam actorBorderColor #743B2F
+skinparam actorFontColor #3E2B26
+skinparam rectangleBorderColor #743B2F
+skinparam rectangleFontColor #2F2420
+skinparam cloudBorderColor #7A655D
+skinparam databaseBorderColor #7A655D
+
+actor "Visitante" as visitante
+actor "Cliente\n(CLIENT)" as cliente
+actor "Administrador\n(ADMIN)" as admin
+
+rectangle "Sistema Barbería Cale" as sistema #F4EFE6 {
+  rectangle "Aplicación Expo\nAndroid y Web" as app #FFFDF9
+  rectangle "API REST\nExpress en Render" as api #FFFDF9
+  database "Datos de negocio\nPostgreSQL / Supabase" as datos #FFFDF9
+  rectangle "Procesador de recordatorios\nSupabase Edge Function" as worker #FFFDF9
+
+  app --> api : HTTPS / JSON\nJWT Bearer
+  api --> datos : SQL parametrizado\nnode-postgres
+  worker --> datos : RPC restringidas\nreminder_api
+}
+
+cloud "Expo Push Service" as expo
+cloud "Firebase Cloud Messaging\n(FCM)" as fcm
+cloud "WhatsApp / wa.me" as whatsapp
+
+visitante --> app : Consulta portada\nRegistro e inicio de sesión
+cliente --> app : Disponibilidad, reserva,\nmis citas, cancelación,\nconfirmación de asistencia
+admin --> app : Panel, gestión y agenda,\nrecordatorios manuales,\ncomunicación asistida
+
+worker --> expo : Envía mensajes push\ncon canal y categoría
+expo --> fcm : Entrega Android
+fcm --> app : Notificación y acción\n"Confirmar asistencia"
+app --> whatsapp : Abre enlace con mensaje\npreparado; envío manual
+
+note bottom of sistema
+  Arquitectura actual: cliente-servidor y API-first, organizada por capas.
+  La API pública es la frontera autoritativa para autenticación, roles y reglas.
+  El worker asíncrono comparte PostgreSQL mediante una superficie RPC limitada.
+end note
+
+legend right
+  |= Relación |= Responsabilidad |
+  | Actor → aplicación | Interacción humana |
+  | Aplicación → API | Operaciones síncronas |
+  | Worker → Expo/FCM | Recordatorios asíncronos |
+endlegend
+
+caption Fuentes auditadas: src/, backend/src/, supabase/ y configuración de despliegue.
+@enduml

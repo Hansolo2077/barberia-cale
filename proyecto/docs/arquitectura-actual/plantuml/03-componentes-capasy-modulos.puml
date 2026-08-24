@@ -1,0 +1,147 @@
+@startuml
+title Barbería Cale — Componentes, capas y módulos actuales
+
+top to bottom direction
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam packageBorderColor #743B2F
+skinparam componentBorderColor #7A655D
+skinparam databaseBorderColor #7A655D
+skinparam componentStyle rectangle
+
+package "Cliente Expo — capa de presentación" as presentation #F4EFE6 {
+  component "Rutas públicas y autenticación\n/, /auth/login, /auth/register" as ui_auth
+  component "Área CLIENT\nInicio, Agendar, Mis citas" as ui_client
+  component "Área ADMIN\nPanel, Gestión, Agenda" as ui_admin
+  component "Componentes compartidos\nmenú, feedback, iconos, fechas" as ui_shared
+}
+
+package "Cliente Expo — estado y coordinación" as state #FFF8ED {
+  component "AuthContext\nsesión, restauración y logout" as authctx
+  component "NotificationContext\npermiso, token, acciones y pending intent" as notifctx
+  component "FeedbackProvider + show-message\ncola de mensajes" as feedback
+  component "Expo Router\nguardas CLIENT/ADMIN" as guards
+}
+
+package "Cliente Expo — acceso remoto y utilidades" as clientinfra #FFFDF9 {
+  component "api-client.ts\nfetch, timeout, errores, 401" as apiclient
+  component "auth.api.ts" as authapi
+  component "appointments.api.ts" as appointmentsapi
+  component "admin.api.ts" as adminapi
+  component "notifications.api.ts" as notificationsapi
+  component "Constantes y utilidades\nnegocio, fechas, teléfono, push" as clientutils
+}
+
+package "API Express — entrada HTTP" as http #F4EFE6 {
+  component "server.js\nCORS, JSON, montaje /api" as server
+  component "Routers\nhealth, auth, appointments,\nnotifications, admin" as routes
+  component "Middleware\nrate limit, JWT, CLIENT, ADMIN" as middleware
+}
+
+package "API Express — controladores" as controllers #FFF8ED {
+  component "auth.controller" as authcontroller
+  component "appointment.controller" as appointmentcontroller
+  component "admin.controller" as admincontroller
+  component "notification.controller" as notificationcontroller
+  component "admin-reminder.controller" as remindercontroller
+}
+
+package "API Express — servicios / lógica y SQL" as services #FFFDF9 {
+  component "auth.service\nbcrypt y usuarios" as authservice
+  component "appointment.service\nreservas, agenda y estados" as appointmentservice
+  component "notification.service\ndispositivos push" as notificationservice
+  component "admin-reminder.service\nclasificación y outbox manual" as reminderservice
+  component "Utilidades backend\nfecha, teléfono, paginación, errores" as backendutils
+  component "database/db.js\nPool node-postgres" as dbadapter
+}
+
+package "Procesamiento asíncrono Supabase" as async #F0F5F0 {
+  component "pg_cron + pg_net\ndisparo cada minuto" as cron
+  component "bright-endpoint\nworker Deno" as edgeworker
+  component "reminder_api\nRPC solo service_role" as reminderrpc
+  component "Expo Push Service" as expopush
+}
+
+database "PostgreSQL / Supabase" as database {
+  component "users" as users
+  component "appointments" as appointments
+  component "push_device_tokens" as devices
+  component "appointment_notification_jobs" as jobs
+  component "funciones, triggers e índices" as dblogic
+}
+
+ui_auth --> authctx
+ui_client --> authctx
+ui_admin --> authctx
+ui_client --> notifctx
+ui_auth ..> guards
+ui_client ..> guards
+ui_admin ..> guards
+ui_auth ..> ui_shared
+ui_client ..> ui_shared
+ui_admin ..> ui_shared
+ui_shared --> feedback
+
+authctx --> authapi
+notifctx --> notificationsapi
+notifctx --> appointmentsapi : Confirmación desde acción push
+ui_client --> appointmentsapi
+ui_admin --> adminapi
+authapi --> apiclient
+appointmentsapi --> apiclient
+adminapi --> apiclient
+notificationsapi --> apiclient
+presentation ..> clientutils
+state ..> clientutils
+
+apiclient --> server : HTTPS / JSON / JWT
+server --> routes
+routes --> middleware
+middleware --> authservice : Revalida usuario actual
+routes --> authcontroller
+routes --> appointmentcontroller
+routes --> admincontroller
+routes --> notificationcontroller
+routes --> remindercontroller
+
+authcontroller --> authservice
+appointmentcontroller --> appointmentservice
+admincontroller --> appointmentservice
+notificationcontroller --> notificationservice
+remindercontroller --> reminderservice
+controllers ..> backendutils
+
+authservice --> dbadapter
+appointmentservice --> dbadapter
+notificationservice --> dbadapter
+reminderservice --> dbadapter
+dbadapter --> database : SQL directo parametrizado
+
+cron --> edgeworker : POST + secreto
+edgeworker --> reminderrpc : RPC / service_role
+reminderrpc --> dblogic
+dblogic --> appointments
+dblogic --> devices
+dblogic --> jobs
+edgeworker --> expopush : Lotes por cita
+expopush ..> notifctx : Notificación Android
+
+users --> appointments
+users --> devices
+users --> jobs
+appointments --> jobs
+
+note right of services
+  La implementación no posee una capa repository separada:
+  los servicios concentran reglas de negocio y SQL parametrizado.
+end note
+
+note right of middleware
+  Las guardas de pantalla mejoran navegación, pero la autorización
+  autoritativa ocurre aquí y consulta el rol vigente en users.
+end note
+
+caption Organización actual: presentación → coordinación/adaptadores → API HTTP → middleware/controladores → servicios/SQL → PostgreSQL, más un worker asíncrono para push.
+@enduml

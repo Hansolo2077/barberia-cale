@@ -139,10 +139,23 @@ export default function MyAppointmentsScreen() {
   const {
     permissionStatus,
     registrationStatus,
+    registrationStage,
+    registrationError,
     isSupported: notificationsSupported,
     isRegistering: registeringNotifications,
     enableNotifications,
   } = useNotifications();
+
+  const notificationActivationLabel =
+    registrationStage === "permission"
+      ? "Esperando permiso..."
+      : registrationStage === "device"
+        ? "Preparando teléfono..."
+        : registrationStage === "expo"
+          ? "Conectando recordatorios..."
+          : registrationStage === "server"
+            ? "Guardando activación..."
+            : "Activando...";
 
   const [
     appointments,
@@ -604,9 +617,9 @@ export default function MyAppointmentsScreen() {
       return;
     }
 
-    const enabled = await enableNotifications();
+    const result = await enableNotifications();
 
-    if (enabled) {
+    if (result.enabled) {
       showMessage(
         "Recordatorios activados",
         "Te avisaremos sobre las citas que necesiten tu confirmación.",
@@ -619,7 +632,8 @@ export default function MyAppointmentsScreen() {
       "No pudimos activar los recordatorios",
       permissionStatus === "denied"
         ? "Permite las notificaciones desde los ajustes de tu dispositivo e inténtalo nuevamente."
-        : "Revisa tu conexión e inténtalo nuevamente. Tus citas siguen guardadas.",
+        : result.error ?? registrationError ??
+          "Revisa tu conexión e inténtalo nuevamente. Tus citas siguen guardadas.",
       { kind: "info" }
     );
   }
@@ -898,6 +912,15 @@ export default function MyAppointmentsScreen() {
               Te avisaremos una hora antes para que puedas confirmar tu asistencia.
             </Text>
 
+            {registrationStatus === "failed" && registrationError ? (
+              <Text
+                style={styles.remindersOptInError}
+                accessibilityRole="alert"
+              >
+                {registrationError}
+              </Text>
+            ) : null}
+
             <Pressable
               style={[
                 styles.remindersOptInButton,
@@ -927,7 +950,7 @@ export default function MyAppointmentsScreen() {
               )}
               <Text style={styles.remindersOptInButtonText}>
                 {registeringNotifications
-                  ? "Activando..."
+                  ? notificationActivationLabel
                   : registrationStatus === "failed"
                     ? "Reintentar activación"
                     : "Activar recordatorios"}
@@ -1786,6 +1809,13 @@ const styles = StyleSheet.create({
     fontSize: FONT.caption,
     lineHeight: 18,
     marginTop: 2,
+  },
+
+  remindersOptInError: {
+    color: COLORS.danger,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    marginTop: SPACING.xs,
   },
 
   remindersOptInButton: {

@@ -110,9 +110,9 @@ export default function ClientLayout() {
               }
 
               void (async () => {
-                const enabled = await enableNotifications();
+                const result = await enableNotifications();
 
-                if (enabled) {
+                if (result.enabled) {
                   showMessage(
                     "Recordatorios activados",
                     "Te avisaremos sobre las citas que necesiten tu confirmación.",
@@ -152,7 +152,8 @@ export default function ClientLayout() {
 
                 showMessage(
                   "No pudimos activar los recordatorios",
-                  "Puedes intentarlo nuevamente desde Inicio o Mis citas.",
+                  result.error ??
+                    "Puedes intentarlo nuevamente desde Inicio o Mis citas.",
                   { kind: "info" }
                 );
               })();

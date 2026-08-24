@@ -1,0 +1,157 @@
+@startuml
+title Barbería Cale — Modelo de datos PostgreSQL actual
+
+hide circle
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam classBorderColor #743B2F
+skinparam classBackgroundColor #FFFDF9
+skinparam classHeaderBackgroundColor #F4EFE6
+skinparam noteBorderColor #9A7C70
+skinparam noteBackgroundColor #FFF8ED
+
+entity "users" as users {
+  * id : BIGSERIAL <<PK>>
+  --
+  first_name : VARCHAR(100) <<NOT NULL>>
+  last_name : VARCHAR(100) <<NOT NULL>>
+  phone : VARCHAR(20) <<UNIQUE, NOT NULL>>
+  password_hash : TEXT <<NOT NULL>>
+  role : VARCHAR(20) = CLIENT
+  created_at : TIMESTAMPTZ = NOW()
+}
+
+entity "appointments" as appointments {
+  * id : BIGSERIAL <<PK>>
+  --
+  user_id : BIGINT <<FK, NOT NULL>>
+  service : VARCHAR(150) <<NOT NULL>>
+  appointment_date : DATE <<NOT NULL>>
+  appointment_time : TIME <<NOT NULL>>
+  status : VARCHAR(20) = PENDING
+  client_attendance_confirmed_at : TIMESTAMPTZ <<NULL>>
+  reminder_sent_at : TIMESTAMPTZ <<NULL>>
+  reminder_claimed_at : TIMESTAMPTZ <<NULL>>
+  reminder_claim_token : UUID <<NULL>>
+  reminder_attempts : INTEGER = 0
+  created_at : TIMESTAMPTZ = NOW()
+}
+
+entity "push_device_tokens" as devices {
+  * id : BIGSERIAL <<PK>>
+  --
+  user_id : BIGINT <<FK, NOT NULL>>
+  expo_push_token : TEXT <<UNIQUE, NOT NULL>>
+  platform : VARCHAR(20) <<android | ios>>
+  active : BOOLEAN = TRUE
+  last_seen_at : TIMESTAMPTZ = NOW()
+  created_at : TIMESTAMPTZ = NOW()
+  updated_at : TIMESTAMPTZ = NOW()
+}
+
+entity "appointment_notification_jobs" as jobs {
+  * id : BIGSERIAL <<PK>>
+  --
+  appointment_id : BIGINT <<FK, NOT NULL>>
+  kind : VARCHAR(40) = ATTENDANCE_REMINDER
+  source : VARCHAR(40) = ADMIN_MANUAL
+  requested_by_user_id : BIGINT <<FK, NOT NULL>>
+  status : VARCHAR(20) = QUEUED
+  requested_at : TIMESTAMPTZ
+  available_at : TIMESTAMPTZ
+  claimed_at : TIMESTAMPTZ <<NULL>>
+  claim_token : UUID <<NULL>>
+  sent_at : TIMESTAMPTZ <<NULL>>
+  completed_at : TIMESTAMPTZ <<NULL>>
+  accepted_devices : INTEGER = 0
+  attempts : INTEGER = 0
+  failure_code : VARCHAR(80) <<NULL>>
+  last_error : TEXT <<NULL>>
+}
+
+class "AppointmentStatus" as appointment_status <<enumeration>> {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+class "NotificationJobStatus" as job_status <<enumeration>> {
+  QUEUED
+  CLAIMED
+  SENT
+  SKIPPED
+  FAILED
+}
+
+users ||--o{ appointments : "reserva\nON DELETE RESTRICT"
+users ||--o{ devices : "registra\nON DELETE CASCADE"
+users ||--o{ jobs : "solicita manualmente\nON DELETE RESTRICT"
+appointments ||--o{ jobs : "genera\nON DELETE CASCADE"
+appointments .. appointment_status : status
+jobs .. job_status : status
+
+note right of users
+  CHECK role IN (CLIENT, ADMIN)
+  auth.service guarda bcrypt hash.
+end note
+
+note right of appointments
+  Índices principales:
+  • UNIQUE parcial (appointment_date, appointment_time)
+    para status PENDING/ACCEPTED
+  • user_id; date; status
+  • user + fecha + hora
+  • date + time + status
+  • parcial para recordatorios automáticos pendientes
+
+  Claims automáticos:
+  reminder_claimed_at y reminder_claim_token
+  deben ser ambos NULL o ambos no NULL.
+end note
+
+note right of devices
+  • UNIQUE expo_push_token
+  • índice parcial user_id WHERE active
+  • RLS habilitado
+  • anon/authenticated/PUBLIC sin acceso directo
+  • upsert permite transferir un token al usuario actual
+end note
+
+note right of jobs
+  Outbox de recordatorios manuales:
+  • UNIQUE parcial (appointment_id, kind)
+    WHERE status IN (QUEUED, CLAIMED)
+  • índices de cola y auditoría de enviados
+  • claim consistente solo en status CLAIMED
+  • completed_at para SENT/SKIPPED/FAILED
+  • sent_at únicamente para SENT
+  • RLS habilitado y acceso directo revocado
+end note
+
+rectangle "Lógica de integridad en PostgreSQL" as db_logic #F0F5F0 {
+  component "Trigger clear_ineligible_appointment_reminder_claim\nlimpia el lease si cambia estado, confirmación, envío o tiempo" as trigger_claim
+  component "Trigger skip_ineligible_appointment_notification_jobs\nmarca jobs activos SKIPPED al dejar de ser elegibles" as trigger_jobs
+  component "Funciones public\nclaim / revalidate / mark / release" as public_functions
+  component "Schema reminder_api\nwrappers SECURITY DEFINER\nEXECUTE solo service_role" as api_functions
+}
+
+appointments ..> trigger_claim
+appointments ..> trigger_jobs
+trigger_jobs ..> jobs
+public_functions ..> appointments
+public_functions ..> devices
+public_functions ..> jobs
+api_functions --> public_functions
+
+note bottom of db_logic
+  users, appointments, push_device_tokens y appointment_notification_jobs
+  no están disponibles a roles Supabase anon/authenticated.
+  Render usa DATABASE_URL; el Edge worker usa únicamente reminder_api.
+end note
+
+caption Esquema consolidado de schema.sql y migraciones de recordatorios; zona horaria de negocio usada por funciones y consultas: America/Managua.
+@enduml

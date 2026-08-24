@@ -78,10 +78,23 @@ export default function ClientHomeScreen() {
   const {
     permissionStatus,
     registrationStatus,
+    registrationStage,
+    registrationError,
     isSupported: notificationsSupported,
     isRegistering: registeringNotifications,
     enableNotifications,
   } = useNotifications();
+
+  const notificationActivationLabel =
+    registrationStage === "permission"
+      ? "Esperando permiso..."
+      : registrationStage === "device"
+        ? "Preparando teléfono..."
+        : registrationStage === "expo"
+          ? "Conectando recordatorios..."
+          : registrationStage === "server"
+            ? "Guardando activación..."
+            : "Activando...";
 
   const [nextAppointment, setNextAppointment] =
     useState<AppointmentSummary | null>(null);
@@ -218,9 +231,9 @@ export default function ClientHomeScreen() {
       return;
     }
 
-    const enabled = await enableNotifications();
+    const result = await enableNotifications();
 
-    if (enabled) {
+    if (result.enabled) {
       showMessage(
         "Recordatorios activados",
         "Te avisaremos cuando sea momento de confirmar tu asistencia.",
@@ -233,7 +246,8 @@ export default function ClientHomeScreen() {
       "No pudimos activar los recordatorios",
       permissionStatus === "denied"
         ? "Permite las notificaciones desde los ajustes de tu dispositivo e inténtalo nuevamente."
-        : "Revisa tu conexión e inténtalo nuevamente. Tu cita sigue guardada.",
+        : result.error ?? registrationError ??
+          "Revisa tu conexión e inténtalo nuevamente. Tu cita sigue guardada.",
       { kind: "info" }
     );
   }
@@ -332,7 +346,7 @@ export default function ClientHomeScreen() {
                       />
                       <Text style={styles.reminderSuccessActionText}>
                         {registeringNotifications
-                          ? "Activando..."
+                          ? notificationActivationLabel
                           : registrationStatus === "failed"
                             ? "Reintentar recordatorios"
                             : "Activar recordatorios"}
@@ -341,6 +355,14 @@ export default function ClientHomeScreen() {
                   )}
               </View>
             )}
+
+            {reservationCreated &&
+              registrationStatus === "failed" &&
+              registrationError && (
+                <Text style={styles.reminderErrorText} accessibilityRole="alert">
+                  {registrationError}
+                </Text>
+              )}
 
             {reservationCreated &&
               notificationsSupported &&
@@ -787,6 +809,13 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: FONT.small,
     fontWeight: "800",
+  },
+
+  reminderErrorText: {
+    color: COLORS.danger,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    marginTop: SPACING.xs,
   },
 
   disabledAction: {

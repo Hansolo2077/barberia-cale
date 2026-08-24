@@ -1,0 +1,152 @@
+@startuml
+title Barbería Cale — Arquitectura detallada del backend API
+
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam packageBorderColor #743B2F
+skinparam componentBorderColor #7A655D
+skinparam databaseBorderColor #7A655D
+skinparam componentStyle rectangle
+
+actor "Cliente Expo / Web" as client
+
+package "Proceso Node.js en Render" as render #F4EFE6 {
+  component "server.js" as server
+  component "cors\nexpress.json\n404 JSON" as globalmw
+
+  package "Capa de rutas" as routes #FFF8ED {
+    component "/api/health\nGET /" as healthroutes
+    component "/api/auth\nPOST /register\nPOST /login\nGET /me" as authroutes
+    component "/api/appointments\nGET /availability\nGET /next-availability\nPOST /\nGET /my\nPATCH /:id/cancel\nPATCH /:id/confirm-attendance" as appointmentroutes
+    component "/api/notifications\nPUT /device\nDELETE /device" as notificationroutes
+    component "/api/admin\nGET /appointments\nPATCH /appointments/:id/{accept|reject|cancel|complete}\nGET /attendance-reminders/summary\nPOST /attendance-reminders\nPOST /appointments/:id/attendance-reminder" as adminroutes
+  }
+
+  package "Middleware / fronteras de confianza" as middleware #F7F3ED {
+    component "createRateLimiter\nmapa en memoria por IP" as ratelimit
+    component "authenticateToken\nBearer JWT + jwt.verify\nconsulta usuario vigente" as jwtmw
+    component "requireClient\nrole = CLIENT" as clientmw
+    component "requireAdmin\nrole = ADMIN" as adminmw
+  }
+
+  package "Controladores HTTP" as controllers #FFF8ED {
+    component "auth.controller\nvalidación, JWT 8 h / 30 d" as authcontroller
+    component "appointment.controller\nDTO, fecha/servicio/id, paginación" as appointmentcontroller
+    component "admin.controller\nfiltros, rango <= 93 días, mutaciones" as admincontroller
+    component "notification.controller\nExpoPushToken y plataforma" as notificationcontroller
+    component "admin-reminder.controller\nsummary y respuestas 202" as remindercontroller
+  }
+
+  package "Servicios de aplicación (reglas + SQL)" as services #FFFDF9 {
+    component "auth.service\nbcrypt cost 10\nregistro y búsqueda de usuario" as authservice
+    component "appointment.service\npolítica de reserva, disponibilidad,\nestados, agenda y asistencia" as appointmentservice
+    component "notification.service\nupsert/transferencia y desactivación\nde ExpoPushToken" as notificationservice
+    component "admin-reminder.service\nelegibilidad, cooldown 15 min,\noutbox manual y lote <= 100" as reminderservice
+  }
+
+  package "Infraestructura y utilidades" as infrastructure #F7F3ED {
+    component "database/db.js\npg.Pool / DATABASE_URL\nparser BIGINT seguro" as db
+    component "utils/date\nAmerica/Managua" as dateutils
+    component "utils/pagination\npageSize <= 100" as paginationutils
+    component "utils/phone\nNicaragua: 8 dígitos" as phoneutils
+    component "utils/expo-push-token" as tokenutils
+    component "utils/http-error\nstatus públicos" as httputils
+  }
+}
+
+database "Supabase PostgreSQL" as postgres {
+  component "users" as users
+  component "appointments" as appointments
+  component "push_device_tokens" as devices
+  component "appointment_notification_jobs" as jobs
+  component "índices parciales + triggers" as constraints
+}
+
+client --> server : HTTPS / JSON
+server --> globalmw
+globalmw --> healthroutes
+globalmw --> authroutes
+globalmw --> appointmentroutes
+globalmw --> notificationroutes
+globalmw --> adminroutes
+
+authroutes --> ratelimit : register 10/h\nlogin 20/15 min
+authroutes --> authcontroller
+authroutes --> jwtmw : GET /me
+
+appointmentroutes --> jwtmw
+appointmentroutes --> clientmw
+appointmentroutes --> appointmentcontroller
+
+notificationroutes --> jwtmw
+notificationroutes --> clientmw
+notificationroutes --> notificationcontroller
+
+adminroutes --> jwtmw
+adminroutes --> adminmw
+adminroutes --> ratelimit : recordatorios\n2 o 10/min
+adminroutes --> admincontroller
+adminroutes --> remindercontroller
+
+jwtmw --> authservice : findPublicUserById\nrol vigente por request
+authcontroller --> authservice
+appointmentcontroller --> appointmentservice
+admincontroller --> appointmentservice
+notificationcontroller --> notificationservice
+remindercontroller --> reminderservice
+
+authcontroller ..> phoneutils
+authcontroller ..> httputils
+appointmentcontroller ..> dateutils
+appointmentcontroller ..> paginationutils
+appointmentcontroller ..> httputils
+admincontroller ..> dateutils
+admincontroller ..> paginationutils
+admincontroller ..> httputils
+notificationcontroller ..> tokenutils
+notificationcontroller ..> httputils
+remindercontroller ..> httputils
+
+authservice --> db
+appointmentservice --> db
+notificationservice --> db
+reminderservice --> db
+db --> postgres : SQL parametrizado / TLS
+
+authservice --> users
+appointmentservice --> users : joins de datos CLIENT
+appointmentservice --> appointments
+appointmentservice --> devices : proyección recordatorios ADMIN
+appointmentservice --> jobs : proyección recordatorios ADMIN
+notificationservice --> devices
+reminderservice --> appointments
+reminderservice --> devices
+reminderservice --> jobs
+
+constraints --> appointments : slot activo único\nclaims consistentes
+constraints --> jobs : job activo único\nskip al cambiar cita
+
+note bottom of appointmentservice
+  Política autoritativa actual:
+  • servicio: Corte de cabello
+  • horas 08:00–17:00, intervalos de una hora
+  • anticipación mínima 24 h
+  • 1 cita activa/día y 2 en ventana móvil de 7 días
+  • cancelación CLIENT hasta exactamente 60 min antes
+end note
+
+note bottom of services
+  No existe ORM ni repository independiente.
+  Los servicios contienen lógica de negocio y consultas SQL parametrizadas.
+end note
+
+note bottom of postgres
+  users y appointments no se exponen a roles anon/authenticated de Supabase.
+  La API pública accede mediante su conexión PostgreSQL en Render.
+end note
+
+caption Backend actual: Express 5/CommonJS → routers → middleware → controllers → services/SQL → pg.Pool → PostgreSQL.
+@enduml

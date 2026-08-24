@@ -37,7 +37,13 @@
       ],
       "expo-secure-store",
       "@react-native-community/datetimepicker",
-      "expo-notifications"
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "appointment-reminders-v1",
+          "color": "#743B2F"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
