@@ -78,9 +78,11 @@ type RegistrationInFlight = {
 type NotificationContextValue = {
   permissionStatus: PermissionStatus;
   registrationStatus: NotificationRegistrationStatus;
+  notificationsReady: boolean;
   isSupported: boolean;
   isRegistering: boolean;
   enableNotifications: () => Promise<boolean>;
+  refreshNotificationPermission: () => Promise<PermissionStatus>;
 };
 
 const NotificationContext = createContext<
@@ -249,6 +251,8 @@ export function NotificationProvider({
     useState<NotificationRegistrationStatus>(
       NOTIFICATIONS_SUPPORTED ? "unregistered" : "unsupported"
     );
+  const [notificationsReady, setNotificationsReady] =
+    useState(!NOTIFICATIONS_SUPPORTED);
   const [isRegistering, setIsRegistering] = useState(false);
   const expoPushTokenRef = useRef<string | null>(null);
   const registeredDeviceRef = useRef<RegisteredDevice | null>(null);
@@ -268,6 +272,33 @@ export function NotificationProvider({
       role: user?.role ?? null,
     };
   }, [token, user?.id, user?.role]);
+
+  const refreshNotificationPermission = useCallback(async () => {
+    if (!NOTIFICATIONS_SUPPORTED) {
+      setPermissionStatus("unsupported");
+      setNotificationsReady(true);
+      return "unsupported" as const;
+    }
+
+    try {
+      const Notifications = await configureNotificationPresentation();
+
+      if (!Notifications) {
+        setPermissionStatus("unsupported");
+        setNotificationsReady(true);
+        return "unsupported" as const;
+      }
+
+      const permission = await Notifications.getPermissionsAsync();
+      setPermissionStatus(permission.status);
+      setNotificationsReady(true);
+      return permission.status;
+    } catch (error) {
+      console.warn("No se pudo consultar el permiso de notificaciones:", error);
+      setNotificationsReady(true);
+      return "undetermined" as const;
+    }
+  }, []);
 
   const registerCurrentDevice = useCallback(
     async (
@@ -335,6 +366,7 @@ export function NotificationProvider({
           }
 
           setPermissionStatus(permission.status);
+          setNotificationsReady(true);
 
           if (permission.status !== "granted") {
             setRegistrationStatus("unregistered");
@@ -419,6 +451,7 @@ export function NotificationProvider({
           return true;
         } catch (error) {
           console.warn("No se pudo registrar el dispositivo push:", error);
+          setNotificationsReady(true);
           setRegistrationStatus("failed");
           return false;
         } finally {
@@ -589,6 +622,7 @@ export function NotificationProvider({
         }
 
         setPermissionStatus(permission.status);
+        setNotificationsReady(true);
 
         if (permission.status !== "granted") {
           setRegistrationStatus("unregistered");
@@ -596,6 +630,8 @@ export function NotificationProvider({
       })
       .catch((error) => {
         console.warn("No se pudo preparar el canal de recordatorios:", error);
+        setNotificationsReady(true);
+        setRegistrationStatus("failed");
       });
 
     return () => {
@@ -731,14 +767,18 @@ export function NotificationProvider({
     () => ({
       permissionStatus,
       registrationStatus,
+      notificationsReady,
       isSupported: NOTIFICATIONS_SUPPORTED,
       isRegistering,
       enableNotifications,
+      refreshNotificationPermission,
     }),
     [
       enableNotifications,
       isRegistering,
+      notificationsReady,
       permissionStatus,
+      refreshNotificationPermission,
       registrationStatus,
     ]
   );

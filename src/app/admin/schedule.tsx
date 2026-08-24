@@ -1533,16 +1533,6 @@ export default function AdminScheduleScreen() {
             <View style={styles.summaryMetrics}>
               <View style={styles.summaryMetric}>
                 <Text style={styles.summaryMetricValue}>
-                  {totalRecordCount}
-                </Text>
-
-                <Text style={styles.summaryMetricLabel}>
-                  Registros
-                </Text>
-              </View>
-
-              <View style={styles.summaryMetric}>
-                <Text style={styles.summaryMetricValue}>
                   {pendingCount}
                 </Text>
 
