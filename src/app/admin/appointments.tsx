@@ -35,9 +35,14 @@ import {
     acceptAdminAppointment,
     AdminAppointment,
     AppointmentStatusCounts,
+    AttendanceReminderPolicy,
+    AttendanceReminderSummary,
     cancelAdminAppointment,
     completeAdminAppointment,
+    getAdminAttendanceReminderSummary,
     getAdminAppointments,
+    queueAdminAttendanceReminder,
+    queueAllAdminAttendanceReminders,
     rejectAdminAppointment,
 } from "../../api/admin.api";
 import type { Pagination } from "../../api/appointments.api";
@@ -64,6 +69,11 @@ type StatusFilter = "PENDING" | "ACCEPTED";
 type OperationNotice = {
   kind: "success" | "error";
   title: string;
+  message: string;
+};
+
+type ReminderFeedback = {
+  kind: "success" | "error";
   message: string;
 };
 
@@ -220,6 +230,27 @@ export default function AdminAppointmentsScreen() {
   const [processingIds, setProcessingIds] =
     useState<Set<number>>(() => new Set());
 
+  const [reminderProcessingIds, setReminderProcessingIds] =
+    useState<Set<number>>(() => new Set());
+
+  const [reminderFeedback, setReminderFeedback] =
+    useState<Record<number, ReminderFeedback>>({});
+
+  const [attendanceReminderSummary, setAttendanceReminderSummary] =
+    useState<AttendanceReminderSummary | null>(null);
+
+  const [attendanceReminderPolicy, setAttendanceReminderPolicy] =
+    useState<AttendanceReminderPolicy | null>(null);
+
+  const [reminderSummaryLoading, setReminderSummaryLoading] =
+    useState(false);
+
+  const [reminderSummaryError, setReminderSummaryError] =
+    useState("");
+
+  const [bulkReminderProcessing, setBulkReminderProcessing] =
+    useState(false);
+
   const [error, setError] =
     useState("");
 
@@ -251,6 +282,7 @@ export default function AdminAppointmentsScreen() {
 
   const loadedPageRef = useRef(1);
   const requestSequenceRef = useRef(0);
+  const summaryRequestSequenceRef = useRef(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -271,6 +303,59 @@ export default function AdminAppointmentsScreen() {
 
     return () => clearTimeout(timeout);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (Object.keys(reminderFeedback).length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setReminderFeedback({});
+    }, 10_000);
+
+    return () => clearTimeout(timeout);
+  }, [reminderFeedback]);
+
+  const loadAttendanceReminderSummary = useCallback(async () => {
+    if (!token) {
+      return false;
+    }
+
+    const requestSequence = ++summaryRequestSequenceRef.current;
+
+    try {
+      setReminderSummaryLoading(true);
+      setReminderSummaryError("");
+
+      const result = await getAdminAttendanceReminderSummary(token);
+
+      if (requestSequence !== summaryRequestSequenceRef.current) {
+        return false;
+      }
+
+      setAttendanceReminderSummary(result.summary);
+      setAttendanceReminderPolicy(result.policy);
+      return true;
+    } catch (summaryError) {
+      if (requestSequence !== summaryRequestSequenceRef.current) {
+        return false;
+      }
+
+      if (!isUnauthorizedError(summaryError)) {
+        setReminderSummaryError(
+          summaryError instanceof Error
+            ? summaryError.message
+            : "No se pudo comprobar qué citas necesitan recordatorio."
+        );
+      }
+
+      return false;
+    } finally {
+      if (requestSequence === summaryRequestSequenceRef.current) {
+        setReminderSummaryLoading(false);
+      }
+    }
+  }, [token]);
 
   const loadAppointments = useCallback(
     async (
@@ -430,8 +515,34 @@ export default function AdminAppointmentsScreen() {
       void loadAppointments(
         hasLoadedRef.current ? "silent" : "initial"
       );
-    }, [loadAppointments])
+      void loadAttendanceReminderSummary();
+    }, [loadAppointments, loadAttendanceReminderSummary])
   );
+
+  useEffect(() => {
+    const hasPendingReminder =
+      appointments.some(
+        (appointment) => appointment.manualReminderPending === true
+      ) || (attendanceReminderSummary?.alreadyQueued ?? 0) > 0;
+
+    if (!hasPendingReminder) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      void Promise.all([
+        loadAppointments("silent"),
+        loadAttendanceReminderSummary(),
+      ]);
+    }, 65_000);
+
+    return () => clearTimeout(timeout);
+  }, [
+    appointments,
+    attendanceReminderSummary?.alreadyQueued,
+    loadAppointments,
+    loadAttendanceReminderSummary,
+  ]);
 
   function setAppointmentProcessing(
     appointmentId: number,
@@ -448,6 +559,276 @@ export default function AdminAppointmentsScreen() {
 
       return next;
     });
+  }
+
+  function setReminderProcessing(
+    appointmentId: number,
+    processing: boolean
+  ) {
+    setReminderProcessingIds((current) => {
+      const next = new Set(current);
+
+      if (processing) {
+        next.add(appointmentId);
+      } else {
+        next.delete(appointmentId);
+      }
+
+      return next;
+    });
+  }
+
+  function formatReminderTimestamp(value: string) {
+    const timestamp = new Date(value);
+
+    if (Number.isNaN(timestamp.getTime())) {
+      return "Fecha no disponible";
+    }
+
+    return timestamp.toLocaleString("es-NI", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }
+
+  function getLatestAttendanceReminderSentAt(
+    appointment: AdminAppointment
+  ) {
+    return [
+      appointment.reminderSentAt,
+      appointment.lastManualReminderSentAt,
+    ].reduce<string | null>((latest, candidate) => {
+      if (!candidate) {
+        return latest;
+      }
+
+      if (!latest) {
+        return candidate;
+      }
+
+      const candidateTime = new Date(candidate).getTime();
+      const latestTime = new Date(latest).getTime();
+
+      if (Number.isNaN(candidateTime)) {
+        return latest;
+      }
+
+      return Number.isNaN(latestTime) || candidateTime > latestTime
+        ? candidate
+        : latest;
+    }, null);
+  }
+
+  function canSendAttendanceReminder(appointment: AdminAppointment) {
+    return (
+      appointment.status === "ACCEPTED" &&
+      !appointment.clientAttendanceConfirmedAt &&
+      !isPastAppointment(appointment) &&
+      appointment.canSendAttendanceReminder === true &&
+      appointment.manualReminderPending !== true
+    );
+  }
+
+  function handleQueueAttendanceReminder(
+    appointment: AdminAppointment
+  ) {
+    if (!canSendAttendanceReminder(appointment)) {
+      setReminderFeedback((current) => ({
+        ...current,
+        [appointment.id]: {
+          kind: "error",
+          message:
+            appointment.manualReminderPending === true
+              ? "Esta cita ya tiene un recordatorio en preparación."
+              : "Esta cita ya no está disponible para enviar un recordatorio.",
+        },
+      }));
+      return;
+    }
+
+    confirmAction({
+      title: `Recordar a ${appointment.firstName}`,
+      message: `${getAppointmentSummary(
+        appointment
+      )}\n\nPondremos un aviso en cola para que el sistema intente enviarlo al cliente y solicite su confirmación de asistencia.`,
+      confirmText: "Sí, preparar",
+      onConfirm: () => void executeQueueAttendanceReminder(appointment),
+    });
+  }
+
+  async function executeQueueAttendanceReminder(
+    appointment: AdminAppointment
+  ) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setReminderProcessing(appointment.id, true);
+      setReminderFeedback((current) => {
+        const next = { ...current };
+        delete next[appointment.id];
+        return next;
+      });
+
+      const result = await queueAdminAttendanceReminder(
+        token,
+        appointment.id
+      );
+
+      setAttendanceReminderPolicy(result.policy);
+
+      setAppointments((current) =>
+        current.map((item) =>
+          item.id === appointment.id
+            ? {
+                ...item,
+                manualReminderPending: true,
+                canSendAttendanceReminder: false,
+              }
+            : item
+        )
+      );
+      setReminderFeedback((current) => ({
+        ...current,
+        [appointment.id]: {
+          kind: "success",
+          message:
+            "Recordatorio en cola. El sistema intentará enviarlo en los próximos minutos.",
+        },
+      }));
+
+      void Promise.all([
+        loadAttendanceReminderSummary(),
+        loadAppointments("silent"),
+      ]);
+    } catch (reminderError) {
+      if (!isUnauthorizedError(reminderError)) {
+        setReminderFeedback((current) => ({
+          ...current,
+          [appointment.id]: {
+            kind: "error",
+            message:
+              reminderError instanceof Error
+                ? reminderError.message
+                : "No se pudo preparar el recordatorio.",
+          },
+        }));
+      }
+
+      if (shouldReconcileMutation(reminderError)) {
+        void Promise.all([
+          loadAttendanceReminderSummary(),
+          loadAppointments("silent"),
+        ]);
+      }
+    } finally {
+      setReminderProcessing(appointment.id, false);
+    }
+  }
+
+  function handleQueueAllAttendanceReminders() {
+    const eligible = attendanceReminderSummary?.eligible ?? 0;
+    const bulkLimit = attendanceReminderPolicy?.bulkLimit ?? 100;
+    const batchSize = Math.min(eligible, bulkLimit);
+
+    if (eligible === 0) {
+      setOperationNotice({
+        kind: "success",
+        title: "Todo al día",
+        message:
+          "No hay citas confirmadas y futuras que necesiten un recordatorio ahora mismo.",
+      });
+      return;
+    }
+
+    confirmAction({
+      title: "Enviar recordatorios",
+      message: `Se pondrá en cola un recordatorio para ${batchSize} ${
+        batchSize === 1 ? "cita confirmada" : "citas confirmadas"
+      } cuyo cliente aún no confirmó asistencia.\n\nEsto incluye citas elegibles aunque no estén visibles en la lista.${
+        eligible > batchSize
+          ? ` Hay ${eligible} listas en total; después podrás preparar el siguiente lote.`
+          : ""
+      }`,
+      confirmText:
+        batchSize === 1
+          ? "Enviar 1 recordatorio"
+          : `Enviar ${batchSize} recordatorios`,
+      onConfirm: () => void executeQueueAllAttendanceReminders(),
+    });
+  }
+
+  async function executeQueueAllAttendanceReminders() {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setBulkReminderProcessing(true);
+      setOperationNotice(null);
+
+      const result = await queueAllAdminAttendanceReminders(token);
+      const summary = result.summary;
+      setAttendanceReminderPolicy(result.policy);
+      const details = [
+        summary.queued > 0
+          ? `${summary.queued} ${
+              summary.queued === 1
+                ? "recordatorio quedó en cola"
+                : "recordatorios quedaron en cola"
+            } para procesarse progresivamente.`
+          : "No se prepararon recordatorios nuevos.",
+        summary.withoutDevice > 0
+          ? `${summary.withoutDevice} ${
+              summary.withoutDevice === 1
+                ? "cliente no tiene"
+                : "clientes no tienen"
+            } notificaciones activadas.`
+          : "",
+        summary.alreadyQueued > 0
+          ? `${summary.alreadyQueued} ya estaban en preparación.`
+          : "",
+        summary.cooldown > 0
+          ? `${summary.cooldown} recibieron otro recordatorio recientemente.`
+          : "",
+        summary.concurrentSkipped > 0
+          ? `${summary.concurrentSkipped} ya fueron tomados por otro envío simultáneo.`
+          : "",
+        summary.remainingEligible > 0
+          ? `${summary.remainingEligible} quedaron pendientes por el límite de este lote.`
+          : "",
+      ].filter(Boolean);
+
+      setOperationNotice({
+        kind: "success",
+        title:
+          summary.queued > 0
+            ? "Recordatorios preparados"
+            : "No había recordatorios nuevos",
+        message: details.join(" "),
+      });
+
+      await Promise.all([
+        loadAttendanceReminderSummary(),
+        loadAppointments("silent"),
+      ]);
+    } catch (reminderError) {
+      if (!isUnauthorizedError(reminderError)) {
+        setOperationNotice({
+          kind: "error",
+          title: "No se pudieron preparar los recordatorios",
+          message:
+            reminderError instanceof Error
+              ? reminderError.message
+              : "Inténtalo nuevamente después de actualizar la lista.",
+        });
+      }
+
+      void loadAttendanceReminderSummary();
+    } finally {
+      setBulkReminderProcessing(false);
+    }
   }
 
   function getAppointmentSummary(appointment: AdminAppointment) {
@@ -574,6 +955,10 @@ export default function AdminAppointmentsScreen() {
           hasMore: current.page < totalPages,
         };
       });
+
+      if (previousStatus === "ACCEPTED" || status === "ACCEPTED") {
+        void loadAttendanceReminderSummary();
+      }
     }
 
     setLastUpdated(new Date());
@@ -1082,6 +1467,10 @@ export default function AdminAppointmentsScreen() {
     setStatusFilter(filter);
     setExpandedAppointmentId(null);
 
+    if (filter === "ACCEPTED") {
+      void loadAttendanceReminderSummary();
+    }
+
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollTo({
         y: Math.max(
@@ -1124,6 +1513,49 @@ export default function AdminAppointmentsScreen() {
   const networkBusy =
     loading || refreshing || loadingMore || querying;
 
+  const bulkReminderCount =
+    attendanceReminderSummary?.eligible ?? 0;
+
+  const bulkReminderLimit =
+    attendanceReminderPolicy?.bulkLimit ?? 100;
+
+  const bulkReminderBatchCount = Math.min(
+    bulkReminderCount,
+    bulkReminderLimit
+  );
+
+  const bulkReminderUnavailableReasons = [
+    (attendanceReminderSummary?.alreadyQueued ?? 0) > 0
+      ? `${attendanceReminderSummary?.alreadyQueued} ya están en cola.`
+      : "",
+    (attendanceReminderSummary?.cooldown ?? 0) > 0
+      ? `${attendanceReminderSummary?.cooldown} recibieron un aviso recientemente.`
+      : "",
+    (attendanceReminderSummary?.withoutDevice ?? 0) > 0
+      ? `${attendanceReminderSummary?.withoutDevice} no tienen notificaciones activadas.`
+      : "",
+  ].filter(Boolean);
+
+  const bulkReminderDescription = reminderSummaryError
+    ? reminderSummaryError
+    : reminderSummaryLoading && !attendanceReminderSummary
+      ? "Comprobando qué clientes necesitan un aviso…"
+      : bulkReminderCount > 0
+        ? bulkReminderCount > bulkReminderBatchCount
+          ? `Hay ${bulkReminderCount} citas listas. Este envío preparará las próximas ${bulkReminderBatchCount}.`
+          : "Envía un aviso a las citas confirmadas que todavía esperan respuesta."
+        : (attendanceReminderSummary?.matched ?? 0) === 0
+          ? "No hay citas futuras esperando confirmación del cliente."
+          : `No hay avisos nuevos listos. ${bulkReminderUnavailableReasons.join(
+              " "
+            )}`;
+
+  const bulkReminderDisabled =
+    reminderSummaryLoading ||
+    bulkReminderProcessing ||
+    networkBusy ||
+    (!reminderSummaryError && bulkReminderCount === 0);
+
   return (
     <ScrollView
       ref={scrollViewRef}
@@ -1133,7 +1565,12 @@ export default function AdminAppointmentsScreen() {
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={() => void loadAppointments("refresh")}
+          onRefresh={() =>
+            void Promise.all([
+              loadAppointments("refresh"),
+              loadAttendanceReminderSummary(),
+            ])
+          }
           colors={[COLORS.primary]}
           tintColor={COLORS.primary}
         />
@@ -1229,7 +1666,12 @@ export default function AdminAppointmentsScreen() {
             styles.refreshButton,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => void loadAppointments("refresh")}
+          onPress={() =>
+            void Promise.all([
+              loadAppointments("refresh"),
+              loadAttendanceReminderSummary(),
+            ])
+          }
           disabled={networkBusy}
           accessibilityRole="button"
           accessibilityLabel="Actualizar citas"
@@ -1505,6 +1947,101 @@ export default function AdminAppointmentsScreen() {
         )}
       </ScrollView>
 
+      {loadedQuery.status === "ACCEPTED" && !displayingPreviousData ? (
+        <View
+          style={styles.bulkReminderCard}
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.bulkReminderHeader}>
+            <View style={styles.bulkReminderIcon}>
+              <AppIcon
+                name={{
+                  ios: "bell.badge.fill",
+                  android: "notification_add",
+                  web: "notification_add",
+                }}
+                size={21}
+                color={COLORS.primary}
+              />
+            </View>
+
+            <View style={styles.bulkReminderContent}>
+              <View style={styles.bulkReminderTitleRow}>
+                <Text style={styles.bulkReminderTitle}>
+                  Recordatorios de asistencia
+                </Text>
+
+                {!reminderSummaryError && !reminderSummaryLoading ? (
+                  <View style={styles.bulkReminderCountBadge}>
+                    <Text style={styles.bulkReminderCountText}>
+                      {bulkReminderCount}{" "}
+                      {bulkReminderCount === 1 ? "lista" : "listas"}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <Text style={styles.bulkReminderText}>
+                {bulkReminderDescription}
+              </Text>
+            </View>
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.bulkReminderButton,
+              Platform.OS === "web" && styles.webBulkReminderButton,
+              pressed && styles.buttonPressed,
+              bulkReminderDisabled && styles.disabledButton,
+            ]}
+            disabled={bulkReminderDisabled}
+            onPress={() =>
+              reminderSummaryError
+                ? void loadAttendanceReminderSummary()
+                : handleQueueAllAttendanceReminders()
+            }
+            accessibilityRole="button"
+            accessibilityLabel={
+              reminderSummaryError
+                ? "Reintentar comprobación de recordatorios"
+                : `Enviar recordatorios de asistencia a ${bulkReminderBatchCount} citas`
+            }
+            accessibilityState={{
+              disabled: bulkReminderDisabled,
+              busy: reminderSummaryLoading || bulkReminderProcessing,
+            }}
+          >
+            {reminderSummaryLoading || bulkReminderProcessing ? (
+              <ActivityIndicator size="small" color={COLORS.onPrimary} />
+            ) : (
+              <AppIcon
+                name={{
+                  ios: "paperplane.fill",
+                  android: "send",
+                  web: "send",
+                }}
+                size={17}
+                color={COLORS.onPrimary}
+              />
+            )}
+
+            <Text style={styles.bulkReminderButtonText}>
+              {reminderSummaryError
+                ? "Reintentar"
+                : bulkReminderProcessing
+                  ? "Preparando…"
+                  : reminderSummaryLoading
+                    ? "Comprobando…"
+                    : bulkReminderBatchCount > 0
+                      ? bulkReminderBatchCount === 1
+                        ? "Enviar 1 recordatorio"
+                        : `Enviar ${bulkReminderBatchCount} recordatorios`
+                      : "Todo al día"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {displayingPreviousData && !syncWarning ? (
         <View
           style={[styles.noticeCard, styles.warningNotice]}
@@ -1640,6 +2177,12 @@ export default function AdminAppointmentsScreen() {
                 const processing =
                   processingIds.has(appointment.id);
 
+                const reminderProcessing =
+                  reminderProcessingIds.has(appointment.id);
+
+                const appointmentReminderFeedback =
+                  reminderFeedback[appointment.id];
+
                 const actionsDisabled =
                   processing || networkBusy || displayingPreviousData;
 
@@ -1681,6 +2224,22 @@ export default function AdminAppointmentsScreen() {
                 const pendingExpired =
                   appointment.status === "PENDING" &&
                   !canAcceptAppointment(appointment);
+
+                const canSendReminder =
+                  canSendAttendanceReminder(appointment);
+
+                const awaitingAttendance =
+                  appointment.status === "ACCEPTED" &&
+                  !appointment.clientAttendanceConfirmedAt &&
+                  !appointmentIsPast;
+
+                const lastAttendanceReminderSentAt =
+                  getLatestAttendanceReminderSentAt(appointment);
+
+                const reminderActionDisabled =
+                  actionsDisabled ||
+                  reminderProcessing ||
+                  bulkReminderProcessing;
 
                 return (
                   <Fragment key={appointment.id}>
@@ -2101,6 +2660,140 @@ export default function AdminAppointmentsScreen() {
                         >
                           Gestión de la cita
                         </Text>
+
+                        {awaitingAttendance ? (
+                          <View style={styles.manualReminderSection}>
+                            <Text style={styles.manualReminderLabel}>
+                              Confirmación de asistencia
+                            </Text>
+
+                            {appointment.manualReminderPending === true ? (
+                              <View
+                                style={styles.manualReminderStatus}
+                                accessibilityLiveRegion="polite"
+                              >
+                                <ActivityIndicator
+                                  size="small"
+                                  color={COLORS.primary}
+                                />
+                                <Text style={styles.manualReminderStatusText}>
+                                  Recordatorio en cola. El sistema lo procesará en los próximos minutos.
+                                </Text>
+                              </View>
+                            ) : canSendReminder ? (
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.manualReminderButton,
+                                  Platform.OS === "web" &&
+                                    styles.webManagementButton,
+                                  pressed && styles.buttonPressed,
+                                  reminderActionDisabled &&
+                                    styles.disabledButton,
+                                ]}
+                                disabled={reminderActionDisabled}
+                                onPress={() =>
+                                  handleQueueAttendanceReminder(appointment)
+                                }
+                                accessibilityRole="button"
+                                accessibilityLabel={`Enviar recordatorio de asistencia a ${appointment.firstName} ${appointment.lastName}`}
+                                accessibilityState={{
+                                  disabled: reminderActionDisabled,
+                                  busy: reminderProcessing,
+                                }}
+                              >
+                                {reminderProcessing ? (
+                                  <ActivityIndicator
+                                    size="small"
+                                    color={COLORS.primary}
+                                  />
+                                ) : (
+                                  <AppIcon
+                                    name={{
+                                      ios: "bell.badge",
+                                      android: "notification_add",
+                                      web: "notification_add",
+                                    }}
+                                    size={18}
+                                    color={COLORS.primary}
+                                  />
+                                )}
+
+                                <Text style={styles.manualReminderButtonText}>
+                                  {reminderProcessing
+                                    ? "Preparando…"
+                                    : lastAttendanceReminderSentAt
+                                      ? "Enviar de nuevo"
+                                      : "Enviar recordatorio"}
+                                </Text>
+                              </Pressable>
+                            ) : appointment.hasActivePushDevice === false ? (
+                              <View style={styles.manualReminderUnavailable}>
+                                <AppIcon
+                                  name={{
+                                    ios: "bell.slash",
+                                    android: "notifications_off",
+                                    web: "notifications_off",
+                                  }}
+                                  size={17}
+                                  color={COLORS.textMuted}
+                                />
+                                <Text style={styles.manualReminderUnavailableText}>
+                                  Este cliente no tiene recordatorios activados.
+                                </Text>
+                              </View>
+                            ) : lastAttendanceReminderSentAt ? (
+                              <Text style={styles.manualReminderHint}>
+                                Ya recibió un recordatorio recientemente.
+                              </Text>
+                            ) : (
+                              <View style={styles.manualReminderUnavailable}>
+                                <AppIcon
+                                  name={{
+                                    ios: "info.circle",
+                                    android: "info",
+                                    web: "info",
+                                  }}
+                                  size={17}
+                                  color={COLORS.textMuted}
+                                />
+                                <Text style={styles.manualReminderUnavailableText}>
+                                  El recordatorio no está disponible ahora. Actualiza la lista e inténtalo más tarde.
+                                </Text>
+                              </View>
+                            )}
+
+                            {lastAttendanceReminderSentAt ? (
+                              <Text style={styles.manualReminderTimestamp}>
+                                Último envío: {formatReminderTimestamp(
+                                  lastAttendanceReminderSentAt
+                                )}
+                              </Text>
+                            ) : null}
+
+                            {appointmentReminderFeedback ? (
+                              <View
+                                style={[
+                                  styles.manualReminderFeedback,
+                                  appointmentReminderFeedback.kind === "success"
+                                    ? styles.manualReminderFeedbackSuccess
+                                    : styles.manualReminderFeedbackError,
+                                ]}
+                                accessibilityRole={
+                                  appointmentReminderFeedback.kind === "error"
+                                    ? "alert"
+                                    : undefined
+                                }
+                                accessibilityLiveRegion="polite"
+                              >
+                                <Text
+                                  style={styles.manualReminderFeedbackText}
+                                >
+                                  {appointmentReminderFeedback.message}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        ) : null}
 
                         {canComplete ? (
                           <Pressable
@@ -2714,6 +3407,99 @@ const styles =
       color: COLORS.onPrimary,
     },
 
+    bulkReminderCard: {
+      gap: SPACING.md,
+      marginBottom: SPACING.lg,
+      padding: SPACING.md,
+      borderWidth: 1,
+      borderColor: COLORS.accentSoft,
+      borderRadius: RADIUS.lg,
+      backgroundColor: COLORS.primarySoft,
+    },
+
+    bulkReminderHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.sm,
+    },
+
+    bulkReminderIcon: {
+      width: 42,
+      height: 42,
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+    },
+
+    bulkReminderContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    bulkReminderTitleRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginBottom: SPACING.xs,
+    },
+
+    bulkReminderTitle: {
+      flexGrow: 1,
+      flexShrink: 1,
+      color: COLORS.text,
+      fontSize: FONT.subheading,
+      fontFamily: FONT_FAMILY.display,
+      fontWeight: "800",
+    },
+
+    bulkReminderCountBadge: {
+      minHeight: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: SPACING.sm,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+    },
+
+    bulkReminderCountText: {
+      color: COLORS.primary,
+      fontSize: FONT.caption,
+      fontWeight: "800",
+    },
+
+    bulkReminderText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.small,
+      lineHeight: 20,
+    },
+
+    bulkReminderButton: {
+      minHeight: 46,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      alignSelf: "stretch",
+      gap: SPACING.sm,
+      paddingHorizontal: SPACING.md,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.primary,
+    },
+
+    webBulkReminderButton: {
+      width: 280,
+      maxWidth: "100%",
+      alignSelf: "flex-start",
+    },
+
+    bulkReminderButtonText: {
+      color: COLORS.onPrimary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
     resultsHeading: {
       flexDirection: "row",
       alignItems: "center",
@@ -3138,6 +3924,115 @@ const styles =
       color: COLORS.text,
       marginBottom:
         SPACING.sm,
+    },
+
+    manualReminderSection: {
+      gap: SPACING.sm,
+      marginBottom: SPACING.md,
+      paddingBottom: SPACING.md,
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.border,
+    },
+
+    manualReminderLabel: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      fontWeight: "800",
+      letterSpacing: 0.5,
+      textTransform: "uppercase",
+    },
+
+    manualReminderButton: {
+      minHeight: 46,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.sm,
+      paddingHorizontal: SPACING.md,
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+      borderRadius: RADIUS.pill,
+      backgroundColor: COLORS.surface,
+    },
+
+    manualReminderButtonText: {
+      color: COLORS.primary,
+      fontSize: FONT.small,
+      fontWeight: "800",
+    },
+
+    manualReminderStatus: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      padding: SPACING.sm,
+      borderRadius: RADIUS.md,
+      backgroundColor: COLORS.warningBackground,
+    },
+
+    manualReminderStatusText: {
+      flex: 1,
+      minWidth: 0,
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      fontWeight: "700",
+    },
+
+    manualReminderUnavailable: {
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      padding: SPACING.sm,
+      borderRadius: RADIUS.md,
+      backgroundColor: COLORS.surface,
+    },
+
+    manualReminderUnavailableText: {
+      flex: 1,
+      minWidth: 0,
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      fontWeight: "600",
+    },
+
+    manualReminderHint: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      fontWeight: "600",
+    },
+
+    manualReminderTimestamp: {
+      color: COLORS.textMuted,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+    },
+
+    manualReminderFeedback: {
+      padding: SPACING.sm,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+    },
+
+    manualReminderFeedbackSuccess: {
+      backgroundColor: COLORS.successBackground,
+      borderColor: "#B9DEC9",
+    },
+
+    manualReminderFeedbackError: {
+      backgroundColor: COLORS.dangerBackground,
+      borderColor: "#F0C7C2",
+    },
+
+    manualReminderFeedbackText: {
+      color: COLORS.textSecondary,
+      fontSize: FONT.caption,
+      lineHeight: 18,
+      fontWeight: "700",
     },
 
     completeButton: {

@@ -27,11 +27,37 @@ const AVAILABLE_TIMES = [
 
 function getAttendanceProjection(
   tableAlias = "",
-  { includeReminderSentAt = false } = {}
+  {
+    includeReminderSentAt = false,
+    includeManualReminderState = false,
+  } = {}
 ) {
   const prefix = tableAlias ? `${tableAlias}.` : "";
   const appointmentAt =
     `(${prefix}appointment_date + ${prefix}appointment_time)`;
+  const activeManualReminderJob = `
+    SELECT 1
+    FROM appointment_notification_jobs AS reminder_job
+    WHERE reminder_job.appointment_id = ${prefix}id
+      AND reminder_job.kind = 'ATTENDANCE_REMINDER'
+      AND reminder_job.source = 'ADMIN_MANUAL'
+      AND reminder_job.status IN ('QUEUED', 'CLAIMED')
+  `;
+  const recentManualReminder = `
+    SELECT 1
+    FROM appointment_notification_jobs AS reminder_job
+    WHERE reminder_job.appointment_id = ${prefix}id
+      AND reminder_job.kind = 'ATTENDANCE_REMINDER'
+      AND reminder_job.source = 'ADMIN_MANUAL'
+      AND reminder_job.status = 'SENT'
+      AND reminder_job.sent_at > NOW() - INTERVAL '15 minutes'
+  `;
+  const activePushDevice = `
+    SELECT 1
+    FROM push_device_tokens AS reminder_device
+    WHERE reminder_device.user_id = ${prefix}user_id
+      AND reminder_device.active = TRUE
+  `;
 
   return `
     ${prefix}client_attendance_confirmed_at
@@ -59,6 +85,38 @@ function getAttendanceProjection(
     ) AS "canConfirmAttendance"
     ${includeReminderSentAt
       ? `,\n\n    ${prefix}reminder_sent_at AS "reminderSentAt"`
+      : ""}
+    ${includeManualReminderState
+      ? `,
+
+    EXISTS (${activePushDevice}) AS "hasActivePushDevice",
+
+    EXISTS (${activeManualReminderJob}) AS "manualReminderPending",
+
+    (
+      SELECT MAX(reminder_job.sent_at)
+      FROM appointment_notification_jobs AS reminder_job
+      WHERE reminder_job.appointment_id = ${prefix}id
+        AND reminder_job.kind = 'ATTENDANCE_REMINDER'
+        AND reminder_job.source = 'ADMIN_MANUAL'
+        AND reminder_job.status = 'SENT'
+    ) AS "lastManualReminderSentAt",
+
+    (
+      ${prefix}status = 'ACCEPTED'
+      AND ${prefix}client_attendance_confirmed_at IS NULL
+      AND ${appointmentAt} >
+        (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+      AND EXISTS (${activePushDevice})
+      AND NOT EXISTS (${activeManualReminderJob})
+      AND NOT (
+        COALESCE(
+          ${prefix}reminder_sent_at > NOW() - INTERVAL '15 minutes',
+          FALSE
+        )
+        OR EXISTS (${recentManualReminder})
+      )
+    ) AS "canSendAttendanceReminder"`
       : ""}
   `;
 }
@@ -940,6 +998,7 @@ async function getAllAppointments({
 
         ${getAttendanceProjection("a", {
           includeReminderSentAt: true,
+          includeManualReminderState: true,
         })},
 
         (
@@ -1225,6 +1284,7 @@ async function acceptAppointment(
 
           ${getAttendanceProjection("", {
             includeReminderSentAt: true,
+            includeManualReminderState: true,
           })},
 
           created_at AS "createdAt"
@@ -1328,6 +1388,7 @@ async function rejectAppointment(
 
           ${getAttendanceProjection("", {
             includeReminderSentAt: true,
+            includeManualReminderState: true,
           })},
 
           created_at AS "createdAt"
@@ -1397,6 +1458,7 @@ async function getAppointmentsByDateRange(
 
         ${getAttendanceProjection("a", {
           includeReminderSentAt: true,
+          includeManualReminderState: true,
         })},
 
         (
@@ -1707,6 +1769,7 @@ async function cancelAppointmentByAdmin(
 
           ${getAttendanceProjection("", {
             includeReminderSentAt: true,
+            includeManualReminderState: true,
           })},
 
           created_at AS "createdAt"
@@ -1849,6 +1912,7 @@ async function completeAppointment(
 
           ${getAttendanceProjection("", {
             includeReminderSentAt: true,
+            includeManualReminderState: true,
           })},
 
           created_at AS "createdAt"

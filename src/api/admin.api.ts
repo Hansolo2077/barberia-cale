@@ -19,6 +19,10 @@ export type AdminAppointment = {
   attendanceStatus: AttendanceStatus;
   canConfirmAttendance: boolean;
   reminderSentAt: string | null;
+  hasActivePushDevice?: boolean;
+  manualReminderPending?: boolean;
+  lastManualReminderSentAt?: string | null;
+  canSendAttendanceReminder?: boolean;
   canAccept?: boolean;
   canComplete?: boolean;
   canAdminCancel?: boolean;
@@ -68,6 +72,49 @@ export type AdminAppointmentMutationResponse = {
   success: boolean;
   message: string;
   appointment: AdminAppointmentMutation;
+};
+
+export type AttendanceReminderSummary = {
+  matched: number;
+  eligible: number;
+  queued: number;
+  alreadyQueued: number;
+  cooldown: number;
+  withoutDevice: number;
+  concurrentSkipped: number;
+  remainingEligible: number;
+};
+
+export type AttendanceReminderPolicy = {
+  cooldownMinutes: number;
+  bulkLimit: number;
+};
+
+export type AttendanceReminderSummaryResponse = {
+  success: boolean;
+  summary: AttendanceReminderSummary;
+  policy: AttendanceReminderPolicy;
+};
+
+export type BulkAttendanceReminderResponse = {
+  success: boolean;
+  message: string;
+  summary: AttendanceReminderSummary;
+  policy: AttendanceReminderPolicy;
+};
+
+export type QueuedAttendanceReminder = {
+  id: number;
+  appointmentId: number;
+  status: "QUEUED";
+  requestedAt: string;
+};
+
+export type AttendanceReminderMutationResponse = {
+  success: boolean;
+  message: string;
+  reminder: QueuedAttendanceReminder;
+  policy: AttendanceReminderPolicy;
 };
 
 function normalizeAdminQuery(
@@ -245,4 +292,37 @@ export function completeAdminAppointment(
   appointmentId: number
 ) {
   return updateAdminAppointment(token, appointmentId, "complete");
+}
+
+export function getAdminAttendanceReminderSummary(token: string) {
+  return apiRequest<AttendanceReminderSummaryResponse>(
+    "/admin/attendance-reminders/summary",
+    {
+      method: "GET",
+      token,
+    }
+  );
+}
+
+export function queueAllAdminAttendanceReminders(token: string) {
+  return apiRequest<BulkAttendanceReminderResponse>(
+    "/admin/attendance-reminders",
+    {
+      method: "POST",
+      token,
+    }
+  );
+}
+
+export function queueAdminAttendanceReminder(
+  token: string,
+  appointmentId: number
+) {
+  return apiRequest<AttendanceReminderMutationResponse>(
+    `/admin/appointments/${appointmentId}/attendance-reminder`,
+    {
+      method: "POST",
+      token,
+    }
+  );
 }

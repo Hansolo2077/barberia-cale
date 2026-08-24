@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isRunningInExpoGo } from "expo";
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import {
   AppState,
@@ -32,7 +32,16 @@ const CATEGORY_ID = "attendance_reminder";
 const CONFIRM_ACTION_ID = "confirm_attendance";
 const PENDING_INTENT_KEY = "barberia_cale_notification_intent";
 const INTENT_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
-const NOTIFICATIONS_SUPPORTED = Platform.OS === "android";
+const NOTIFICATIONS_SUPPORTED =
+  Platform.OS === "android" && !isRunningInExpoGo();
+
+type NotificationsModule = typeof import("expo-notifications");
+type NotificationResponse =
+  import("expo-notifications").NotificationResponse;
+
+let notificationsModulePromise: Promise<NotificationsModule> | null = null;
+let notificationPresentationPromise: Promise<NotificationsModule> | null =
+  null;
 
 type PermissionStatus =
   | "undetermined"
@@ -78,16 +87,18 @@ const NotificationContext = createContext<
   NotificationContextValue | undefined
 >(undefined);
 
-if (NOTIFICATIONS_SUPPORTED) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      priority: Notifications.AndroidNotificationPriority.HIGH,
-    }),
-  });
+function loadNotifications() {
+  if (!NOTIFICATIONS_SUPPORTED) {
+    return Promise.resolve<NotificationsModule | null>(null);
+  }
+
+  notificationsModulePromise ??= import("expo-notifications").catch(
+    (error) => {
+      notificationsModulePromise = null;
+      throw error;
+    }
+  );
+  return notificationsModulePromise;
 }
 
 function parseAppointmentId(value: unknown) {
@@ -104,7 +115,7 @@ function parseAppointmentId(value: unknown) {
 }
 
 function getIntentFromResponse(
-  response: Notifications.NotificationResponse
+  response: NotificationResponse
 ): NotificationIntent | null {
   const data = response.notification.request.content.data;
 
@@ -170,30 +181,55 @@ function getProjectId() {
 
 async function configureNotificationPresentation() {
   if (!NOTIFICATIONS_SUPPORTED) {
-    return;
+    return null;
   }
 
-  await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-    name: "Recordatorios de citas",
-    description:
-      "Avisos para confirmar la asistencia a tus próximas citas.",
-    importance: Notifications.AndroidImportance.HIGH,
-    sound: "default",
-    vibrationPattern: [0, 250, 200, 250],
-    lightColor: "#743B2F",
-    lockscreenVisibility:
-      Notifications.AndroidNotificationVisibility.PRIVATE,
+  notificationPresentationPromise ??= (async () => {
+    const Notifications = await loadNotifications();
+
+    if (!Notifications) {
+      throw new Error("Las notificaciones no están disponibles.");
+    }
+
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      }),
+    });
+
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: "Recordatorios de citas",
+      description:
+        "Avisos para confirmar la asistencia a tus próximas citas.",
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: "default",
+      vibrationPattern: [0, 250, 200, 250],
+      lightColor: "#743B2F",
+      lockscreenVisibility:
+        Notifications.AndroidNotificationVisibility.PRIVATE,
+    });
+
+    await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
+      {
+        identifier: CONFIRM_ACTION_ID,
+        buttonTitle: "Confirmar asistencia",
+        options: {
+          opensAppToForeground: true,
+        },
+      },
+    ]);
+
+    return Notifications;
+  })().catch((error) => {
+    notificationPresentationPromise = null;
+    throw error;
   });
 
-  await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
-    {
-      identifier: CONFIRM_ACTION_ID,
-      buttonTitle: "Confirmar asistencia",
-      options: {
-        opensAppToForeground: true,
-      },
-    },
-  ]);
+  return notificationPresentationPromise;
 }
 
 export function NotificationProvider({
@@ -283,7 +319,14 @@ export function NotificationProvider({
         setRegistrationStatus("registering");
 
         try {
-          await configureNotificationPresentation();
+          const Notifications =
+            await configureNotificationPresentation();
+
+          if (!Notifications) {
+            setPermissionStatus("unsupported");
+            setRegistrationStatus("unsupported");
+            return false;
+          }
 
           let permission = await Notifications.getPermissionsAsync();
 
@@ -484,7 +527,7 @@ export function NotificationProvider({
   }, [authLoading, router, token, user]);
 
   const handleNotificationResponse = useCallback(
-    async (response: Notifications.NotificationResponse) => {
+    async (response: NotificationResponse) => {
       const responseKey = `${response.notification.request.identifier}:${response.actionIdentifier}`;
 
       if (handledResponsesRef.current.has(responseKey)) {
@@ -516,36 +559,48 @@ export function NotificationProvider({
     }
 
     let active = true;
+    let responseSubscription: { remove: () => void } | null = null;
 
     void configureNotificationPresentation()
-      .then(() => Notifications.getPermissionsAsync())
-      .then((permission) => {
-        if (active) {
-          setPermissionStatus(permission.status);
+      .then(async (Notifications) => {
+        if (!Notifications || !active) {
+          return;
+        }
 
-          if (permission.status !== "granted") {
-            setRegistrationStatus("unregistered");
-          }
+        responseSubscription =
+          Notifications.addNotificationResponseReceivedListener(
+            (response) => {
+              void handleNotificationResponse(response);
+            }
+          );
+
+        const lastResponse =
+          Notifications.getLastNotificationResponse();
+
+        if (lastResponse) {
+          void handleNotificationResponse(lastResponse);
+          Notifications.clearLastNotificationResponse();
+        }
+
+        const permission = await Notifications.getPermissionsAsync();
+
+        if (!active) {
+          return;
+        }
+
+        setPermissionStatus(permission.status);
+
+        if (permission.status !== "granted") {
+          setRegistrationStatus("unregistered");
         }
       })
       .catch((error) => {
         console.warn("No se pudo preparar el canal de recordatorios:", error);
       });
 
-    const responseSubscription =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        void handleNotificationResponse(response);
-      });
-    const lastResponse = Notifications.getLastNotificationResponse();
-
-    if (lastResponse) {
-      void handleNotificationResponse(lastResponse);
-      Notifications.clearLastNotificationResponse();
-    }
-
     return () => {
       active = false;
-      responseSubscription.remove();
+      responseSubscription?.remove();
     };
   }, [handleNotificationResponse]);
 
@@ -554,15 +609,31 @@ export function NotificationProvider({
       return;
     }
 
-    const subscription = Notifications.addPushTokenListener(() => {
-      expoPushTokenRef.current = null;
+    let active = true;
+    let pushTokenSubscription: { remove: () => void } | null = null;
 
-      if (!authLoading && token && user?.role === "CLIENT") {
-        void registerCurrentDevice(false, true);
-      }
-    });
+    void loadNotifications()
+      .then((Notifications) => {
+        if (!Notifications || !active) {
+          return;
+        }
 
-    return () => subscription.remove();
+        pushTokenSubscription = Notifications.addPushTokenListener(() => {
+          expoPushTokenRef.current = null;
+
+          if (!authLoading && token && user?.role === "CLIENT") {
+            void registerCurrentDevice(false, true);
+          }
+        });
+      })
+      .catch((error) => {
+        console.warn("No se pudo escuchar la rotación del token push:", error);
+      });
+
+    return () => {
+      active = false;
+      pushTokenSubscription?.remove();
+    };
   }, [authLoading, registerCurrentDevice, token, user?.role]);
 
   useEffect(() => {
@@ -588,22 +659,44 @@ export function NotificationProvider({
       return;
     }
 
+    let active = true;
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        void Notifications.getPermissionsAsync().then((permission) => {
-          setPermissionStatus(permission.status);
+        void loadNotifications()
+          .then(async (Notifications) => {
+            if (!Notifications || !active) {
+              return;
+            }
 
-          if (permission.status === "granted") {
-            void registerCurrentDevice(false);
-          } else {
-            setRegistrationStatus("unregistered");
-          }
-        });
+            const permission =
+              await Notifications.getPermissionsAsync();
+
+            if (!active) {
+              return;
+            }
+
+            setPermissionStatus(permission.status);
+
+            if (permission.status === "granted") {
+              void registerCurrentDevice(false);
+            } else {
+              setRegistrationStatus("unregistered");
+            }
+          })
+          .catch((error) => {
+            console.warn(
+              "No se pudo consultar el permiso de notificaciones:",
+              error
+            );
+          });
         void processStoredIntent();
       }
     });
 
-    return () => subscription.remove();
+    return () => {
+      active = false;
+      subscription.remove();
+    };
   }, [processStoredIntent, registerCurrentDevice]);
 
   useEffect(() => {

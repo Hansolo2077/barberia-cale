@@ -440,6 +440,14 @@ test("client and admin listings expose the attendance contract", async () => {
     assert.match(queries[0], /AS "attendanceStatus"/);
     assert.match(queries[0], /AS "canConfirmAttendance"/);
     assert.match(queries[0], /AS "reminderSentAt"/);
+    assert.match(queries[0], /AS "hasActivePushDevice"/);
+    assert.match(queries[0], /AS "manualReminderPending"/);
+    assert.match(queries[0], /AS "lastManualReminderSentAt"/);
+    assert.match(queries[0], /AS "canSendAttendanceReminder"/);
+    assert.match(
+      queries[0],
+      /status = 'ACCEPTED'[\s\S]*client_attendance_confirmed_at IS NULL[\s\S]*INTERVAL '15 minutes'/
+    );
 
     queries.length = 0;
 
@@ -455,6 +463,7 @@ test("client and admin listings expose the attendance contract", async () => {
 
     assert.match(queries[0], /AS "attendanceStatus"/);
     assert.match(queries[0], /AS "reminderSentAt"/);
+    assert.match(queries[0], /AS "canSendAttendanceReminder"/);
   } finally {
     db.query = originalQuery;
   }

@@ -14,6 +14,10 @@ type ClaimedReminder = {
   appointment_at: string;
 };
 
+type ClaimedManualReminder = ClaimedReminder & {
+  job_id: number;
+};
+
 type DeviceToken = {
   id: number;
   expo_push_token: string;
@@ -41,7 +45,7 @@ type ExpoPushPayload = {
 
 type ReminderResult = {
   appointmentId: number;
-  status: "sent" | "skipped" | "failed";
+  status: "sent" | "skipped" | "retrying" | "failed";
   acceptedDevices: number;
 };
 
@@ -79,6 +83,41 @@ function formatAppointmentTime(appointmentAt: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(appointmentAt));
+}
+
+function formatAppointmentDate(appointmentAt: string) {
+  return new Intl.DateTimeFormat("es-NI", {
+    timeZone: BUSINESS_TIME_ZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(appointmentAt));
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function summarizeReminderResults(
+  claimed: number,
+  results: ReminderResult[]
+) {
+  return {
+    claimed,
+    sent: results.filter((result) => result.status === "sent").length,
+    skipped: results.filter((result) => result.status === "skipped").length,
+    retrying: results.filter((result) => result.status === "retrying")
+      .length,
+    failed: results.filter((result) => result.status === "failed").length,
+  };
 }
 
 async function sendExpoMessages(messages: unknown[]) {
@@ -151,6 +190,328 @@ Deno.serve(async (request) => {
     },
   });
   const reminderApi = supabase.schema("reminder_api");
+  const manualClaimToken = crypto.randomUUID();
+  const manualResults: ReminderResult[] = [];
+
+  const revalidateManualClaim = async (jobId: number) => {
+    const { data: isEligible, error } = await reminderApi.rpc(
+      "revalidate_manual_appointment_reminder_claim",
+      {
+        p_job_id: jobId,
+        p_claim_token: manualClaimToken,
+      }
+    );
+
+    if (error) {
+      console.error(
+        `No se pudo revalidar el recordatorio manual ${jobId}:`,
+        error
+      );
+      throw error;
+    }
+
+    return isEligible === true;
+  };
+
+  const markManualSkipped = async (
+    jobId: number,
+    failureCode: string,
+    acceptedDevices = 0
+  ) => {
+    const { data: skipped, error } = await reminderApi.rpc(
+      "mark_manual_appointment_reminder_skipped",
+      {
+        p_job_id: jobId,
+        p_claim_token: manualClaimToken,
+        p_failure_code: failureCode,
+        p_accepted_devices: acceptedDevices,
+      }
+    );
+
+    if (error) {
+      console.error(
+        `No se pudo omitir el recordatorio manual ${jobId}:`,
+        error
+      );
+      throw error;
+    }
+
+    if (skipped !== true) {
+      console.warn(
+        `El recordatorio manual ${jobId} ya no estaba reclamado al omitirlo.`
+      );
+    }
+
+    return skipped === true;
+  };
+
+  const releaseManualClaim = async (
+    jobId: number,
+    failureCode: string,
+    error: unknown
+  ) => {
+    const { data: nextStatus, error: releaseError } = await reminderApi.rpc(
+      "release_manual_appointment_reminder_claim",
+      {
+        p_job_id: jobId,
+        p_claim_token: manualClaimToken,
+        p_failure_code: failureCode,
+        p_last_error: getErrorMessage(error),
+      }
+    );
+
+    if (releaseError) {
+      console.error(
+        `No se pudo liberar el recordatorio manual ${jobId}:`,
+        releaseError
+      );
+      return null;
+    }
+
+    if (nextStatus !== "QUEUED" && nextStatus !== "FAILED") {
+      console.warn(
+        `El recordatorio manual ${jobId} ya no estaba reclamado al liberarlo.`
+      );
+    }
+
+    return nextStatus as "QUEUED" | "FAILED" | null;
+  };
+
+  const { data: manualData, error: manualClaimError } =
+    await reminderApi.rpc("claim_manual_appointment_reminders", {
+      p_claim_token: manualClaimToken,
+      p_limit: MAX_REMINDERS_PER_RUN,
+    });
+
+  if (manualClaimError) {
+    console.error(
+      "No se pudieron reclamar recordatorios manuales:",
+      manualClaimError
+    );
+  }
+
+  const manualReminders = manualClaimError
+    ? []
+    : ((manualData ?? []) as ClaimedManualReminder[]);
+
+  for (const reminder of manualReminders) {
+    let acceptedDevices = 0;
+
+    try {
+      if (!(await revalidateManualClaim(reminder.job_id))) {
+        await markManualSkipped(reminder.job_id, "NO_LONGER_ELIGIBLE");
+        manualResults.push({
+          appointmentId: reminder.appointment_id,
+          status: "skipped",
+          acceptedDevices,
+        });
+        continue;
+      }
+
+      const { data: tokenRows, error: tokenError } = await reminderApi.rpc(
+        "get_manual_reminder_device_tokens",
+        {
+          p_job_id: reminder.job_id,
+          p_claim_token: manualClaimToken,
+        }
+      );
+
+      if (tokenError) {
+        console.error(
+          `No se pudieron consultar dispositivos para el recordatorio manual ${reminder.job_id}:`,
+          tokenError
+        );
+        throw tokenError;
+      }
+
+      const tokens = (tokenRows ?? []) as DeviceToken[];
+
+      if (tokens.length === 0) {
+        await markManualSkipped(reminder.job_id, "NO_ACTIVE_DEVICE");
+        manualResults.push({
+          appointmentId: reminder.appointment_id,
+          status: "skipped",
+          acceptedDevices,
+        });
+        continue;
+      }
+
+      if (tokens.length > MAX_DEVICE_TOKENS_PER_APPOINTMENT) {
+        throw new Error(
+          `La cita tiene más de ${MAX_DEVICE_TOKENS_PER_APPOINTMENT} dispositivos.`
+        );
+      }
+
+      if (!(await revalidateManualClaim(reminder.job_id))) {
+        await markManualSkipped(reminder.job_id, "NO_LONGER_ELIGIBLE");
+        manualResults.push({
+          appointmentId: reminder.appointment_id,
+          status: "skipped",
+          acceptedDevices,
+        });
+        continue;
+      }
+
+      const appointmentDate = formatAppointmentDate(
+        reminder.appointment_at
+      );
+      const appointmentTime = formatAppointmentTime(
+        reminder.appointment_at
+      );
+      const expiresAt = Math.floor(
+        new Date(reminder.appointment_at).getTime() / 1_000
+      );
+      const messages = tokens.map((token) => ({
+        to: token.expo_push_token,
+        title: "¿Confirmas tu cita?",
+        body: `Tu cita es el ${appointmentDate} a las ${appointmentTime}. Confirma tu asistencia.`,
+        data: {
+          kind: "appointment_reminder",
+          version: 1,
+          appointmentId: reminder.appointment_id,
+        },
+        priority: "high",
+        expiration: expiresAt,
+        channelId: NOTIFICATION_CHANNEL_ID,
+        categoryId: NOTIFICATION_CATEGORY_ID,
+        collapseId: `appointment-reminder-${reminder.appointment_id}`,
+        tag: `appointment-reminder-${reminder.appointment_id}`,
+      }));
+      const expoResponse = await sendExpoMessages(messages);
+
+      if (!expoResponse.ok) {
+        throw new Error(`Expo Push respondió ${expoResponse.status}.`);
+      }
+
+      const payload = (await expoResponse.json()) as ExpoPushPayload;
+      const topLevelErrors = asArray(payload.errors);
+
+      if (topLevelErrors.length > 0) {
+        console.error(
+          `Expo Push reportó errores para el recordatorio manual ${reminder.job_id}:`,
+          topLevelErrors
+        );
+      }
+
+      const tickets = asArray(payload.data);
+
+      if (tickets.length !== tokens.length) {
+        console.warn(
+          `Expo Push devolvió ${tickets.length} tickets para ${tokens.length} dispositivos del recordatorio manual ${reminder.job_id}.`
+        );
+      }
+
+      for (let index = 0; index < tokens.length; index += 1) {
+        const ticket = tickets[index];
+        const token = tokens[index];
+
+        if (ticket?.status === "ok") {
+          acceptedDevices += 1;
+          continue;
+        }
+
+        console.error(
+          `Expo rechazó un dispositivo para el recordatorio manual ${reminder.job_id}:`,
+          {
+            tokenId: token.id,
+            message: ticket?.message ?? "Ticket ausente o inválido.",
+            details: ticket?.details ?? null,
+          }
+        );
+
+        if (ticket?.details?.error === "DeviceNotRegistered") {
+          const { data: deactivated, error: deactivateError } =
+            await reminderApi.rpc(
+              "deactivate_manual_reminder_device_token",
+              {
+                p_job_id: reminder.job_id,
+                p_claim_token: manualClaimToken,
+                p_token_id: token.id,
+              }
+            );
+
+          if (deactivateError) {
+            console.error(
+              `No se pudo desactivar el dispositivo ${token.id}:`,
+              deactivateError
+            );
+          } else if (deactivated !== true) {
+            console.warn(
+              `El dispositivo ${token.id} no se desactivó porque el reclamo manual cambió.`
+            );
+          }
+        }
+      }
+
+      if (acceptedDevices === 0) {
+        throw new Error(
+          "Expo no aceptó el recordatorio en ningún dispositivo."
+        );
+      }
+
+      if (!(await revalidateManualClaim(reminder.job_id))) {
+        console.warn(
+          `La cita ${reminder.appointment_id} cambió después de que Expo aceptó el envío manual.`
+        );
+        await markManualSkipped(
+          reminder.job_id,
+          "STATE_CHANGED_AFTER_SEND",
+          acceptedDevices
+        );
+        manualResults.push({
+          appointmentId: reminder.appointment_id,
+          status: "skipped",
+          acceptedDevices,
+        });
+        continue;
+      }
+
+      const { data: markedSent, error: markError } = await reminderApi.rpc(
+        "mark_manual_appointment_reminder_sent",
+        {
+          p_job_id: reminder.job_id,
+          p_claim_token: manualClaimToken,
+          p_accepted_devices: acceptedDevices,
+        }
+      );
+
+      if (markError) {
+        console.error(
+          `No se pudo marcar el recordatorio manual ${reminder.job_id}:`,
+          markError
+        );
+        throw markError;
+      }
+
+      if (markedSent !== true) {
+        throw new Error(
+          "La cita dejó de ser elegible antes de confirmar el envío manual."
+        );
+      }
+
+      manualResults.push({
+        appointmentId: reminder.appointment_id,
+        status: "sent",
+        acceptedDevices,
+      });
+    } catch (error) {
+      console.error(
+        `Error enviando recordatorio manual ${reminder.job_id}:`,
+        error
+      );
+      const nextStatus = await releaseManualClaim(
+        reminder.job_id,
+        "DELIVERY_FAILED",
+        error
+      );
+      manualResults.push({
+        appointmentId: reminder.appointment_id,
+        status: nextStatus === "QUEUED" ? "retrying" : "failed",
+        acceptedDevices,
+      });
+    }
+  }
+
   const claimToken = crypto.randomUUID();
 
   const releaseClaim = async (
@@ -212,8 +573,30 @@ Deno.serve(async (request) => {
 
   if (claimError) {
     console.error("No se pudieron reclamar recordatorios:", claimError);
+    const automaticSummary = {
+      ...summarizeReminderResults(0, []),
+      preparationFailed: true,
+    };
+    const manualSummary = {
+      ...summarizeReminderResults(manualReminders.length, manualResults),
+      preparationFailed: Boolean(manualClaimError),
+    };
+
     return jsonResponse(
-      { success: false, message: "No se pudieron preparar los recordatorios." },
+      {
+        success: false,
+        message: "No se pudieron preparar los recordatorios automáticos.",
+        claimed: manualSummary.claimed,
+        sent: manualSummary.sent,
+        skipped: manualSummary.skipped,
+        retrying: manualSummary.retrying,
+        failed:
+          manualSummary.failed +
+          (manualClaimError ? 1 : 0) +
+          1,
+        automatic: automaticSummary,
+        manual: manualSummary,
+      },
       500
     );
   }
@@ -442,11 +825,29 @@ Deno.serve(async (request) => {
     }
   }
 
-  return jsonResponse({
-    success: true,
-    claimed: reminders.length,
-    sent: results.filter((result) => result.status === "sent").length,
-    skipped: results.filter((result) => result.status === "skipped").length,
-    failed: results.filter((result) => result.status === "failed").length,
-  });
+  const automaticSummary = {
+    ...summarizeReminderResults(reminders.length, results),
+    preparationFailed: false,
+  };
+  const manualSummary = {
+    ...summarizeReminderResults(manualReminders.length, manualResults),
+    preparationFailed: Boolean(manualClaimError),
+  };
+
+  return jsonResponse(
+    {
+      success: !manualClaimError,
+      claimed: automaticSummary.claimed + manualSummary.claimed,
+      sent: automaticSummary.sent + manualSummary.sent,
+      skipped: automaticSummary.skipped + manualSummary.skipped,
+      retrying: automaticSummary.retrying + manualSummary.retrying,
+      failed:
+        automaticSummary.failed +
+        manualSummary.failed +
+        (manualClaimError ? 1 : 0),
+      automatic: automaticSummary,
+      manual: manualSummary,
+    },
+    manualClaimError ? 500 : 200
+  );
 });
