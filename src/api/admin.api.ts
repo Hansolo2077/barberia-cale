@@ -3,6 +3,7 @@ import {
   createQueryString,
 } from "./api-client";
 import type {
+  AttendanceStatus,
   AppointmentStatus,
   Pagination,
 } from "./appointments.api";
@@ -14,6 +15,10 @@ export type AdminAppointment = {
   time: string;
   status: AppointmentStatus;
   createdAt: string;
+  clientAttendanceConfirmedAt: string | null;
+  attendanceStatus: AttendanceStatus;
+  canConfirmAttendance: boolean;
+  reminderSentAt: string | null;
   canAccept?: boolean;
   canComplete?: boolean;
   canAdminCancel?: boolean;

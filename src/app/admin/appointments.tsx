@@ -47,6 +47,7 @@ import { useAuth } from "../../context/AuthContext";
 
 import BackButton from "../../components/BackButton";
 import AppIcon from "../../components/AppIcon";
+import AttendanceBadge from "../../components/AttendanceBadge";
 
 import {
     COLORS,
@@ -1880,6 +1881,15 @@ export default function AdminAppointmentsScreen() {
                       </View>
                     </View>
 
+                    {appointment.attendanceStatus &&
+                      appointment.attendanceStatus !== "NOT_APPLICABLE" && (
+                        <View style={styles.attendanceBadgeRow}>
+                          <AttendanceBadge
+                            status={appointment.attendanceStatus}
+                          />
+                        </View>
+                      )}
+
                     {expanded && (
                       <View style={styles.expandedDetails}>
                         <View style={styles.detailIcon}>
@@ -2964,6 +2974,10 @@ const styles =
       flexDirection: "row",
       flexWrap: "wrap",
       gap: SPACING.lg,
+    },
+
+    attendanceBadgeRow: {
+      marginTop: SPACING.sm,
     },
 
     infoBlock: {

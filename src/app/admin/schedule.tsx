@@ -42,6 +42,7 @@ import { ApiError } from "../../api/api-client";
 
 import BackButton from "../../components/BackButton";
 import AppIcon from "../../components/AppIcon";
+import AttendanceBadge from "../../components/AttendanceBadge";
 import WebDateInput from "../../components/WebDateInput";
 
 import {
@@ -1874,6 +1875,15 @@ export default function AdminScheduleScreen() {
                         </Text>
                       </View>
 
+                      {appointment.attendanceStatus &&
+                        appointment.attendanceStatus !== "NOT_APPLICABLE" && (
+                          <View style={styles.attendanceBadgeRow}>
+                            <AttendanceBadge
+                              status={appointment.attendanceStatus}
+                            />
+                          </View>
+                        )}
+
                       {expanded && (
                         <View style={styles.expandedDetails}>
                           <View style={styles.detailIcon}>
@@ -2914,6 +2924,10 @@ const styles =
       borderRadius: RADIUS.md,
       padding: SPACING.sm,
       marginTop: SPACING.md,
+    },
+
+    attendanceBadgeRow: {
+      marginTop: SPACING.sm,
     },
 
     serviceIcon: {

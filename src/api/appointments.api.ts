@@ -10,6 +10,12 @@ export type AppointmentStatus =
   | "CANCELLED"
   | "COMPLETED";
 
+export type AttendanceStatus =
+  | "CONFIRMED"
+  | "AWAITING"
+  | "NO_RESPONSE"
+  | "NOT_APPLICABLE";
+
 export type BookingPolicy = {
   minLeadHours: number;
   maxActivePerDay: number;
@@ -53,6 +59,9 @@ export type UserAppointment = {
   time: string;
   status: AppointmentStatus;
   createdAt: string;
+  clientAttendanceConfirmedAt: string | null;
+  attendanceStatus: AttendanceStatus;
+  canConfirmAttendance: boolean;
   cancelUntil?: string;
   canCancel?: boolean;
   isPast?: boolean;
@@ -143,6 +152,19 @@ export function cancelAppointment(
 ) {
   return apiRequest<AppointmentMutationResponse>(
     `/appointments/${appointmentId}/cancel`,
+    {
+      method: "PATCH",
+      token,
+    }
+  );
+}
+
+export function confirmAttendance(
+  token: string,
+  appointmentId: number
+) {
+  return apiRequest<AppointmentMutationResponse>(
+    `/appointments/${appointmentId}/confirm-attendance`,
     {
       method: "PATCH",
       token,

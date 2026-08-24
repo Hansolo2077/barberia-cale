@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "848425516444",
+    "project_id": "barberia-cale",
+    "storage_bucket": "barberia-cale.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848425516444:android:e71f817d24a1f7efe1dc59",
+        "android_client_info": {
+          "package_name": "com.hanssel957.barberiacale"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRnM9IxV7nR6rNs-nqxgqogyjnZJrrezM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

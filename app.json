@@ -14,7 +14,8 @@
     },
     "android": {
       "predictiveBackGestureEnabled": true,
-      "package": "com.hanssel957.barberiacale"
+      "package": "com.hanssel957.barberiacale",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -35,7 +36,8 @@
         }
       ],
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -9,6 +9,8 @@ const appointmentRoutes =
   require("./routes/appointment.routes");
 const adminRoutes =
   require("./routes/admin.routes");
+const notificationRoutes =
+  require("./routes/notification.routes");
 
 const app = express();
 
@@ -81,6 +83,11 @@ app.use(
 app.use(
   "/api/appointments",
   appointmentRoutes
+);
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
 );
 
 app.use(

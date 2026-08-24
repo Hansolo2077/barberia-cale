@@ -25,6 +25,44 @@ const AVAILABLE_TIMES = [
   "17:00",
 ];
 
+function getAttendanceProjection(
+  tableAlias = "",
+  { includeReminderSentAt = false } = {}
+) {
+  const prefix = tableAlias ? `${tableAlias}.` : "";
+  const appointmentAt =
+    `(${prefix}appointment_date + ${prefix}appointment_time)`;
+
+  return `
+    ${prefix}client_attendance_confirmed_at
+      AS "clientAttendanceConfirmedAt",
+
+    CASE
+      WHEN ${prefix}status NOT IN ('ACCEPTED', 'COMPLETED')
+        THEN 'NOT_APPLICABLE'
+      WHEN ${prefix}client_attendance_confirmed_at IS NOT NULL
+        THEN 'CONFIRMED'
+      WHEN ${prefix}status = 'ACCEPTED'
+        AND ${appointmentAt} >
+          (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+        THEN 'AWAITING'
+      WHEN ${prefix}status IN ('ACCEPTED', 'COMPLETED')
+        THEN 'NO_RESPONSE'
+      ELSE 'NOT_APPLICABLE'
+    END AS "attendanceStatus",
+
+    (
+      ${prefix}client_attendance_confirmed_at IS NULL
+      AND ${prefix}status = 'ACCEPTED'
+      AND ${appointmentAt} >
+        (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+    ) AS "canConfirmAttendance"
+    ${includeReminderSentAt
+      ? `,\n\n    ${prefix}reminder_sent_at AS "reminderSentAt"`
+      : ""}
+  `;
+}
+
 async function getBookingEligibility(
   queryable,
   userId,
@@ -416,6 +454,8 @@ async function createAppointment({
 
             status,
 
+            ${getAttendanceProjection()},
+
             created_at AS "createdAt"
         `,
         [
@@ -495,6 +535,8 @@ async function getUserAppointments(
         ) AS time,
 
         status,
+
+        ${getAttendanceProjection()},
 
         created_at AS "createdAt",
 
@@ -588,7 +630,10 @@ async function cancelAppointment(
   const cancelResult = await db.query(
     `
       UPDATE appointments
-      SET status = 'CANCELLED'
+      SET
+        status = 'CANCELLED',
+        reminder_claimed_at = NULL,
+        reminder_claim_token = NULL
       WHERE id = $1
         AND user_id = $2
         AND status IN ('PENDING', 'ACCEPTED')
@@ -603,6 +648,7 @@ async function cancelAppointment(
         TO_CHAR(appointment_date, 'YYYY-MM-DD') AS date,
         TO_CHAR(appointment_time, 'HH24:MI') AS time,
         status,
+        ${getAttendanceProjection()},
         created_at AS "createdAt",
         (
           (appointment_date + appointment_time)
@@ -694,6 +740,139 @@ async function cancelAppointment(
   throw error;
 }
 
+/*
+ * Registra de forma idempotente la confirmación de asistencia.
+ * La mutación autoritativa incluye ownership, estado y tiempo para
+ * evitar carreras con cancelaciones o cambios administrativos.
+ */
+async function confirmAppointmentAttendance(
+  userId,
+  appointmentId
+) {
+  const updateResult = await db.query(
+    `
+      UPDATE appointments
+      SET
+        client_attendance_confirmed_at = COALESCE(
+          client_attendance_confirmed_at,
+          NOW()
+        ),
+        reminder_claimed_at = NULL,
+        reminder_claim_token = NULL
+      WHERE id = $1
+        AND user_id = $2
+        AND status = 'ACCEPTED'
+        AND (appointment_date + appointment_time) > (
+          NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+        )
+      RETURNING
+        id,
+        user_id AS "userId",
+        service,
+        TO_CHAR(appointment_date, 'YYYY-MM-DD') AS date,
+        TO_CHAR(appointment_time, 'HH24:MI') AS time,
+        status,
+        ${getAttendanceProjection()},
+        created_at AS "createdAt",
+        (
+          (appointment_date + appointment_time)
+          - INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+        ) AT TIME ZONE '${BUSINESS_TIME_ZONE}' AS "cancelUntil",
+        (
+          (appointment_date + appointment_time) >= (
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            + INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+          )
+        ) AS "canCancel"
+    `,
+    [appointmentId, userId]
+  );
+
+  if (updateResult.rows.length > 0) {
+    return updateResult.rows[0];
+  }
+
+  const result = await db.query(
+    `
+      SELECT
+        id,
+        user_id AS "userId",
+        service,
+        TO_CHAR(appointment_date, 'YYYY-MM-DD') AS date,
+        TO_CHAR(appointment_time, 'HH24:MI') AS time,
+        status,
+        ${getAttendanceProjection()},
+        created_at AS "createdAt",
+        (
+          (appointment_date + appointment_time)
+          - INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+        ) AT TIME ZONE '${BUSINESS_TIME_ZONE}' AS "cancelUntil",
+        (
+          status IN ('PENDING', 'ACCEPTED')
+          AND (appointment_date + appointment_time) >= (
+            (NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}')
+            + INTERVAL '${BOOKING_POLICY.cancellationWindowMinutes} minutes'
+          )
+        ) AS "canCancel",
+        (
+          (appointment_date + appointment_time) > (
+            NOW() AT TIME ZONE '${BUSINESS_TIME_ZONE}'
+          )
+        ) AS "isFuture"
+      FROM appointments
+      WHERE id = $1
+        AND user_id = $2
+      LIMIT 1
+    `,
+    [appointmentId, userId]
+  );
+
+  const appointment = result.rows[0];
+
+  if (!appointment) {
+    const error = new Error(
+      "La cita no existe o no pertenece a tu cuenta."
+    );
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const {
+    isFuture,
+    ...publicAppointment
+  } = appointment;
+
+  if (
+    appointment.clientAttendanceConfirmedAt &&
+    (appointment.status === "ACCEPTED" ||
+      appointment.status === "COMPLETED")
+  ) {
+    return publicAppointment;
+  }
+
+  if (appointment.status !== "ACCEPTED") {
+    const error = new Error(
+      "Solo puedes confirmar asistencia a una cita aceptada."
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  if (!isFuture) {
+    const error = new Error(
+      "Ya no puedes confirmar asistencia porque la cita inició."
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const error = new Error(
+    "La cita cambió mientras confirmabas tu asistencia. Actualiza e inténtalo nuevamente."
+  );
+  error.statusCode = 409;
+  throw error;
+}
+
 function getAdminSearchCriteria(search) {
   const normalizedSearch = search.trim();
   const idMatch = normalizedSearch.match(/^#?(\d+)$/);
@@ -758,6 +937,10 @@ async function getAllAppointments({
         ) AS time,
 
         a.status,
+
+        ${getAttendanceProjection("a", {
+          includeReminderSentAt: true,
+        })},
 
         (
           a.appointment_date + a.appointment_time
@@ -1040,6 +1223,10 @@ async function acceptAppointment(
 
           status,
 
+          ${getAttendanceProjection("", {
+            includeReminderSentAt: true,
+          })},
+
           created_at AS "createdAt"
       `,
       [appointmentId]
@@ -1112,7 +1299,10 @@ async function rejectAppointment(
       `
         UPDATE appointments
 
-        SET status = 'REJECTED'
+        SET
+          status = 'REJECTED',
+          reminder_claimed_at = NULL,
+          reminder_claim_token = NULL
 
         WHERE id = $1
           AND status = 'PENDING'
@@ -1135,6 +1325,10 @@ async function rejectAppointment(
           ) AS time,
 
           status,
+
+          ${getAttendanceProjection("", {
+            includeReminderSentAt: true,
+          })},
 
           created_at AS "createdAt"
       `,
@@ -1200,6 +1394,10 @@ async function getAppointmentsByDateRange(
         ) AS time,
 
         a.status,
+
+        ${getAttendanceProjection("a", {
+          includeReminderSentAt: true,
+        })},
 
         (
           a.appointment_date + a.appointment_time
@@ -1469,7 +1667,10 @@ async function cancelAppointmentByAdmin(
       `
         UPDATE appointments
 
-        SET status = 'CANCELLED'
+        SET
+          status = 'CANCELLED',
+          reminder_claimed_at = NULL,
+          reminder_claim_token = NULL
 
         WHERE id = $1
 
@@ -1503,6 +1704,10 @@ async function cancelAppointmentByAdmin(
           ) AS time,
 
           status,
+
+          ${getAttendanceProjection("", {
+            includeReminderSentAt: true,
+          })},
 
           created_at AS "createdAt"
       `,
@@ -1604,7 +1809,10 @@ async function completeAppointment(
       `
         UPDATE appointments
 
-        SET status = 'COMPLETED'
+        SET
+          status = 'COMPLETED',
+          reminder_claimed_at = NULL,
+          reminder_claim_token = NULL
 
         WHERE id = $1
 
@@ -1639,6 +1847,10 @@ async function completeAppointment(
 
           status,
 
+          ${getAttendanceProjection("", {
+            includeReminderSentAt: true,
+          })},
+
           created_at AS "createdAt"
       `,
       [appointmentId]
@@ -1667,6 +1879,7 @@ module.exports = {
   createAppointment,
   getUserAppointments,
   cancelAppointment,
+  confirmAppointmentAttendance,
   getAllAppointments,
   getAppointmentsByDateRange,
   acceptAppointment,

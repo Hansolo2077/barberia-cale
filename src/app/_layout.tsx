@@ -12,6 +12,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { AuthProvider } from "../context/AuthContext";
+import { NotificationProvider } from "../context/NotificationContext";
 import FeedbackProvider from "../components/FeedbackProvider";
 import AppErrorFallback from "../components/AppErrorFallback";
 
@@ -37,15 +38,17 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <FeedbackProvider>
-          <StatusBar style="dark" />
+        <NotificationProvider>
+          <FeedbackProvider>
+            <StatusBar style="dark" />
 
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
-        </FeedbackProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            />
+          </FeedbackProvider>
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

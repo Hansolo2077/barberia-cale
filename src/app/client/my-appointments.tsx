@@ -31,11 +31,13 @@ import {
 
 import {
     cancelAppointment,
+    confirmAttendance,
     getMyAppointments,
 } from "../../api/appointments.api";
 import { ApiError } from "../../api/api-client";
 
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 import {
     formatDisplayDate,
@@ -65,6 +67,13 @@ type Appointment = {
     | "CANCELLED"
     | "COMPLETED";
   createdAt: string;
+  clientAttendanceConfirmedAt: string | null;
+  attendanceStatus:
+    | "CONFIRMED"
+    | "AWAITING"
+    | "NO_RESPONSE"
+    | "NOT_APPLICABLE";
+  canConfirmAttendance: boolean;
   cancelUntil?: string;
   canCancel?: boolean;
   isPast?: boolean;
@@ -127,6 +136,13 @@ function formatCancellationDeadline(appointment: Appointment) {
 export default function MyAppointmentsScreen() {
   const router = useRouter();
   const { token } = useAuth();
+  const {
+    permissionStatus,
+    registrationStatus,
+    isSupported: notificationsSupported,
+    isRegistering: registeringNotifications,
+    enableNotifications,
+  } = useNotifications();
 
   const [
     appointments,
@@ -173,6 +189,12 @@ export default function MyAppointmentsScreen() {
     useState<number | null>(null);
 
   const cancellationInFlightRef = useRef<number | null>(null);
+
+  const [confirmingAttendanceId, setConfirmingAttendanceId] =
+    useState<number | null>(null);
+
+  const attendanceConfirmationInFlightRef =
+    useRef<number | null>(null);
 
   const [currentTime, setCurrentTime] =
     useState(() => Date.now());
@@ -373,7 +395,10 @@ export default function MyAppointmentsScreen() {
   function confirmCancel(
     appointment: Appointment
   ) {
-    if (cancellationInFlightRef.current !== null) {
+    if (
+      cancellationInFlightRef.current !== null ||
+      attendanceConfirmationInFlightRef.current !== null
+    ) {
       return;
     }
 
@@ -436,7 +461,11 @@ export default function MyAppointmentsScreen() {
   async function handleCancel(
   appointmentId: number
 ) {
-  if (!token || cancellationInFlightRef.current !== null) {
+  if (
+    !token ||
+    cancellationInFlightRef.current !== null ||
+    attendanceConfirmationInFlightRef.current !== null
+  ) {
     return;
   }
 
@@ -502,6 +531,99 @@ export default function MyAppointmentsScreen() {
   }
 }
 
+  async function handleConfirmAttendance(
+    appointmentId: number
+  ) {
+    if (
+      !token ||
+      attendanceConfirmationInFlightRef.current !== null ||
+      cancellationInFlightRef.current !== null
+    ) {
+      return;
+    }
+
+    attendanceConfirmationInFlightRef.current = appointmentId;
+    setConfirmingAttendanceId(appointmentId);
+
+    try {
+      setError("");
+
+      const result = await confirmAttendance(token, appointmentId);
+
+      setAppointments((current) =>
+        current.map((appointment) =>
+          appointment.id === appointmentId
+            ? {
+                ...appointment,
+                ...(result.appointment ?? {}),
+                attendanceStatus: "CONFIRMED",
+                canConfirmAttendance: false,
+              }
+            : appointment
+        )
+      );
+
+      showMessage(
+        "Asistencia confirmada",
+        "Gracias por avisarnos. Te esperamos en Barbería Cale.",
+        { kind: "success" }
+      );
+
+      void loadAppointments(1, "background");
+    } catch (confirmationError) {
+      if (isUnauthorizedError(confirmationError)) {
+        return;
+      }
+
+      showMessage(
+        "No se pudo confirmar la asistencia",
+        confirmationError instanceof Error
+          ? confirmationError.message
+          : "Inténtalo nuevamente en unos momentos.",
+        { kind: "error" }
+      );
+
+      // La respuesta pudo aplicarse antes de un timeout. Reconciliamos con
+      // el servidor para mantener la acción idempotente y evitar otro toque.
+      void loadAppointments(1, "background");
+    } finally {
+      if (
+        attendanceConfirmationInFlightRef.current === appointmentId
+      ) {
+        attendanceConfirmationInFlightRef.current = null;
+      }
+
+      setConfirmingAttendanceId((current) =>
+        current === appointmentId ? null : current
+      );
+    }
+  }
+
+  async function handleEnableReminders() {
+    if (!notificationsSupported || registeringNotifications) {
+      return;
+    }
+
+    const enabled = await enableNotifications();
+
+    if (enabled) {
+      showMessage(
+        "Recordatorios activados",
+        "Te avisaremos sobre las citas que necesiten tu confirmación.",
+        { kind: "success" }
+      );
+      return;
+    }
+
+    showMessage(
+      "No pudimos activar los recordatorios",
+      permissionStatus === "denied"
+        ? "Permite las notificaciones desde los ajustes de tu dispositivo e inténtalo nuevamente."
+        : "Revisa tu conexión e inténtalo nuevamente. Tus citas siguen guardadas.",
+      { kind: "info" }
+    );
+  }
+
   const isPast = (appointment: Appointment) =>
     appointment.isPast === true ||
     isAppointmentPast(
@@ -534,6 +656,12 @@ export default function MyAppointmentsScreen() {
       .sort((a, b) =>
         appointmentDateTimeKey(b).localeCompare(appointmentDateTimeKey(a))
       );
+
+  const shouldOfferReminders =
+    notificationsSupported &&
+    selectedView === "UPCOMING" &&
+    upcomingAppointments.length > 0 &&
+    registrationStatus !== "registered";
 
   const visibleAppointments =
     selectedView === "UPCOMING"
@@ -748,6 +876,67 @@ export default function MyAppointmentsScreen() {
         </Pressable>
       </View>
 
+      {shouldOfferReminders && (
+        <View style={styles.remindersOptInCard}>
+          <View style={styles.remindersOptInIcon}>
+            <AppIcon
+              name={{
+                ios: "bell",
+                android: "notifications_none",
+                web: "notifications_none",
+              }}
+              size={21}
+              color={COLORS.primary}
+            />
+          </View>
+
+          <View style={styles.remindersOptInContent}>
+            <Text style={styles.remindersOptInTitle}>
+              Recibe el recordatorio de tu cita
+            </Text>
+            <Text style={styles.remindersOptInText}>
+              Te avisaremos una hora antes para que puedas confirmar tu asistencia.
+            </Text>
+
+            <Pressable
+              style={[
+                styles.remindersOptInButton,
+                registeringNotifications && styles.disabledButton,
+              ]}
+              disabled={registeringNotifications}
+              onPress={() => void handleEnableReminders()}
+              accessibilityRole="button"
+              accessibilityLabel="Activar recordatorios de citas"
+              accessibilityState={{
+                disabled: registeringNotifications,
+                busy: registeringNotifications,
+              }}
+            >
+              {registeringNotifications ? (
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              ) : (
+                <AppIcon
+                  name={{
+                    ios: "bell.badge",
+                    android: "notifications_active",
+                    web: "notifications_active",
+                  }}
+                  size={17}
+                  color={COLORS.primary}
+                />
+              )}
+              <Text style={styles.remindersOptInButtonText}>
+                {registeringNotifications
+                  ? "Activando..."
+                  : registrationStatus === "failed"
+                    ? "Reintentar activación"
+                    : "Activar recordatorios"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       {error && appointments.length > 0 ? (
         <View style={styles.inlineError} accessibilityRole="alert">
           <Text style={styles.inlineErrorText}>
@@ -941,8 +1130,25 @@ export default function MyAppointmentsScreen() {
                 cancellingId ===
                 appointment.id;
 
-              const cancellationInProgress =
-                cancellingId !== null;
+              const isConfirmingAttendance =
+                confirmingAttendanceId === appointment.id;
+
+              const appointmentActionInProgress =
+                cancellingId !== null || confirmingAttendanceId !== null;
+
+              const attendanceStatus =
+                appointment.attendanceStatus ??
+                (appointment.clientAttendanceConfirmedAt
+                  ? "CONFIRMED"
+                  : appointment.status === "ACCEPTED" && !appointmentIsPast
+                    ? "AWAITING"
+                    : "NOT_APPLICABLE");
+
+              const canConfirmAttendance =
+                appointment.status === "ACCEPTED" &&
+                !appointmentIsPast &&
+                attendanceStatus === "AWAITING" &&
+                appointment.canConfirmAttendance !== false;
 
               return (
                 <View
@@ -1103,16 +1309,17 @@ export default function MyAppointmentsScreen() {
                       style={[
                         styles.cancelButton,
 
-                        cancellationInProgress &&
+                        appointmentActionInProgress &&
                           styles.disabledButton,
                       ]}
                       disabled={
-                        cancellationInProgress
+                        appointmentActionInProgress
                       }
                       accessibilityRole="button"
                       accessibilityLabel={`Cancelar cita de ${appointment.service}`}
                       accessibilityState={{
-                        disabled: cancellationInProgress,
+                        disabled: appointmentActionInProgress,
+                        busy: isCancelling,
                       }}
                       onPress={() =>
                         confirmCancel(
@@ -1187,7 +1394,9 @@ export default function MyAppointmentsScreen() {
                   )}
 
                   {appointment.status ===
-                    "ACCEPTED" && !appointmentIsPast && (
+                    "ACCEPTED" &&
+                    !appointmentIsPast &&
+                    attendanceStatus !== "CONFIRMED" && (
                     <View
                       style={
                         styles.confirmedNotice
@@ -1208,10 +1417,102 @@ export default function MyAppointmentsScreen() {
                           styles.confirmedNoticeText
                         }
                       >
-                        Cita confirmada por la barbería.
+                        Cita aceptada por la barbería.
                       </Text>
                     </View>
                   )}
+
+                  {appointment.status === "ACCEPTED" &&
+                    attendanceStatus === "CONFIRMED" && (
+                      <View style={styles.confirmedNotice}>
+                        <AppIcon
+                          name={{
+                            ios: "checkmark.seal.fill",
+                            android: "verified",
+                            web: "verified",
+                          }}
+                          size={18}
+                          color={COLORS.success}
+                        />
+
+                        <Text style={styles.confirmedNoticeText}>
+                          Asistencia confirmada. Te esperamos en Barbería Cale.
+                        </Text>
+                      </View>
+                    )}
+
+                  {canConfirmAttendance && (
+                    <View style={styles.attendancePrompt}>
+                      <Text style={styles.attendancePromptTitle}>
+                        ¿Confirmas que asistirás?
+                      </Text>
+
+                      <Text style={styles.attendancePromptText}>
+                        Tu respuesta ayuda a la barbería a preparar tu visita.
+                      </Text>
+
+                      <Pressable
+                        style={[
+                          styles.attendanceConfirmButton,
+                          appointmentActionInProgress && styles.disabledButton,
+                        ]}
+                        disabled={appointmentActionInProgress}
+                        onPress={() =>
+                          void handleConfirmAttendance(appointment.id)
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel="Confirmar que asistiré a la cita"
+                        accessibilityState={{
+                          disabled: appointmentActionInProgress,
+                          busy: isConfirmingAttendance,
+                        }}
+                      >
+                        {isConfirmingAttendance ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={COLORS.onPrimary}
+                          />
+                        ) : (
+                          <AppIcon
+                            name={{
+                              ios: "checkmark",
+                              android: "check",
+                              web: "check",
+                            }}
+                            size={18}
+                            color={COLORS.onPrimary}
+                          />
+                        )}
+
+                        <Text style={styles.attendanceConfirmButtonText}>
+                          {isConfirmingAttendance
+                            ? "Confirmando..."
+                            : "Confirmar asistencia"}
+                        </Text>
+                      </Pressable>
+
+                    </View>
+                  )}
+
+                  {appointment.status === "ACCEPTED" &&
+                    (attendanceStatus === "NO_RESPONSE" ||
+                      (attendanceStatus === "AWAITING" &&
+                        !canConfirmAttendance)) && (
+                      <View style={styles.attendanceNeutralNotice}>
+                        <AppIcon
+                          name={{
+                            ios: "minus.circle",
+                            android: "remove_circle_outline",
+                            web: "remove_circle_outline",
+                          }}
+                          size={18}
+                          color={COLORS.textSecondary}
+                        />
+                        <Text style={styles.attendanceNeutralText}>
+                          No se recibió confirmación de asistencia.
+                        </Text>
+                      </View>
+                    )}
 
                   {hasCancellableStatus &&
                     cancellationExpired &&
@@ -1446,6 +1747,65 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom:
       SPACING.xl,
+  },
+
+  remindersOptInCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: SPACING.sm,
+    backgroundColor: COLORS.accentSoft,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginTop: -SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+
+  remindersOptInIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  remindersOptInContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  remindersOptInTitle: {
+    color: COLORS.text,
+    fontSize: FONT.small,
+    lineHeight: 20,
+    fontWeight: "800",
+  },
+
+  remindersOptInText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+
+  remindersOptInButton: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+
+  remindersOptInButtonText: {
+    color: COLORS.primary,
+    fontSize: FONT.small,
+    fontWeight: "800",
   },
 
   tabButton: {
@@ -1705,6 +2065,70 @@ const styles = StyleSheet.create({
       COLORS.success,
     fontSize:
       FONT.caption,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+
+  attendancePrompt: {
+    marginTop: SPACING.sm,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderStrong,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primarySoft,
+  },
+
+  attendancePromptTitle: {
+    color: COLORS.text,
+    fontSize: FONT.small,
+    lineHeight: 20,
+    fontWeight: "800",
+  },
+
+  attendancePromptText: {
+    marginTop: 4,
+    color: COLORS.textSecondary,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+  },
+
+  attendanceConfirmButton: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 10,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.primary,
+  },
+
+  attendanceConfirmButtonText: {
+    color: COLORS.onPrimary,
+    fontSize: FONT.small,
+    fontWeight: "800",
+  },
+
+  attendanceNeutralNotice: {
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surface,
+  },
+
+  attendanceNeutralText: {
+    flex: 1,
+    color: COLORS.textSecondary,
+    fontSize: FONT.caption,
     lineHeight: 18,
     fontWeight: "600",
   },

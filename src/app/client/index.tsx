@@ -20,6 +20,7 @@ import UserMenu from "../../components/UserMenu";
 import AppIcon from "../../components/AppIcon";
 
 import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 import { getMyAppointments } from "../../api/appointments.api";
 import {
@@ -74,6 +75,13 @@ export default function ClientHomeScreen() {
     token,
     signOut,
   } = useAuth();
+  const {
+    permissionStatus,
+    registrationStatus,
+    isSupported: notificationsSupported,
+    isRegistering: registeringNotifications,
+    enableNotifications,
+  } = useNotifications();
 
   const [nextAppointment, setNextAppointment] =
     useState<AppointmentSummary | null>(null);
@@ -205,6 +213,31 @@ export default function ClientHomeScreen() {
     }
   }
 
+  async function handleEnableReminders() {
+    if (!notificationsSupported || registeringNotifications) {
+      return;
+    }
+
+    const enabled = await enableNotifications();
+
+    if (enabled) {
+      showMessage(
+        "Recordatorios activados",
+        "Te avisaremos cuando sea momento de confirmar tu asistencia.",
+        { kind: "success" }
+      );
+      return;
+    }
+
+    showMessage(
+      "No pudimos activar los recordatorios",
+      permissionStatus === "denied"
+        ? "Permite las notificaciones desde los ajustes de tu dispositivo e inténtalo nuevamente."
+        : "Revisa tu conexión e inténtalo nuevamente. Tu cita sigue guardada.",
+      { kind: "info" }
+    );
+  }
+
   return (
     <ScrollView
       contentContainerStyle={
@@ -262,15 +295,71 @@ export default function ClientHomeScreen() {
             </Text>
 
             {reservationCreated && (
-              <Pressable
-                style={styles.successAction}
-                accessibilityRole="button"
-                accessibilityLabel="Ver mis citas"
-                onPress={() => router.replace("/client/my-appointments")}
-              >
-                <Text style={styles.successActionText}>Ver mis citas</Text>
-              </Pressable>
+              <View style={styles.successActions}>
+                <Pressable
+                  style={styles.successAction}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver mis citas"
+                  onPress={() => router.replace("/client/my-appointments")}
+                >
+                  <Text style={styles.successActionText}>Ver mis citas</Text>
+                </Pressable>
+
+                {notificationsSupported &&
+                  registrationStatus !== "registered" && (
+                    <Pressable
+                      style={[
+                        styles.reminderSuccessAction,
+                        registeringNotifications && styles.disabledAction,
+                      ]}
+                      disabled={registeringNotifications}
+                      accessibilityRole="button"
+                      accessibilityLabel="Activar recordatorios para la cita"
+                      accessibilityState={{
+                        disabled: registeringNotifications,
+                        busy: registeringNotifications,
+                      }}
+                      onPress={() => void handleEnableReminders()}
+                    >
+                      <AppIcon
+                        name={{
+                          ios: "bell",
+                          android: "notifications_none",
+                          web: "notifications_none",
+                        }}
+                        size={17}
+                        color={COLORS.primary}
+                      />
+                      <Text style={styles.reminderSuccessActionText}>
+                        {registeringNotifications
+                          ? "Activando..."
+                          : registrationStatus === "failed"
+                            ? "Reintentar recordatorios"
+                            : "Activar recordatorios"}
+                      </Text>
+                    </Pressable>
+                  )}
+              </View>
             )}
+
+            {reservationCreated &&
+              notificationsSupported &&
+              registrationStatus === "registered" && (
+                <View style={styles.remindersReadyRow}>
+                  <AppIcon
+                    name={{
+                      ios: "bell.fill",
+                      android: "notifications_active",
+                      web: "notifications_active",
+                    }}
+                    size={16}
+                    color={COLORS.success}
+                  />
+                  <Text style={styles.remindersReadyText}>
+                    Recordatorios activados para este dispositivo.
+                  </Text>
+                </View>
+              )}
           </View>
 
           <Pressable
@@ -668,10 +757,55 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  successActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+
   successActionText: {
     color: COLORS.primary,
     fontSize: FONT.small,
     fontWeight: "800",
+  },
+
+  reminderSuccessAction: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+  },
+
+  reminderSuccessActionText: {
+    color: COLORS.primary,
+    fontSize: FONT.small,
+    fontWeight: "800",
+  },
+
+  disabledAction: {
+    opacity: 0.55,
+  },
+
+  remindersReadyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+  },
+
+  remindersReadyText: {
+    flex: 1,
+    color: COLORS.success,
+    fontSize: FONT.caption,
+    lineHeight: 18,
+    fontWeight: "700",
   },
 
   dismissButton: {

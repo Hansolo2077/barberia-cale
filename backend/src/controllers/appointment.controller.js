@@ -276,10 +276,55 @@ async function cancel(
   }
 }
 
+async function confirmAttendance(
+  req,
+  res
+) {
+  try {
+    const appointmentId = Number(req.params.id);
+
+    if (
+      !Number.isSafeInteger(appointmentId) ||
+      appointmentId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Identificador de cita inválido.",
+      });
+    }
+
+    const appointment = await appointmentService
+      .confirmAppointmentAttendance(
+        req.user.userId,
+        appointmentId
+      );
+
+    return res.json({
+      success: true,
+      message:
+        "Tu asistencia quedó confirmada.",
+      appointment,
+    });
+  } catch (error) {
+    console.error(
+      "ERROR CONFIRMANDO ASISTENCIA:",
+      error
+    );
+
+    return sendControllerError(
+      res,
+      error,
+      "No se pudo confirmar tu asistencia."
+    );
+  }
+}
+
 module.exports = {
   availability,
   nextAvailability,
   create,
   myAppointments,
   cancel,
+  confirmAttendance,
 };

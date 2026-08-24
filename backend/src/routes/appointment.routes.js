@@ -33,4 +33,9 @@ router.patch(
   appointmentController.cancel
 );
 
+router.patch(
+  "/:id/confirm-attendance",
+  appointmentController.confirmAttendance
+);
+
 module.exports = router;
