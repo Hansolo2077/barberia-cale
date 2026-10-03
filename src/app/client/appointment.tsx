@@ -756,9 +756,10 @@ export default function AppointmentScreen() {
                 minimumDate={
                   getTomorrowDate()
                 }
-                onChange={
+                onValueChange={
                   handleDateChange
                 }
+                onDismiss={() => setShowDatePicker(false)}
               />
             )}
 
