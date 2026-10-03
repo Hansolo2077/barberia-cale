@@ -1198,9 +1198,10 @@ export default function AdminScheduleScreen() {
                 }
                 mode="date"
                 display="default"
-                onChange={
+                onValueChange={
                   handleStartDateChange
                 }
+                onDismiss={() => setShowStartPicker(false)}
               />
             )}
           </>
@@ -1275,9 +1276,10 @@ export default function AdminScheduleScreen() {
                 minimumDate={
                   selectedStartDate
                 }
-                onChange={
+                onValueChange={
                   handleEndDateChange
                 }
+                onDismiss={() => setShowEndPicker(false)}
               />
             )}
           </>
