@@ -1,0 +1,88 @@
+@startuml
+title Barbería Cale — Estados y ciclo de vida de una cita
+
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam stateBorderColor #743B2F
+skinparam stateBackgroundColor #FFFDF9
+skinparam stateStartColor #743B2F
+skinparam stateEndColor #743B2F
+
+[*] --> PENDING : CLIENT crea una reserva válida\nPOST /api/appointments
+
+state "PENDING" as PENDING #FFF8ED
+state "ACCEPTED" as ACCEPTED #F0F5F0
+state "REJECTED" as REJECTED #F8EDEC
+state "CANCELLED" as CANCELLED #F8EDEC
+state "COMPLETED" as COMPLETED #EEEAF5
+
+PENDING --> ACCEPTED : ADMIN acepta\nsolo si la cita es futura
+PENDING --> REJECTED : ADMIN rechaza
+PENDING --> CANCELLED : CLIENT cancela su cita\n>= 60 min antes
+
+ACCEPTED --> CANCELLED : CLIENT cancela >= 60 min antes\no ADMIN cancela mientras sea futura
+ACCEPTED --> COMPLETED : ADMIN completa\ncuando fecha/hora <= NOW
+
+REJECTED --> [*]
+CANCELLED --> [*]
+COMPLETED --> [*]
+
+note right of PENDING
+  Estado inicial y activo.
+  Bloquea fecha + hora mediante el índice parcial.
+  Una solicitud vencida no se transforma automáticamente;
+  ya no puede aceptarse, pero ADMIN puede rechazarla.
+end note
+
+note right of ACCEPTED
+  Estado activo y habilitado para:
+  • confirmación de asistencia del CLIENT;
+  • recordatorio automático una hora antes;
+  • recordatorios manuales ADMIN;
+  • finalización o cancelación según el tiempo.
+end note
+
+note bottom of REJECTED
+  Terminal. Libera el horario.
+end note
+
+note bottom of CANCELLED
+  Terminal. Libera el horario.
+  Toda mutación limpia el claim automático.
+end note
+
+note bottom of COMPLETED
+  Terminal para el ciclo de la cita.
+  Conserva si el cliente había confirmado asistencia.
+end note
+
+state "Atributo de asistencia\n(ortogonal al status)" as attendance {
+  [*] --> NOT_APPLICABLE
+  NOT_APPLICABLE --> AWAITING : status = ACCEPTED\ny cita futura
+  AWAITING --> CONFIRMED : CLIENT confirma\nacción idempotente
+  AWAITING --> NO_RESPONSE : llega la hora\nsin confirmación
+  CONFIRMED --> CONFIRMED : confirmación repetida
+}
+
+ACCEPTED -[dashed]-> attendance : client_attendance_confirmed_at
+COMPLETED -[dashed]-> attendance : proyección conserva\nCONFIRMED o NO_RESPONSE
+
+note right of attendance
+  attendanceStatus se calcula al consultar:
+  NOT_APPLICABLE, AWAITING, CONFIRMED o NO_RESPONSE.
+  No es una columna enum ni sustituye AppointmentStatus.
+end note
+
+legend right
+  |= Estado activo |= Bloquea el horario |
+  | PENDING | Sí |
+  | ACCEPTED | Sí |
+  | REJECTED | No |
+  | CANCELLED | No |
+  | COMPLETED | No |
+endlegend
+
+caption Las transiciones son condicionales y atómicas en appointment.service; America/Managua define las comparaciones temporales.
+@enduml

@@ -1,0 +1,1760 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitectura y Diseño Actual — Barbería Cale</title>
+<style>
+  @page { size: A4; margin: 2cm 1.8cm 2cm 1.8cm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #2f2420; background: #ffffff; font: 10.5pt/1.48 Arial, sans-serif; }
+  .document { max-width: 18cm; margin: 0 auto; }
+  .cover { min-height: 24.5cm; padding: 2.2cm 1.1cm 1cm; background: #f4efe6; border-top: 12pt solid #743b2f; page-break-after: always; position: relative; }
+  .cover .eyebrow { color: #8d4638; font-weight: 700; letter-spacing: 1.8pt; text-transform: uppercase; }
+  .cover h1 { margin: 1.2cm 0 0.4cm; font: 700 32pt/1.05 Georgia, serif; color: #2f2420; }
+  .cover .subtitle { max-width: 14cm; color: #6f5d55; font-size: 14pt; }
+  .cover .rule { width: 3.2cm; height: 5pt; background: #c89a3d; margin: 1cm 0; }
+  .cover .meta { margin-top: 2cm; width: 100%; border-collapse: collapse; }
+  .cover .meta td { border: 0; border-bottom: 1px solid #ddcfc5; padding: 9pt 4pt; background: transparent; }
+  .cover .meta td:first-child { width: 38%; color: #743b2f; font-weight: 700; }
+  .cover .statement { position: absolute; left: 1.1cm; right: 1.1cm; bottom: 1.2cm; padding: 12pt 14pt; border-left: 4pt solid #c89a3d; background: #fffdf9; color: #594941; }
+  .toc-page { page-break-after: always; }
+  .toc-page h2 { page-break-before: avoid; }
+  .toc { columns: 2; column-gap: 1.2cm; list-style: none; padding: 0; }
+  .toc li { break-inside: avoid; margin: 0 0 5pt; }
+  .toc-2 { font-weight: 700; color: #743b2f; }
+  .toc-3 { margin-left: 10pt !important; font-size: 9pt; }
+  .toc a { color: inherit; text-decoration: none; }
+  main { padding: 0 2pt; }
+  h2 { color: #743b2f; font: 700 20pt/1.15 Georgia, serif; border-bottom: 2pt solid #c89a3d; padding-bottom: 5pt; margin: 18pt 0 10pt; page-break-after: avoid; }
+  h2:not(:first-child) { page-break-before: always; }
+  h3 { color: #3e2b26; font: 700 14pt/1.2 Georgia, serif; margin: 16pt 0 7pt; page-break-after: avoid; }
+  h4 { color: #743b2f; font: 700 11pt/1.2 Arial, sans-serif; margin: 12pt 0 5pt; page-break-after: avoid; }
+  p { margin: 0 0 8pt; text-align: justify; }
+  ul, ol { margin: 4pt 0 10pt 20pt; padding: 0; }
+  li { margin: 0 0 4pt; }
+  a { color: #743b2f; }
+  code { font: 8.8pt Consolas, monospace; color: #6f3026; background: #f7efe9; padding: 1pt 2pt; }
+  pre { overflow-wrap: anywhere; white-space: pre-wrap; background: #2f2420; color: #fffdf9; border-left: 5pt solid #c89a3d; padding: 10pt; font: 8.2pt/1.35 Consolas, monospace; page-break-inside: avoid; }
+  pre code { color: inherit; background: transparent; padding: 0; }
+  .callout { margin: 10pt 0 14pt; padding: 11pt 13pt; border-left: 5pt solid #c89a3d; background: #fff8ed; color: #493932; }
+  hr { border: 0; border-top: 1pt solid #ddcfc5; margin: 16pt 0; }
+  .table-wrap { margin: 8pt 0 14pt; }
+  table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: 8.5pt; }
+  th { background: #743b2f; color: #ffffff; text-align: left; vertical-align: top; padding: 6pt; border: 1px solid #743b2f; }
+  td { vertical-align: top; padding: 5pt 6pt; border: 1px solid #d9cec7; }
+  tbody tr:nth-child(even) td { background: #faf6f1; }
+  .diagram-page { page-break-before: always; page-break-after: always; margin: 0; min-height: 23cm; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .diagram-page img { display: block; max-width: 100%; max-height: 21.5cm; width: auto; height: auto; margin: 0 auto; }
+  figcaption { margin-top: 10pt; color: #5f4d45; font-size: 9pt; text-align: center; font-style: italic; }
+  .footer-note { margin-top: 18pt; color: #806d64; font-size: 8pt; border-top: 1px solid #ddcfc5; padding-top: 6pt; }
+</style>
+</head>
+<body>
+<div class="document">
+  <section class="cover">
+    <div class="eyebrow">Procedimientos de diseño, arquitectura y patrones de software</div>
+    <h1>Arquitectura y diseño<br>de software actual</h1>
+    <div class="rule"></div>
+    <div class="subtitle">Barbería Cale — aplicación Android y web para la gestión integral y trazable de citas</div>
+    <table class="meta">
+      <tr><td>Documento</td><td>Arquitectura y diseño de la versión actual</td></tr>
+      <tr><td>Versión documentada</td><td>1.0 ampliada</td></tr>
+      <tr><td>Fecha de corte</td><td>27 de agosto de 2026</td></tr>
+      <tr><td>Equipo</td><td>Proyecto Barbería Cale</td></tr>
+      <tr><td>Fuentes</td><td>Repositorio, contratos REST, esquema SQL, migraciones, configuración y prototipo implementado</td></tr>
+    </table>
+    <div class="statement">Este documento describe exclusivamente la implementación vigente. Los módulos, contratos, decisiones, datos y despliegues citados fueron contrastados con el repositorio; no se presentan microservicios ni patrones que el sistema no utiliza.</div>
+  </section>
+  <section class="toc-page">
+    <h2>Contenido</h2>
+    <ol class="toc"><li class="toc-2"><a href="#1-resumen-ejecutivo">1. Resumen ejecutivo</a></li>
+<li class="toc-2"><a href="#2-objetivo-y-alcance-actual">2. Objetivo y alcance actual</a></li>
+<li class="toc-3"><a href="#2-1-objetivo-general">2.1 Objetivo general</a></li>
+<li class="toc-3"><a href="#2-2-actores">2.2 Actores</a></li>
+<li class="toc-3"><a href="#2-3-funcionalidades-incluidas">2.3 Funcionalidades incluidas</a></li>
+<li class="toc-3"><a href="#2-4-fuera-del-alcance-actual">2.4 Fuera del alcance actual</a></li>
+<li class="toc-3"><a href="#2-5-restricciones-y-supuestos">2.5 Restricciones y supuestos</a></li>
+<li class="toc-2"><a href="#3-requisitos-funcionales-actualizados">3. Requisitos funcionales actualizados</a></li>
+<li class="toc-3"><a href="#3-1-refinamientos-que-eliminan-ambiguedad">3.1 Refinamientos que eliminan ambigüedad</a></li>
+<li class="toc-2"><a href="#4-impulsores-arquitectonicos">4. Impulsores arquitectónicos</a></li>
+<li class="toc-3"><a href="#4-1-atributos-prioritarios">4.1 Atributos prioritarios</a></li>
+<li class="toc-2"><a href="#5-estilo-arquitectonico-y-patrones-empleados">5. Estilo arquitectónico y patrones empleados</a></li>
+<li class="toc-3"><a href="#5-1-arquitectura-cliente-servidor">5.1 Arquitectura cliente-servidor</a></li>
+<li class="toc-3"><a href="#5-2-arquitectura-por-capas">5.2 Arquitectura por capas</a></li>
+<li class="toc-3"><a href="#5-3-monolito-modular-en-el-backend">5.3 Monolito modular en el backend</a></li>
+<li class="toc-3"><a href="#5-4-diseno-basado-en-api">5.4 Diseño basado en API</a></li>
+<li class="toc-3"><a href="#5-5-patrones-concretos">5.5 Patrones concretos</a></li>
+<li class="toc-2"><a href="#6-vistas-y-diagramas-de-arquitectura">6. Vistas y diagramas de arquitectura</a></li>
+<li class="toc-3"><a href="#6-1-lectura-de-la-vista-de-contexto">6.1 Lectura de la vista de contexto</a></li>
+<li class="toc-3"><a href="#6-2-lectura-de-la-vista-de-contenedores-despliegue">6.2 Lectura de la vista de contenedores/despliegue</a></li>
+<li class="toc-3"><a href="#6-3-flujo-de-dependencias">6.3 Flujo de dependencias</a></li>
+<li class="toc-2"><a href="#7-catalogo-de-modulos-y-responsabilidades">7. Catálogo de módulos y responsabilidades</a></li>
+<li class="toc-3"><a href="#7-1-frontend-expo">7.1 Frontend Expo</a></li>
+<li class="toc-3"><a href="#7-2-backend-api">7.2 Backend API</a></li>
+<li class="toc-3"><a href="#7-3-procesamiento-asincrono">7.3 Procesamiento asíncrono</a></li>
+<li class="toc-2"><a href="#8-contratos-de-la-api-rest">8. Contratos de la API REST</a></li>
+<li class="toc-3"><a href="#8-1-convenciones">8.1 Convenciones</a></li>
+<li class="toc-3"><a href="#8-2-endpoints-publicos-y-de-sesion">8.2 Endpoints públicos y de sesión</a></li>
+<li class="toc-3"><a href="#8-3-endpoints-de-cliente">8.3 Endpoints de cliente</a></li>
+<li class="toc-3"><a href="#8-4-endpoints-administrativos">8.4 Endpoints administrativos</a></li>
+<li class="toc-3"><a href="#8-5-codigos-relevantes">8.5 Códigos relevantes</a></li>
+<li class="toc-2"><a href="#9-diseno-de-datos">9. Diseño de datos</a></li>
+<li class="toc-3"><a href="#9-1-entidades">9.1 Entidades</a></li>
+<li class="toc-3"><a href="#9-2-relaciones">9.2 Relaciones</a></li>
+<li class="toc-3"><a href="#9-3-integridad-y-concurrencia">9.3 Integridad y concurrencia</a></li>
+<li class="toc-3"><a href="#9-4-tiempo-de-negocio">9.4 Tiempo de negocio</a></li>
+<li class="toc-3"><a href="#9-5-estados-de-cita">9.5 Estados de cita</a></li>
+<li class="toc-3"><a href="#9-6-proyeccion-de-asistencia">9.6 Proyección de asistencia</a></li>
+<li class="toc-3"><a href="#9-7-estados-de-trabajo-manual">9.7 Estados de trabajo manual</a></li>
+<li class="toc-2"><a href="#10-reglas-de-negocio-autoritativas">10. Reglas de negocio autoritativas</a></li>
+<li class="toc-2"><a href="#11-arquitectura-de-notificaciones-y-confirmacion">11. Arquitectura de notificaciones y confirmación</a></li>
+<li class="toc-3"><a href="#11-1-activacion-del-dispositivo">11.1 Activación del dispositivo</a></li>
+<li class="toc-3"><a href="#11-2-recordatorio-automatico-t-1-h">11.2 Recordatorio automático T−1 h</a></li>
+<li class="toc-3"><a href="#11-3-recordatorio-manual-individual-o-masivo">11.3 Recordatorio manual individual o masivo</a></li>
+<li class="toc-3"><a href="#11-4-confirmacion-desde-la-notificacion">11.4 Confirmación desde la notificación</a></li>
+<li class="toc-3"><a href="#11-5-semantica-de-confiabilidad">11.5 Semántica de confiabilidad</a></li>
+<li class="toc-2"><a href="#12-seguridad-y-fronteras-de-confianza">12. Seguridad y fronteras de confianza</a></li>
+<li class="toc-3"><a href="#12-1-identidad-y-autorizacion">12.1 Identidad y autorización</a></li>
+<li class="toc-3"><a href="#12-2-base-de-datos-y-worker">12.2 Base de datos y worker</a></li>
+<li class="toc-3"><a href="#12-3-red-y-configuracion">12.3 Red y configuración</a></li>
+<li class="toc-3"><a href="#12-4-amenazas-mitigadas-y-pendientes">12.4 Amenazas mitigadas y pendientes</a></li>
+<li class="toc-2"><a href="#13-despliegue-y-operacion">13. Despliegue y operación</a></li>
+<li class="toc-3"><a href="#13-1-topologia-actual">13.1 Topología actual</a></li>
+<li class="toc-3"><a href="#13-2-configuracion-por-entorno">13.2 Configuración por entorno</a></li>
+<li class="toc-3"><a href="#13-3-migraciones-requeridas">13.3 Migraciones requeridas</a></li>
+<li class="toc-3"><a href="#13-4-observabilidad-operativa-actual">13.4 Observabilidad operativa actual</a></li>
+<li class="toc-2"><a href="#14-matriz-de-trazabilidad-completa">14. Matriz de trazabilidad completa</a></li>
+<li class="toc-3"><a href="#14-1-resultado-de-la-trazabilidad">14.1 Resultado de la trazabilidad</a></li>
+<li class="toc-2"><a href="#15-prototipo-actual-y-correspondencia-de-pantallas">15. Prototipo actual y correspondencia de pantallas</a></li>
+<li class="toc-2"><a href="#16-decisiones-arquitectonicas-y-compromisos">16. Decisiones arquitectónicas y compromisos</a></li>
+<li class="toc-3"><a href="#16-1-alternativas-no-seleccionadas">16.1 Alternativas no seleccionadas</a></li>
+<li class="toc-2"><a href="#17-limitaciones-conocidas-y-evolucion-recomendada">17. Limitaciones conocidas y evolución recomendada</a></li>
+<li class="toc-3"><a href="#17-1-brechas-documentales-operativas">17.1 Brechas documentales/operativas</a></li>
+<li class="toc-3"><a href="#17-2-limitaciones-tecnicas-actuales">17.2 Limitaciones técnicas actuales</a></li>
+<li class="toc-3"><a href="#17-3-ruta-de-evolucion-proporcional">17.3 Ruta de evolución proporcional</a></li>
+<li class="toc-2"><a href="#18-organizacion-del-repositorio-y-evidencia-git">18. Organización del repositorio y evidencia Git</a></li>
+<li class="toc-3"><a href="#18-1-ubicaciones-relevantes">18.1 Ubicaciones relevantes</a></li>
+<li class="toc-3"><a href="#18-2-evidencias-verificables">18.2 Evidencias verificables</a></li>
+<li class="toc-2"><a href="#19-reproduccion-de-los-diagramas-plantuml">19. Reproducción de los diagramas PlantUML</a></li>
+<li class="toc-3"><a href="#19-1-validar-sintaxis">19.1 Validar sintaxis</a></li>
+<li class="toc-3"><a href="#19-2-generar-png-para-el-documento">19.2 Generar PNG para el documento</a></li>
+<li class="toc-3"><a href="#19-3-generar-svg-editable-escalable">19.3 Generar SVG editable/escalable</a></li>
+<li class="toc-2"><a href="#20-justificacion-sintetica-solicitada-por-la-actividad">20. Justificación sintética solicitada por la actividad</a></li>
+<li class="toc-2"><a href="#21-reflexion-final">21. Reflexión final</a></li>
+<li class="toc-2"><a href="#apendice-a-glosario">Apéndice A. Glosario</a></li>
+<li class="toc-2"><a href="#apendice-b-criterio-de-actualizacion-del-documento">Apéndice B. Criterio de actualización del documento</a></li></ol>
+    <div class="footer-note">Los doce diagramas incluidos poseen su fuente editable en PlantUML dentro de <code>proyecto/docs/arquitectura-actual/plantuml</code>.</div>
+  </section>
+  <main><h2 id="1-resumen-ejecutivo">1. Resumen ejecutivo</h2>
+<p>Barbería Cale es una solución cliente-servidor para administrar el ciclo completo de una cita de barbería. Ofrece una aplicación construida con Expo y React Native que comparte base de código entre Android y web, una API REST en Express, persistencia PostgreSQL alojada en Supabase y un subsistema asíncrono de recordatorios push. El cliente puede registrarse, iniciar sesión, consultar disponibilidad, reservar, revisar o cancelar citas y confirmar su asistencia. El administrador puede gestionar solicitudes, consultar una agenda, completar el servicio, preparar comunicación por WhatsApp y enviar recordatorios de asistencia individuales o masivos.</p>
+<p>La arquitectura principal es <strong>cliente-servidor, organizada por capas y módulos, con una API REST como frontera de negocio</strong>. El backend es un monolito modular: sus rutas, middlewares, controladores y servicios se despliegan como una sola unidad en Render, pero tienen responsabilidades separadas. PostgreSQL es la fuente de verdad para usuarios, citas, dispositivos y trabajos de notificación. El envío programado no depende de que una persona mantenga abierta la aplicación: <code>pg_cron</code> activa una Supabase Edge Function mediante <code>pg_net</code>; la función reclama trabajo de manera segura mediante RPC restringidas y entrega mensajes a Expo Push, que utiliza FCM para Android.</p>
+<p>La elección responde al tamaño actual del proyecto. Mantiene bajo el costo operativo, reutiliza interfaz y dominio entre Android y web, centraliza las reglas sensibles y permite evolucionar cada módulo sin introducir todavía la complejidad operativa de varios servicios independientes.</p>
+<hr>
+<h2 id="2-objetivo-y-alcance-actual">2. Objetivo y alcance actual</h2>
+<h3 id="2-1-objetivo-general">2.1 Objetivo general</h3>
+<p>Desarrollar una aplicación móvil y web para Barbería Cale que permita gestionar de forma segura, centralizada y trazable el ciclo de una cita, desde el registro e inicio de sesión del cliente y la consulta de disponibilidad hasta la gestión administrativa, la comunicación asistida, los recordatorios de asistencia y el cierre de la cita.</p>
+<h3 id="2-2-actores">2.2 Actores</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Actor</th>
+<th>Responsabilidades en la versión actual</th>
+</tr></thead><tbody>
+<tr>
+<td>Cliente (<code>CLIENT</code>)</td>
+<td>Registrarse, autenticarse, mantener o cerrar la sesión, consultar horarios, reservar, consultar próximas citas e historial, cancelar cuando la regla temporal lo permita, activar recordatorios en un dispositivo y confirmar asistencia.</td>
+</tr>
+<tr>
+<td>Administrador (<code>ADMIN</code>)</td>
+<td>Consultar y filtrar solicitudes, aceptar o rechazar citas, consultar agenda, cancelar citas elegibles, completar servicios, abrir WhatsApp con un mensaje preparado, observar la confirmación del cliente y solicitar recordatorios individuales o masivos.</td>
+</tr>
+<tr>
+<td>Planificador del sistema</td>
+<td>Ejecutar cada minuto la búsqueda de recordatorios automáticos y trabajos manuales pendientes. No es un usuario humano; es un actor técnico representado por <code>pg_cron</code>.</td>
+</tr>
+<tr>
+<td>Servicios externos</td>
+<td>Render ejecuta la API, Supabase almacena datos y ejecuta el worker, Expo Push/FCM entrega notificaciones Android, Netlify sirve la web, EAS genera el APK y WhatsApp recibe enlaces preparados.</td>
+</tr>
+</tbody></table></div>
+<h3 id="2-3-funcionalidades-incluidas">2.3 Funcionalidades incluidas</h3>
+<ul>
+<li>Registro de clientes con confirmación de contraseña e inicio automático de sesión.</li>
+<li>Inicio y cierre de sesión con persistencia opcional.</li>
+<li>Autenticación JWT y autorización efectiva por roles <code>CLIENT</code> y <code>ADMIN</code>.</li>
+<li>Validación de celular de ocho dígitos, sin espacios y con prefijo <code>8</code>, <code>7</code> o <code>5</code>.</li>
+<li>Disponibilidad en bloques de una hora entre las 08:00 y las 17:00.</li>
+<li>Reserva con un mínimo real de 24 horas de anticipación.</li>
+<li>Prevención de doble reserva, máximo de una cita activa del cliente por día y máximo de dos citas activas dentro de cualquier ventana móvil de siete días.</li>
+<li>Consulta paginada de próximas citas e historial.</li>
+<li>Cancelación por el cliente hasta, e incluyendo, exactamente 60 minutos antes del inicio.</li>
+<li>Gestión administrativa por estado, búsqueda, paginación y rango de fechas.</li>
+<li>Estados de cita <code>PENDING</code>, <code>ACCEPTED</code>, <code>COMPLETED</code>, <code>REJECTED</code> y <code>CANCELLED</code>.</li>
+<li>Confirmación de asistencia del cliente como un dato independiente del estado de la cita.</li>
+<li>Registro y desactivación de dispositivos para notificaciones.</li>
+<li>Recordatorio automático aproximadamente una hora antes de una cita aceptada que aún no tiene confirmación de asistencia.</li>
+<li>Recordatorios administrativos individuales o masivos para citas aceptadas y pendientes de respuesta.</li>
+<li>Comunicación asistida por WhatsApp mediante mensaje contextual preparado para revisión y envío manual.</li>
+<li>Aplicación Android mediante EAS y aplicación web estática mediante Expo/Netlify.</li>
+</ul>
+<h3 id="2-4-fuera-del-alcance-actual">2.4 Fuera del alcance actual</h3>
+<ul>
+<li>Pagos, facturación, caja o integración bancaria.</li>
+<li>Selección de barbero, múltiples sucursales, inventario o catálogo dinámico de servicios.</li>
+<li>Reprogramación directa de una cita; actualmente se cancela y se crea otra.</li>
+<li>Autenticación social, recuperación automática de contraseña o segundo factor.</li>
+<li>Notificaciones push remotas para web; el flujo implementado se utiliza en compilaciones nativas Android.</li>
+<li>Envío automatizado por la API de WhatsApp. El sistema solo prepara y abre el mensaje.</li>
+<li>Procesamiento sistemático de recibos finales de Expo Push. La versión actual registra aceptación por el servicio de Expo, no prueba de visualización en el dispositivo.</li>
+<li>Panel analítico, reportes financieros o exportaciones.</li>
+</ul>
+<h3 id="2-5-restricciones-y-supuestos">2.5 Restricciones y supuestos</h3>
+<ul>
+<li>La zona horaria de negocio autoritativa en el código es <code>America/Managua</code>; toda comparación sensible debe utilizarla de forma consistente.</li>
+<li>El servicio ofrecido por la interfaz actual es “Corte de cabello”.</li>
+<li>Las reglas de negocio deben imponerse en el backend y la base de datos, aun cuando el frontend también anticipe validaciones para mejorar la experiencia.</li>
+<li>Una instancia gratuita de Render puede entrar en reposo y añadir latencia al primer llamado.</li>
+<li>Las notificaciones requieren una compilación nativa con la configuración de Firebase; Expo Go no sustituye esa compilación para este caso.</li>
+<li>Ningún secreto de JWT, base de datos, Firebase, Supabase service role o cron debe formar parte del repositorio ni de este documento.</li>
+</ul>
+<hr>
+<h2 id="3-requisitos-funcionales-actualizados">3. Requisitos funcionales actualizados</h2>
+<p>Los RF-01 a RF-17 corresponden al alcance funcional base. Los RF-18 a RF-22 formalizan funciones que ya existen en la versión actual y que deben incorporarse a los documentos formales de requisitos y alcance para eliminar la brecha documental.</p>
+<div class="table-wrap"><table><thead><tr>
+<th>ID</th>
+<th>Requisito funcional actual</th>
+</tr></thead><tbody>
+<tr>
+<td>RF-01</td>
+<td>El sistema permitirá crear una cuenta <code>CLIENT</code> con nombre, apellido, celular y contraseña, solicitará confirmación de contraseña, validará el celular y, tras un registro exitoso, iniciará la sesión automáticamente.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>El sistema autenticará mediante celular y contraseña y dirigirá al usuario al área correspondiente según su rol.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>El sistema permitirá conservar opcionalmente el token y los datos públicos necesarios para restaurar y validar una sesión.</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>El sistema permitirá finalizar la sesión, limpiar los datos locales de autenticación, intentar desactivar el dispositivo de notificaciones y regresar al acceso público.</td>
+</tr>
+<tr>
+<td>RF-05</td>
+<td>El cliente podrá consultar horarios disponibles para una fecha válida; solo se mostrarán horarios con al menos 24 horas reales de anticipación y sin una cita activa que los bloquee.</td>
+</tr>
+<tr>
+<td>RF-06</td>
+<td>El cliente podrá reservar un horario disponible con estado inicial <code>PENDING</code>; el backend impedirá la doble reserva, más de una cita activa del cliente en el mismo día y más de dos citas activas en una ventana móvil de siete días.</td>
+</tr>
+<tr>
+<td>RF-07</td>
+<td>El cliente podrá consultar sus citas activas <code>PENDING</code> y <code>ACCEPTED</code>, ordenadas para favorecer las próximas visitas.</td>
+</tr>
+<tr>
+<td>RF-08</td>
+<td>El cliente podrá consultar el historial de citas <code>COMPLETED</code>, <code>REJECTED</code> y <code>CANCELLED</code>.</td>
+</tr>
+<tr>
+<td>RF-09</td>
+<td>El cliente podrá cancelar una cita propia activa hasta exactamente 60 minutos antes de su inicio; la cita cancelada dejará de bloquear el horario.</td>
+</tr>
+<tr>
+<td>RF-10</td>
+<td>El administrador podrá consultar, buscar, paginar y filtrar solicitudes/citas para su gestión.</td>
+</tr>
+<tr>
+<td>RF-11</td>
+<td>El administrador podrá cambiar una solicitud <code>PENDING</code> a <code>ACCEPTED</code>.</td>
+</tr>
+<tr>
+<td>RF-12</td>
+<td>El administrador podrá cambiar una solicitud <code>PENDING</code> a <code>REJECTED</code>, liberando el horario.</td>
+</tr>
+<tr>
+<td>RF-13</td>
+<td>El administrador podrá consultar una agenda por rango de fechas y filtrar por estados aplicables.</td>
+</tr>
+<tr>
+<td>RF-14</td>
+<td>El administrador podrá cancelar administrativamente una cita <code>ACCEPTED</code> futura cuando la regla temporal lo permita, liberando el horario.</td>
+</tr>
+<tr>
+<td>RF-15</td>
+<td>El administrador podrá cambiar una cita <code>ACCEPTED</code> a <code>COMPLETED</code> cuando su fecha y hora hayan llegado o pasado.</td>
+</tr>
+<tr>
+<td>RF-16</td>
+<td>El sistema protegerá pantallas y endpoints y permitirá funciones de <code>CLIENT</code> o <code>ADMIN</code> únicamente al rol autorizado.</td>
+</tr>
+<tr>
+<td>RF-17</td>
+<td>Después de aceptar o rechazar una cita, el administrador podrá abrir el chat del cliente con un mensaje contextual preparado para revisión y envío manual.</td>
+</tr>
+<tr>
+<td>RF-18</td>
+<td>Un cliente autenticado podrá autorizar notificaciones y registrar o desactivar de forma idempotente el token push de su dispositivo.</td>
+</tr>
+<tr>
+<td>RF-19</td>
+<td>El sistema preparará y enviará un recordatorio automático a las citas <code>ACCEPTED</code>, futuras, sin confirmación de asistencia y dentro de la ventana de una hora, siempre que exista un dispositivo activo.</td>
+</tr>
+<tr>
+<td>RF-20</td>
+<td>El cliente podrá confirmar su asistencia desde la notificación o desde “Mis citas” mientras la cita siga <code>ACCEPTED</code>, no haya iniciado y no haya sido confirmada previamente.</td>
+</tr>
+<tr>
+<td>RF-21</td>
+<td>El administrador podrá distinguir de forma legible si el cliente confirmó, está pendiente o no respondió, sin confundir ese dato con el estado operativo de la cita.</td>
+</tr>
+<tr>
+<td>RF-22</td>
+<td>El administrador podrá solicitar recordatorios para una cita elegible o en lote para todas las elegibles; cada solicitud manual será persistente, auditable, limitada, protegida contra duplicados y reintentable.</td>
+</tr>
+</tbody></table></div>
+<h3 id="3-1-refinamientos-que-eliminan-ambiguedad">3.1 Refinamientos que eliminan ambigüedad</h3>
+<ul>
+<li><strong>Estado de cita y asistencia son conceptos diferentes.</strong> <code>ACCEPTED</code> significa que la barbería aprobó la cita. <code>CONFIRMED</code>, <code>AWAITING</code>, <code>NO_RESPONSE</code> y <code>NOT_APPLICABLE</code> son proyecciones de la respuesta del cliente; no sustituyen los cinco estados de cita.</li>
+<li><strong>“Una hora antes” es una condición del recordatorio automático.</strong> El recordatorio manual no depende de estar en esa ventana; depende de que la cita esté aceptada, sea futura, no tenga confirmación, disponga de un dispositivo activo y no esté en cola ni en enfriamiento.</li>
+<li><strong>“Enviado” significa aceptado por Expo Push.</strong> No garantiza que Android haya mostrado la notificación; esa garantía requeriría consultar recibos de Expo y mantener telemetría adicional.</li>
+<li><strong>La cancelación del cliente es inclusiva.</strong> A exactamente 60 minutos aún se permite; con menos de 60 minutos se rechaza.</li>
+<li><strong>La disponibilidad visual no es una reserva.</strong> La validación final ocurre de nuevo dentro de una transacción al crear la cita.</li>
+</ul>
+<hr>
+<h2 id="4-impulsores-arquitectonicos">4. Impulsores arquitectónicos</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Impulsor</th>
+<th>Consecuencia de diseño</th>
+</tr></thead><tbody>
+<tr>
+<td>Compartir Android y web</td>
+<td>Expo/React Native y Expo Router permiten reutilizar pantallas, componentes, estado y adaptadores HTTP, con archivos <code>.web.tsx</code> cuando la plataforma necesita una implementación específica.</td>
+</tr>
+<tr>
+<td>Proteger reglas de negocio</td>
+<td>La API Express y PostgreSQL son autoritativos; la interfaz nunca escribe directamente en las tablas.</td>
+</tr>
+<tr>
+<td>Evitar doble reserva concurrente</td>
+<td>Transacción, bloqueo consultivo por cliente e índice único parcial para fecha/hora activa.</td>
+</tr>
+<tr>
+<td>Operar con bajo costo</td>
+<td>Monolito modular en Render, web estática en Netlify, PostgreSQL/Supabase y servicios de notificación de Expo.</td>
+</tr>
+<tr>
+<td>Mantener sesiones móviles</td>
+<td><code>expo-secure-store</code> en Android y almacenamiento web adaptado, seguido de validación por <code>/auth/me</code>.</td>
+</tr>
+<tr>
+<td>Ejecutar recordatorios sin una app abierta</td>
+<td>Planificación en base de datos, Edge Function y cola persistente para desacoplar el trabajo del ciclo de vida del frontend.</td>
+</tr>
+<tr>
+<td>Hacer visibles fallos y estados</td>
+<td>Contratos JSON consistentes, mensajes comprensibles, estados de carga/error/vacío y estado persistido de los trabajos manuales.</td>
+</tr>
+<tr>
+<td>Reducir acoplamiento con proveedores</td>
+<td>El frontend llama módulos <code>src/api</code>; la Edge Function concentra la integración con Expo Push; WhatsApp se invoca mediante enlace, no se mezcla con el dominio de citas.</td>
+</tr>
+<tr>
+<td>Seguridad por mínimo privilegio</td>
+<td>JWT, búsqueda de rol actual en base de datos, middleware por rol, secreto cron, esquema RPC restringido y revocación de acceso Data API para roles públicos.</td>
+</tr>
+</tbody></table></div>
+<h3 id="4-1-atributos-prioritarios">4.1 Atributos prioritarios</h3>
+<ol>
+<li><strong>Corrección e integridad:</strong> no permitir dos citas activas en el mismo horario ni transiciones ilegales.</li>
+<li><strong>Seguridad:</strong> autenticar cada operación protegida y autorizarla en el servidor.</li>
+<li><strong>Usabilidad multicanal:</strong> conservar una interacción coherente en Android y web sin deformar los layouts.</li>
+<li><strong>Mantenibilidad:</strong> separar presentación, estado, adaptación HTTP, reglas y persistencia.</li>
+<li><strong>Confiabilidad asíncrona:</strong> reclamar, revalidar, reintentar y cerrar trabajos sin enviarlos por una condición que ya dejó de ser válida.</li>
+<li><strong>Trazabilidad:</strong> poder conectar cada requisito con pantalla, endpoint, módulo y datos.</li>
+</ol>
+<hr>
+<h2 id="5-estilo-arquitectonico-y-patrones-empleados">5. Estilo arquitectónico y patrones empleados</h2>
+<h3 id="5-1-arquitectura-cliente-servidor">5.1 Arquitectura cliente-servidor</h3>
+<p>Android y web son clientes de una API REST. Las aplicaciones muestran información y recogen intención, pero no poseen acceso directo a PostgreSQL. La API valida el token, resuelve el rol, aplica reglas y ejecuta consultas parametrizadas. Esta frontera permite que una misma regla rija para ambas plataformas.</p>
+<h3 id="5-2-arquitectura-por-capas">5.2 Arquitectura por capas</h3>
+<p>La solución se organiza conceptualmente así:</p>
+<ol>
+<li><strong>Presentación:</strong> rutas Expo, pantallas y componentes visuales.</li>
+<li><strong>Estado y coordinación del cliente:</strong> contextos de autenticación, notificaciones y retroalimentación.</li>
+<li><strong>Adaptación de API:</strong> cliente HTTP y módulos tipados por dominio.</li>
+<li><strong>Entrada del servidor:</strong> Express, CORS, parseo JSON, rutas y middlewares.</li>
+<li><strong>Aplicación y dominio:</strong> controladores y servicios de autenticación, citas, dispositivos y recordatorios.</li>
+<li><strong>Persistencia:</strong> consultas SQL, transacciones, restricciones, índices, triggers y RPC.</li>
+<li><strong>Procesamiento asíncrono:</strong> cron, worker Edge y proveedor push.</li>
+</ol>
+<p>Las capas son una regla de dependencia, no procesos separados. La presentación depende de los adaptadores HTTP; estos dependen del contrato de la API. El backend no depende de componentes visuales.</p>
+<h3 id="5-3-monolito-modular-en-el-backend">5.3 Monolito modular en el backend</h3>
+<p>La API es una sola aplicación Node/Express desplegada en Render. Internamente se divide por responsabilidades y por etapas de una solicitud: ruta → middleware → controlador → servicio → base de datos. Esta organización ofrece la claridad de módulos sin introducir descubrimiento de servicios, múltiples despliegues o transacciones distribuidas que el volumen actual no justifica.</p>
+<h3 id="5-4-diseno-basado-en-api">5.4 Diseño basado en API</h3>
+<p>Los casos de uso se expresan mediante recursos y acciones HTTP bajo <code>/api</code>. El token se transmite como <code>Authorization: Bearer …</code>; las operaciones protegidas no confían en un rol enviado por el cliente. Los adaptadores TypeScript encapsulan URLs, query strings, cuerpos, modelos y manejo uniforme de errores.</p>
+<h3 id="5-5-patrones-concretos">5.5 Patrones concretos</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Patrón o mecanismo</th>
+<th>Uso actual</th>
+</tr></thead><tbody>
+<tr>
+<td>Router basado en archivos</td>
+<td>Expo Router mapea archivos en <code>src/app</code> a navegación pública, de autenticación, cliente y administración.</td>
+</tr>
+<tr>
+<td>Provider/Context</td>
+<td><code>AuthContext</code>, <code>NotificationContext</code> y <code>FeedbackProvider</code> comparten estado transversal sin prop drilling.</td>
+</tr>
+<tr>
+<td>Adapter/Gateway</td>
+<td><code>src/api/*.api.ts</code> traduce casos de uso de la interfaz a contratos REST.</td>
+</tr>
+<tr>
+<td>Middleware pipeline</td>
+<td>Autenticación, autorización por rol y limitación de frecuencia se componen antes de los controladores.</td>
+</tr>
+<tr>
+<td>Service layer</td>
+<td>Los servicios del backend concentran reglas y SQL reutilizable fuera de Express.</td>
+</tr>
+<tr>
+<td>State machine</td>
+<td>Las transiciones de una cita y los estados de un trabajo manual son explícitos y acotados.</td>
+</tr>
+<tr>
+<td>Outbox/cola persistente especializada</td>
+<td><code>appointment_notification_jobs</code> registra solicitudes manuales antes de que el worker intente entregarlas.</td>
+</tr>
+<tr>
+<td>Lease/claim token</td>
+<td>Las RPC reclaman filas por lote y usan un UUID para evitar que dos ejecuciones procesen el mismo trabajo.</td>
+</tr>
+<tr>
+<td>Revalidación antes de efectos externos</td>
+<td>El worker comprueba elegibilidad antes de consultar tokens, antes de enviar y antes de marcar el resultado.</td>
+</tr>
+<tr>
+<td>Índice único parcial</td>
+<td>PostgreSQL impide de forma atómica dos citas <code>PENDING</code>/<code>ACCEPTED</code> en fecha y hora iguales.</td>
+</tr>
+<tr>
+<td>Bloqueo consultivo transaccional</td>
+<td>Serializa las reservas simultáneas del mismo cliente para hacer cumplir sus límites temporales.</td>
+</tr>
+<tr>
+<td>Deep link</td>
+<td>WhatsApp recibe un <code>wa.me</code> preparado; el humano revisa y envía.</td>
+</tr>
+</tbody></table></div>
+<p>La solución se inspira en la separación de MVC, pero <strong>no se presenta como MVC puro</strong>: no existe una carpeta “models” con objetos de dominio activos y la persistencia se realiza mediante SQL en servicios. Tampoco es una arquitectura de microservicios.</p>
+<hr>
+<h2 id="6-vistas-y-diagramas-de-arquitectura">6. Vistas y diagramas de arquitectura</h2>
+<p>Todos los diagramas son reproducibles desde PlantUML. Los <code>.puml</code> son la fuente editable; las imágenes generadas se incorporan al documento final.</p>
+<div class="table-wrap"><table><thead><tr>
+<th>N.º</th>
+<th>Diagrama</th>
+<th>Fuente PlantUML</th>
+<th>Propósito</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Contexto del sistema</td>
+<td><a href="plantuml/01-contexto.puml"><code>01-contexto.puml</code></a></td>
+<td>Actores, sistema y servicios externos.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Contenedores y despliegue</td>
+<td><a href="plantuml/02-contenedores-despliegue.puml"><code>02-contenedores-despliegue.puml</code></a></td>
+<td>Unidades ejecutables y canales de comunicación.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Componentes, capas y módulos</td>
+<td><a href="plantuml/03-componentes-capasy-modulos.puml"><code>03-componentes-capasy-modulos.puml</code></a></td>
+<td>Separación de responsabilidades de extremo a extremo.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Componentes del frontend Expo</td>
+<td><a href="plantuml/04-frontend-expo.puml"><code>04-frontend-expo.puml</code></a></td>
+<td>Navegación, contextos, componentes y adaptadores HTTP.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Componentes del backend API</td>
+<td><a href="plantuml/05-backend-api.puml"><code>05-backend-api.puml</code></a></td>
+<td>Rutas, seguridad, controladores, servicios y persistencia.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Secuencia de reserva</td>
+<td><a href="plantuml/06-secuencia-reserva.puml"><code>06-secuencia-reserva.puml</code></a></td>
+<td>Consulta de disponibilidad, transacción y protección concurrente.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Secuencia de recordatorios</td>
+<td><a href="plantuml/07-secuencia-recordatorios.puml"><code>07-secuencia-recordatorios.puml</code></a></td>
+<td>Flujo automático y manual hasta Expo/FCM.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Modelo de datos</td>
+<td><a href="plantuml/08-modelo-datos.puml"><code>08-modelo-datos.puml</code></a></td>
+<td>Entidades, relaciones, restricciones y funciones.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Estados de una cita</td>
+<td><a href="plantuml/09-estados-cita.puml"><code>09-estados-cita.puml</code></a></td>
+<td>Transiciones válidas y proyección de asistencia.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Secuencia de autenticación</td>
+<td><a href="plantuml/10-secuencia-autenticacion.puml"><code>10-secuencia-autenticacion.puml</code></a></td>
+<td>Registro, login, persistencia y restauración.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Confirmación desde push</td>
+<td><a href="plantuml/11-secuencia-confirmacion-push.puml"><code>11-secuencia-confirmacion-push.puml</code></a></td>
+<td>Apertura de notificación y confirmación idempotente.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Fronteras de seguridad</td>
+<td><a href="plantuml/12-fronteras-seguridad.puml"><code>12-fronteras-seguridad.puml</code></a></td>
+<td>Zonas de confianza, secretos y accesos permitidos.</td>
+</tr>
+</tbody></table></div>
+<figure class="diagram-page"><img src="diagramas/01-contexto.png" alt="Figura 1. Contexto del sistema Barbería Cale y sus actores externos."><figcaption>Figura 1. Contexto del sistema Barbería Cale y sus actores externos.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/02-contenedores-despliegue.png" alt="Figura 2. Contenedores, infraestructura y despliegue de la versión actual."><figcaption>Figura 2. Contenedores, infraestructura y despliegue de la versión actual.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/03-componentes-capasy-modulos.png" alt="Figura 3. Capas, módulos y dependencias principales de extremo a extremo."><figcaption>Figura 3. Capas, módulos y dependencias principales de extremo a extremo.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/04-frontend-expo.png" alt="Figura 4. Componentes y responsabilidades del cliente Expo para Android y web."><figcaption>Figura 4. Componentes y responsabilidades del cliente Expo para Android y web.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/05-backend-api.png" alt="Figura 5. Componentes internos de la API Express y su acceso a persistencia."><figcaption>Figura 5. Componentes internos de la API Express y su acceso a persistencia.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/06-secuencia-reserva.png" alt="Figura 6. Secuencia de consulta de disponibilidad y creación concurrente de una reserva."><figcaption>Figura 6. Secuencia de consulta de disponibilidad y creación concurrente de una reserva.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/07-secuencia-recordatorios.png" alt="Figura 7. Secuencias automática y manual del subsistema de recordatorios."><figcaption>Figura 7. Secuencias automática y manual del subsistema de recordatorios.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/08-modelo-datos.png" alt="Figura 8. Modelo de datos, relaciones, restricciones y lógica PostgreSQL."><figcaption>Figura 8. Modelo de datos, relaciones, restricciones y lógica PostgreSQL.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/09-estados-cita.png" alt="Figura 9. Máquina de estados de una cita y confirmación de asistencia ortogonal."><figcaption>Figura 9. Máquina de estados de una cita y confirmación de asistencia ortogonal.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/10-secuencia-autenticacion.png" alt="Figura 10. Registro, inicio de sesión y restauración segura de sesión."><figcaption>Figura 10. Registro, inicio de sesión y restauración segura de sesión.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/11-secuencia-confirmacion-push.png" alt="Figura 11. Confirmación de asistencia iniciada desde una notificación Android."><figcaption>Figura 11. Confirmación de asistencia iniciada desde una notificación Android.</figcaption></figure>
+<figure class="diagram-page"><img src="diagramas/12-fronteras-seguridad.png" alt="Figura 12. Fronteras de confianza, credenciales y controles de acceso."><figcaption>Figura 12. Fronteras de confianza, credenciales y controles de acceso.</figcaption></figure>
+<h3 id="6-1-lectura-de-la-vista-de-contexto">6.1 Lectura de la vista de contexto</h3>
+<p>El cliente y el administrador acceden al mismo producto, pero a flujos distintos según su rol. Ambos consumen la API de Barbería Cale. Solo la API pública de Render se considera entrada de negocio interactiva. La base de datos, el esquema de RPC de recordatorios y las credenciales de proveedores permanecen fuera del cliente. El planificador y el worker constituyen el segundo punto de ejecución, limitado a recordatorios.</p>
+<h3 id="6-2-lectura-de-la-vista-de-contenedores-despliegue">6.2 Lectura de la vista de contenedores/despliegue</h3>
+<ul>
+<li><strong>Aplicación Android:</strong> binario nativo generado por EAS; contiene Expo Router, React Native, SecureStore y <code>expo-notifications</code>.</li>
+<li><strong>Aplicación web:</strong> exportación estática servida por Netlify; comparte componentes y adaptadores, con sustituciones específicas para controles web.</li>
+<li><strong>API REST:</strong> proceso Node.js/Express en Render.</li>
+<li><strong>PostgreSQL/Supabase:</strong> fuente de verdad, restricciones, triggers, funciones y cola.</li>
+<li><strong>Planificador:</strong> <code>pg_cron</code> ejecuta una expresión cada minuto.</li>
+<li><strong>Transporte HTTP desde base:</strong> <code>pg_net</code> llama a la Edge Function con un secreto almacenado en Vault.</li>
+<li><strong>Worker Edge:</strong> <code>bright-endpoint</code> reclama y procesa lotes, sin exponer acceso general a tablas.</li>
+<li><strong>Proveedor push:</strong> Expo Push recibe mensajes; FCM entrega al paquete Android configurado.</li>
+<li><strong>WhatsApp:</strong> integración voluntaria de salida por deep link, sin escritura automática en el sistema.</li>
+</ul>
+<h3 id="6-3-flujo-de-dependencias">6.3 Flujo de dependencias</h3>
+<pre><code>Pantalla
+  → contexto/componente
+    → adaptador src/api
+      → HTTPS /api
+        → ruta Express
+          → middleware de identidad/rol/límite
+            → controlador
+              → servicio de aplicación
+                → SQL parametrizado/transacción
+                  → PostgreSQL</code></pre>
+<p>Para recordatorios el flujo adicional es:</p>
+<pre><code>pg_cron → pg_net → Edge Function → RPC reminder_api
+        → Expo Push → FCM → Android</code></pre>
+<hr>
+<h2 id="7-catalogo-de-modulos-y-responsabilidades">7. Catálogo de módulos y responsabilidades</h2>
+<h3 id="7-1-frontend-expo">7.1 Frontend Expo</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Módulo</th>
+<th>Archivos representativos</th>
+<th>Responsabilidad</th>
+<th>Dependencias permitidas</th>
+</tr></thead><tbody>
+<tr>
+<td>Arranque y enrutamiento</td>
+<td><code>src/app/_layout.tsx</code>, <code>src/app/index.tsx</code>, layouts por grupo</td>
+<td>Montar providers, resolver el destino inicial y declarar navegación.</td>
+<td>Contextos y Expo Router.</td>
+</tr>
+<tr>
+<td>Autenticación visual</td>
+<td><code>src/app/auth/login.tsx</code>, <code>register.tsx</code></td>
+<td>Capturar credenciales, validar forma, comunicar carga/error y ejecutar login/registro.</td>
+<td><code>AuthContext</code>, utilidades de celular y tema.</td>
+</tr>
+<tr>
+<td>Área cliente</td>
+<td><code>src/app/client/index.tsx</code>, <code>appointment.tsx</code>, <code>my-appointments.tsx</code></td>
+<td>Inicio, selección de fecha/horario, reserva, próximas citas, historial, cancelación y confirmación.</td>
+<td>API de citas, AuthContext, NotificationContext y componentes.</td>
+</tr>
+<tr>
+<td>Área administrativa</td>
+<td><code>src/app/admin/index.tsx</code>, <code>appointments.tsx</code>, <code>schedule.tsx</code></td>
+<td>Resumen, gestión de solicitudes, filtros, agenda, transiciones y recordatorios.</td>
+<td>API administrativa y componentes compartidos.</td>
+</tr>
+<tr>
+<td>Estado de autenticación</td>
+<td><code>src/context/AuthContext.tsx</code></td>
+<td>Registrar, iniciar/cerrar, restaurar, validar y exponer identidad/sesión.</td>
+<td>API de autenticación y almacenamiento de plataforma.</td>
+</tr>
+<tr>
+<td>Estado de notificaciones</td>
+<td><code>src/context/NotificationContext.tsx</code></td>
+<td>Solicitar permiso, obtener token nativo y Expo, registrar/desactivar dispositivo, manejar eventos y exponer etapas de activación.</td>
+<td><code>expo-notifications</code>, API de dispositivos y utilidades de timeout.</td>
+</tr>
+<tr>
+<td>Retroalimentación</td>
+<td><code>src/components/FeedbackProvider.tsx</code>, <code>src/utils/show-message.ts</code></td>
+<td>Mensajes globales, confirmaciones y comunicación de resultados.</td>
+<td>React/React Native.</td>
+</tr>
+<tr>
+<td>Componentes comunes</td>
+<td><code>BackButton</code>, <code>UserMenu</code>, <code>AttendanceBadge</code>, <code>AppIcon</code>, <code>WebDateInput</code></td>
+<td>Interacciones consistentes, accesibles y adaptadas a plataforma.</td>
+<td>Tema y APIs de plataforma.</td>
+</tr>
+<tr>
+<td>Adaptadores HTTP</td>
+<td><code>src/api/api-client.ts</code>, <code>auth.api.ts</code>, <code>appointments.api.ts</code>, <code>admin.api.ts</code>, <code>notifications.api.ts</code></td>
+<td>Serializar solicitudes, incluir token, tipar respuestas, normalizar error y compatibilidad de contratos.</td>
+<td><code>fetch</code> y tipos locales.</td>
+</tr>
+<tr>
+<td>Tema y reglas de presentación</td>
+<td><code>src/constants/app-theme.ts</code>, <code>business.ts</code>, <code>global.css</code></td>
+<td>Identidad visual, espaciado, tipografía y constantes compartidas de interfaz.</td>
+<td>Ninguna capa de servidor.</td>
+</tr>
+<tr>
+<td>Fechas/validaciones</td>
+<td><code>src/utils/business-date.ts</code>, <code>date-format.ts</code>, <code>phone-validation.ts</code></td>
+<td>Formato local y validaciones inmediatas; no sustituyen las reglas autoritativas.</td>
+<td>APIs estándar.</td>
+</tr>
+</tbody></table></div>
+<h3 id="7-2-backend-api">7.2 Backend API</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Módulo</th>
+<th>Archivos representativos</th>
+<th>Responsabilidad</th>
+</tr></thead><tbody>
+<tr>
+<td>Composición HTTP</td>
+<td><code>backend/src/server.js</code></td>
+<td>Configurar Express, proxy, CORS, JSON, rutas y respuesta 404.</td>
+</tr>
+<tr>
+<td>Rutas</td>
+<td><code>backend/src/routes/*.routes.js</code></td>
+<td>Exponer verbos/rutas y componer middleware con controlador.</td>
+</tr>
+<tr>
+<td>Autenticación</td>
+<td><code>auth.controller.js</code>, <code>auth.service.js</code></td>
+<td>Validar entrada, hashear/verificar contraseña, emitir JWT y recuperar usuario.</td>
+</tr>
+<tr>
+<td>Middleware de identidad</td>
+<td><code>auth.middleware.js</code></td>
+<td>Validar Bearer JWT y consultar la identidad/rol actual en base de datos.</td>
+</tr>
+<tr>
+<td>Autorización</td>
+<td><code>client.middleware.js</code>, <code>admin.middleware.js</code></td>
+<td>Rechazar operaciones que no correspondan al rol actual.</td>
+</tr>
+<tr>
+<td>Limitación de frecuencia</td>
+<td><code>rate-limit.middleware.js</code></td>
+<td>Limitar login, registro y recordatorios para reducir abuso accidental o deliberado.</td>
+</tr>
+<tr>
+<td>Citas</td>
+<td><code>appointment.controller.js</code>, <code>appointment.service.js</code></td>
+<td>Disponibilidad, reserva, listado, cancelación, confirmación, agenda y transiciones administrativas.</td>
+</tr>
+<tr>
+<td>Dispositivos push</td>
+<td><code>notification.controller.js</code>, <code>notification.service.js</code></td>
+<td>Validar tokens Expo, registrar de forma idempotente y desactivar tokens por propietario.</td>
+</tr>
+<tr>
+<td>Recordatorios administrativos</td>
+<td><code>admin-reminder.controller.js</code>, <code>admin-reminder.service.js</code></td>
+<td>Resumir elegibilidad y persistir solicitudes manuales individuales o masivas.</td>
+</tr>
+<tr>
+<td>Persistencia</td>
+<td><code>database/db.js</code>, <code>schema.sql</code>, <code>migrations/*.sql</code></td>
+<td>Pool PostgreSQL, esquema base, evolución, índices, triggers y RPC restringidas.</td>
+</tr>
+<tr>
+<td>Utilidades</td>
+<td><code>utils/date.js</code>, <code>pagination.js</code>, <code>phone.js</code>, <code>http-error.js</code>, <code>expo-push-token.js</code></td>
+<td>Reglas técnicas compartidas y normalización de errores.</td>
+</tr>
+</tbody></table></div>
+<h3 id="7-3-procesamiento-asincrono">7.3 Procesamiento asíncrono</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Componente</th>
+<th>Archivo</th>
+<th>Responsabilidad</th>
+</tr></thead><tbody>
+<tr>
+<td>Programación</td>
+<td><code>supabase/cron/schedule-appointment-reminders.sql</code></td>
+<td>Registrar o actualizar un job por minuto y llamar a la Edge Function.</td>
+</tr>
+<tr>
+<td>Worker</td>
+<td><code>supabase/functions/bright-endpoint/index.ts</code></td>
+<td>Autenticar al cron, reclamar lotes, revalidar, consultar tokens, enviar a Expo y cerrar/liberar trabajos.</td>
+</tr>
+<tr>
+<td>Frontera RPC</td>
+<td>migraciones <code>reminder_api_boundary</code>, <code>reminder_reliability</code>, <code>manual_attendance_reminders</code></td>
+<td>Exponer al worker solo las operaciones requeridas con claims y búsqueda segura.</td>
+</tr>
+<tr>
+<td>Proveedor</td>
+<td>Expo Push/FCM</td>
+<td>Aceptar tickets y entregar notificación remota a Android.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="8-contratos-de-la-api-rest">8. Contratos de la API REST</h2>
+<h3 id="8-1-convenciones">8.1 Convenciones</h3>
+<ul>
+<li>Base lógica: <code>/api</code>.</li>
+<li>Cuerpos y respuestas: JSON.</li>
+<li>Operaciones protegidas: <code>Authorization: Bearer &lt;JWT&gt;</code>.</li>
+<li>Respuestas exitosas contienen <code>success: true</code>; errores contienen <code>success: false</code> y un mensaje apto para el usuario.</li>
+<li>Las consultas de lista usan <code>page</code> y <code>pageSize</code>; el límite máximo actual es 100.</li>
+<li>Una solicitud de recordatorio aceptada para procesamiento responde como trabajo encolado, no como garantía de entrega final.</li>
+</ul>
+<h3 id="8-2-endpoints-publicos-y-de-sesion">8.2 Endpoints públicos y de sesión</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Método y ruta</th>
+<th>Rol</th>
+<th>Caso de uso</th>
+<th>Datos principales</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET /api/health</code></td>
+<td>Público</td>
+<td>Comprobar disponibilidad de la API.</td>
+<td>Estado del servicio.</td>
+</tr>
+<tr>
+<td><code>POST /api/auth/register</code></td>
+<td>Público</td>
+<td>Crear cliente y devolver JWT/usuario.</td>
+<td>nombre, apellido, celular, hash, rol.</td>
+</tr>
+<tr>
+<td><code>POST /api/auth/login</code></td>
+<td>Público</td>
+<td>Verificar credenciales y devolver JWT/usuario.</td>
+<td>celular, hash, usuario.</td>
+</tr>
+<tr>
+<td><code>GET /api/auth/me</code></td>
+<td>Autenticado</td>
+<td>Validar token y obtener identidad vigente.</td>
+<td>usuario y rol actual.</td>
+</tr>
+</tbody></table></div>
+<h3 id="8-3-endpoints-de-cliente">8.3 Endpoints de cliente</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Método y ruta</th>
+<th>Caso de uso</th>
+<th>Regla autoritativa</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET /api/appointments/availability?date=</code></td>
+<td>Consultar horarios de una fecha.</td>
+<td>24 h, ocupación y elegibilidad del cliente.</td>
+</tr>
+<tr>
+<td><code>GET /api/appointments/next-availability?startDate=</code></td>
+<td>Encontrar la siguiente fecha utilizable.</td>
+<td>Busca hasta 60 días y respeta límites del cliente.</td>
+</tr>
+<tr>
+<td><code>POST /api/appointments</code></td>
+<td>Crear cita <code>PENDING</code>.</td>
+<td>Transacción, bloqueo por cliente, índice único parcial.</td>
+</tr>
+<tr>
+<td><code>GET /api/appointments/my</code></td>
+<td>Obtener citas propias paginadas.</td>
+<td>Solo filas del usuario autenticado.</td>
+</tr>
+<tr>
+<td><code>PATCH /api/appointments/:id/cancel</code></td>
+<td>Cancelar cita propia.</td>
+<td>Propiedad, estado activo y ventana inclusiva de 60 min.</td>
+</tr>
+<tr>
+<td><code>PATCH /api/appointments/:id/confirm-attendance</code></td>
+<td>Confirmar asistencia.</td>
+<td>Propiedad, <code>ACCEPTED</code>, futura e idempotencia.</td>
+</tr>
+<tr>
+<td><code>PUT /api/notifications/device</code></td>
+<td>Registrar/reactivar dispositivo.</td>
+<td>Token Expo válido y usuario autenticado.</td>
+</tr>
+<tr>
+<td><code>DELETE /api/notifications/device</code></td>
+<td>Desactivar dispositivo propio.</td>
+<td>Token y propietario.</td>
+</tr>
+</tbody></table></div>
+<h3 id="8-4-endpoints-administrativos">8.4 Endpoints administrativos</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Método y ruta</th>
+<th>Caso de uso</th>
+<th>Regla autoritativa</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET /api/admin/appointments</code></td>
+<td>Gestión o agenda con estado, búsqueda y rango.</td>
+<td>Rol <code>ADMIN</code>, paginación y rango máximo de 93 días.</td>
+</tr>
+<tr>
+<td><code>PATCH /api/admin/appointments/:id/accept</code></td>
+<td>Aceptar.</td>
+<td>Solo desde <code>PENDING</code>.</td>
+</tr>
+<tr>
+<td><code>PATCH /api/admin/appointments/:id/reject</code></td>
+<td>Rechazar.</td>
+<td>Solo desde <code>PENDING</code>; libera horario.</td>
+</tr>
+<tr>
+<td><code>PATCH /api/admin/appointments/:id/cancel</code></td>
+<td>Cancelar administrativamente.</td>
+<td>Solo <code>ACCEPTED</code> y futura según regla.</td>
+</tr>
+<tr>
+<td><code>PATCH /api/admin/appointments/:id/complete</code></td>
+<td>Completar.</td>
+<td>Solo <code>ACCEPTED</code> cuando la hora llegó o pasó.</td>
+</tr>
+<tr>
+<td><code>GET /api/admin/attendance-reminders/summary</code></td>
+<td>Resumen de elegibles.</td>
+<td>Cuenta elegibles, cola, cooldown y falta de dispositivo.</td>
+</tr>
+<tr>
+<td><code>POST /api/admin/attendance-reminders</code></td>
+<td>Encolar recordatorios masivos.</td>
+<td>Hasta 100 elegibles, rate limit y exclusión concurrente.</td>
+</tr>
+<tr>
+<td><code>POST /api/admin/appointments/:id/attendance-reminder</code></td>
+<td>Encolar uno.</td>
+<td>Elegibilidad, cooldown, dispositivo y no duplicación.</td>
+</tr>
+</tbody></table></div>
+<h3 id="8-5-codigos-relevantes">8.5 Códigos relevantes</h3>
+<ul>
+<li><code>200</code>: consulta o mutación completada de forma síncrona.</li>
+<li><code>201</code>: recurso creado cuando aplica al contrato.</li>
+<li><code>202</code>: recordatorio persistido para procesamiento asíncrono.</li>
+<li><code>400</code>: formato o regla temporal inválida.</li>
+<li><code>401</code>: credencial ausente o inválida.</li>
+<li><code>403</code>: identidad válida sin rol autorizado.</li>
+<li><code>404</code>: recurso inexistente o no accesible para el propietario.</li>
+<li><code>409</code>: conflicto de estado, disponibilidad, duplicidad o límite de negocio.</li>
+<li><code>429</code>: límite temporal de solicitudes.</li>
+<li><code>500</code>: fallo no esperado sin revelar detalles internos.</li>
+</ul>
+<hr>
+<h2 id="9-diseno-de-datos">9. Diseño de datos</h2>
+<h3 id="9-1-entidades">9.1 Entidades</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Tabla</th>
+<th>Finalidad</th>
+<th>Campos principales</th>
+</tr></thead><tbody>
+<tr>
+<td><code>users</code></td>
+<td>Identidad local de clientes y administradores.</td>
+<td><code>id</code>, <code>first_name</code>, <code>last_name</code>, <code>phone</code>, <code>password_hash</code>, <code>role</code>, <code>created_at</code>.</td>
+</tr>
+<tr>
+<td><code>appointments</code></td>
+<td>Cita y su ciclo operativo, además del claim automático.</td>
+<td><code>user_id</code>, servicio, fecha, hora, estado, confirmación de asistencia, <code>reminder_sent_at</code>, claim/intententos y creación.</td>
+</tr>
+<tr>
+<td><code>push_device_tokens</code></td>
+<td>Dispositivos que un cliente autorizó para recordatorios.</td>
+<td><code>user_id</code>, <code>expo_push_token</code>, plataforma, activo, última vista y timestamps.</td>
+</tr>
+<tr>
+<td><code>appointment_notification_jobs</code></td>
+<td>Solicitud manual durable y auditable.</td>
+<td>cita, tipo, origen, solicitante, estado, disponibilidad, claim, intentos, dispositivos aceptados y fallo.</td>
+</tr>
+</tbody></table></div>
+<h3 id="9-2-relaciones">9.2 Relaciones</h3>
+<ul>
+<li>Un <code>user</code> posee cero o muchas <code>appointments</code>.</li>
+<li>Un <code>user</code> posee cero o muchos <code>push_device_tokens</code>.</li>
+<li>Una <code>appointment</code> puede tener varios trabajos históricos, pero como máximo un trabajo manual activo del mismo tipo.</li>
+<li>Un administrador, como <code>requested_by_user_id</code>, puede solicitar muchos trabajos.</li>
+<li>La eliminación de un usuario está restringida si tiene citas y propaga a sus tokens; los trabajos conservan integridad con cita y solicitante según las claves definidas.</li>
+</ul>
+<h3 id="9-3-integridad-y-concurrencia">9.3 Integridad y concurrencia</h3>
+<ul>
+<li><code>phone</code> es único.</li>
+<li><code>role</code>, estado de cita, plataforma, tipo/origen/estado de trabajo usan restricciones <code>CHECK</code>.</li>
+<li>El índice <code>idx_unique_active_appointment</code> es único sobre fecha y hora solo cuando el estado está en <code>PENDING</code> o <code>ACCEPTED</code>. Rechazar o cancelar libera el horario sin borrar el historial.</li>
+<li>La reserva ejecuta <code>BEGIN</code>, obtiene <code>pg_advisory_xact_lock(userId)</code>, vuelve a verificar anticipación/límites/disponibilidad, inserta y hace <code>COMMIT</code>. El error PostgreSQL <code>23505</code> se convierte en conflicto comprensible.</li>
+<li>Las columnas de claim exigen consistencia entre timestamp y token UUID.</li>
+<li>Un trigger limpia reclamos automáticos cuando una cita deja de ser elegible.</li>
+<li>Otro trigger marca trabajos manuales activos como <code>SKIPPED</code> cuando cambia el estado, el cliente confirma, la cita inicia o un recordatorio automático reciente hace redundante el trabajo.</li>
+<li>RLS se habilita sobre tokens y trabajos; la aplicación cliente no usa estas tablas mediante Data API.</li>
+</ul>
+<h3 id="9-4-tiempo-de-negocio">9.4 Tiempo de negocio</h3>
+<p>La fecha y hora de cita se almacenan separadas porque representan una agenda local. Al compararlas con un instante se combinan y se interpretan en <code>America/Managua</code>. Esta decisión evita que la zona del navegador o del teléfono cambie el significado de las 08:00 de la barbería. Debe cambiarse de forma coordinada en backend, SQL y worker si el negocio adopta otra zona.</p>
+<h3 id="9-5-estados-de-cita">9.5 Estados de cita</h3>
+<pre><code>PENDING  → ACCEPTED → COMPLETED
+    └────→ REJECTED
+    └────→ CANCELLED (cliente, mientras sea elegible)
+ACCEPTED └──────────→ CANCELLED (cliente o administrador, según regla)</code></pre>
+<p>Los estados finales <code>COMPLETED</code>, <code>REJECTED</code> y <code>CANCELLED</code> no vuelven a un estado activo. La confirmación del cliente se conserva como <code>client_attendance_confirmed_at</code>, no como un sexto estado, porque una cita puede ser aceptada y confirmada al mismo tiempo.</p>
+<h3 id="9-6-proyeccion-de-asistencia">9.6 Proyección de asistencia</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Proyección</th>
+<th>Interpretación</th>
+</tr></thead><tbody>
+<tr>
+<td><code>CONFIRMED</code></td>
+<td>Existe <code>client_attendance_confirmed_at</code>.</td>
+</tr>
+<tr>
+<td><code>AWAITING</code></td>
+<td>Cita aceptada, futura y todavía no confirmada.</td>
+</tr>
+<tr>
+<td><code>NO_RESPONSE</code></td>
+<td>La cita aceptada/completada llegó o pasó sin confirmación.</td>
+</tr>
+<tr>
+<td><code>NOT_APPLICABLE</code></td>
+<td>Estado en el que no corresponde solicitar confirmación.</td>
+</tr>
+</tbody></table></div>
+<h3 id="9-7-estados-de-trabajo-manual">9.7 Estados de trabajo manual</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Estado</th>
+<th>Significado</th>
+</tr></thead><tbody>
+<tr>
+<td><code>QUEUED</code></td>
+<td>Persistido y disponible, o esperando su siguiente reintento.</td>
+</tr>
+<tr>
+<td><code>CLAIMED</code></td>
+<td>Una ejecución posee temporalmente el trabajo mediante UUID.</td>
+</tr>
+<tr>
+<td><code>SENT</code></td>
+<td>Al menos un ticket fue aceptado por Expo Push.</td>
+</tr>
+<tr>
+<td><code>SKIPPED</code></td>
+<td>Dejó de ser elegible o no existe dispositivo activo.</td>
+</tr>
+<tr>
+<td><code>FAILED</code></td>
+<td>Se agotaron los intentos o ocurrió una condición terminal.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="10-reglas-de-negocio-autoritativas">10. Reglas de negocio autoritativas</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Regla</th>
+<th>Aplicación técnica</th>
+</tr></thead><tbody>
+<tr>
+<td>Celular</td>
+<td>Ocho dígitos, sin espacios, inicio <code>8</code>, <code>7</code> o <code>5</code>; frontend anticipa y backend confirma.</td>
+</tr>
+<tr>
+<td>Anticipación</td>
+<td>La cita debe iniciar al menos 24 horas después del reloj de negocio.</td>
+</tr>
+<tr>
+<td>Horario</td>
+<td>Bloques <code>08:00</code> a <code>17:00</code>, cada hora.</td>
+</tr>
+<tr>
+<td>Bloqueo de horario</td>
+<td>Solo <code>PENDING</code> y <code>ACCEPTED</code> ocupan un bloque.</td>
+</tr>
+<tr>
+<td>Límite diario</td>
+<td>Máximo una cita activa del mismo cliente en la fecha.</td>
+</tr>
+<tr>
+<td>Límite móvil</td>
+<td>Máximo dos citas activas en cualquiera de las ventanas de siete días que incluyen la candidata.</td>
+</tr>
+<tr>
+<td>Cancelación cliente</td>
+<td><code>PENDING</code> o <code>ACCEPTED</code> y al menos 60 minutos restantes; comparación inclusiva.</td>
+</tr>
+<tr>
+<td>Aceptación/rechazo</td>
+<td>Únicamente desde <code>PENDING</code>.</td>
+</tr>
+<tr>
+<td>Completar</td>
+<td>Únicamente desde <code>ACCEPTED</code> cuando el inicio llegó o pasó.</td>
+</tr>
+<tr>
+<td>Consulta de agenda</td>
+<td>Rango máximo de 93 días y página máxima de 100 registros.</td>
+</tr>
+<tr>
+<td>Confirmación</td>
+<td>Propietario, <code>ACCEPTED</code>, futura y sin confirmación previa.</td>
+</tr>
+<tr>
+<td>Recordatorio individual</td>
+<td>Cita aceptada, futura, no confirmada, dispositivo activo, sin job activo ni recordatorio en los últimos 15 min.</td>
+</tr>
+<tr>
+<td>Recordatorio masivo</td>
+<td>Mismas reglas, máximo 100 inserciones por solicitud.</td>
+</tr>
+<tr>
+<td>Worker</td>
+<td>Hasta cinco recordatorios automáticos y cinco manuales reclamados por ejecución.</td>
+</tr>
+<tr>
+<td>Reintentos manuales</td>
+<td>Hasta tres intentos; espera aproximada de 30 s y luego 2 min entre reintentos.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="11-arquitectura-de-notificaciones-y-confirmacion">11. Arquitectura de notificaciones y confirmación</h2>
+<h3 id="11-1-activacion-del-dispositivo">11.1 Activación del dispositivo</h3>
+<ol>
+<li>Un cliente autenticado ve una invitación para activar recordatorios.</li>
+<li>Android solicita permiso mediante <code>expo-notifications</code>.</li>
+<li><code>NotificationContext</code> obtiene el token nativo del dispositivo.</li>
+<li>Obtiene el token Expo pasando explícitamente ese token nativo y el <code>projectId</code> EAS.</li>
+<li><code>PUT /api/notifications/device</code> valida y hace upsert/reactivación del token asociado al usuario.</li>
+<li>La interfaz informa por etapas: permiso, preparación, conexión y registro en el servidor.</li>
+</ol>
+<p>La suscripción al cambio de token consume el token recibido por el evento. No vuelve a pedir un token nativo dentro del listener, porque esa recursión podría disparar indefinidamente el mismo evento. Los timeouts evitan un estado visual eterno si Android o la red no responden.</p>
+<h3 id="11-2-recordatorio-automatico-t-1-h">11.2 Recordatorio automático T−1 h</h3>
+<ol>
+<li><code>pg_cron</code> ejecuta el job cada minuto.</li>
+<li><code>pg_net</code> llama por HTTPS a <code>bright-endpoint</code> con <code>x-cron-secret</code> obtenido de Vault.</li>
+<li>La función compara el secreto sin consultar credenciales del cliente.</li>
+<li>Una RPC en <code>reminder_api</code> reclama citas <code>ACCEPTED</code>, futuras, sin confirmación, sin envío anterior y cuyo inicio menos una hora ya llegó.</li>
+<li>Cada fila queda asociada a un <code>claim_token</code> y aumenta intentos.</li>
+<li>El worker revalida, obtiene únicamente tokens activos de ese propietario y construye un mensaje que incluye <code>appointmentId</code>.</li>
+<li>Expo Push devuelve tickets por dispositivo; <code>DeviceNotRegistered</code> provoca desactivación del token.</li>
+<li>Si al menos un ticket fue aceptado y la cita sigue elegible, otra RPC marca <code>reminder_sent_at</code>; en caso contrario libera el claim.</li>
+</ol>
+<h3 id="11-3-recordatorio-manual-individual-o-masivo">11.3 Recordatorio manual individual o masivo</h3>
+<ol>
+<li>El administrador consulta el resumen o pulsa la acción de una cita.</li>
+<li>Render valida JWT y rol, rate limit y elegibilidad.</li>
+<li>El servicio inserta uno o varios <code>appointment_notification_jobs</code> con <code>QUEUED</code>. La petición devuelve <code>202</code> porque el envío ocurrirá después.</li>
+<li>En la siguiente ejecución, el mismo worker reclama trabajos disponibles.</li>
+<li>El worker revalida estado, tiempo, confirmación, dispositivo, cooldown y propiedad del claim.</li>
+<li>El mensaje se envía a los dispositivos de esa cita y el job termina en <code>SENT</code>, <code>SKIPPED</code>, vuelve a <code>QUEUED</code> para reintento o termina <code>FAILED</code>.</li>
+</ol>
+<p>El índice parcial evita dos jobs activos del mismo tipo para la misma cita. El enfriamiento de 15 minutos evita presión repetitiva sobre el cliente y reduce duplicados entre recordatorios automáticos y manuales.</p>
+<h3 id="11-4-confirmacion-desde-la-notificacion">11.4 Confirmación desde la notificación</h3>
+<p>El payload contiene un tipo versionado y <code>appointmentId</code>. Al tocar o responder desde el flujo soportado, la app navega a “Mis citas” y ejecuta <code>PATCH /appointments/:id/confirm-attendance</code> con la sesión del propietario. El servidor no confía en el id por sí solo: exige usuario, estado y tiempo elegible. Si ya estaba confirmada, el resultado permanece coherente; la interfaz y la administración refrescan la proyección de asistencia.</p>
+<h3 id="11-5-semantica-de-confiabilidad">11.5 Semántica de confiabilidad</h3>
+<ul>
+<li>El claim evita procesamiento simultáneo del mismo registro.</li>
+<li>Los claims antiguos pueden recuperarse después de su lease.</li>
+<li>La elegibilidad se verifica varias veces para cerrar carreras con cancelación, rechazo o confirmación.</li>
+<li><code>collapseId</code>/<code>tag</code> agrupa notificaciones de la misma cita en Android.</li>
+<li>La expiración del mensaje coincide con el inicio; una notificación ya inútil no debe entregarse después.</li>
+<li>La aceptación de un ticket Expo es una confirmación intermedia. La entrega final requeriría almacenar identificadores de ticket y consultar push receipts.</li>
+</ul>
+<hr>
+<h2 id="12-seguridad-y-fronteras-de-confianza">12. Seguridad y fronteras de confianza</h2>
+<h3 id="12-1-identidad-y-autorizacion">12.1 Identidad y autorización</h3>
+<ul>
+<li>Las contraseñas se almacenan como hash, nunca en texto plano.</li>
+<li>El JWT identifica la sesión; el middleware consulta el usuario y rol actuales para no depender de un rol obsoleto enviado por el cliente.</li>
+<li>Los layouts protegen navegación por experiencia, pero la seguridad efectiva reside en <code>authenticateToken</code>, <code>requireClient</code> y <code>requireAdmin</code>.</li>
+<li>Cada mutación de cliente incluye <code>user_id</code> en la condición SQL para evitar acceso horizontal a citas ajenas.</li>
+<li>Los endpoints administrativos exigen rol <code>ADMIN</code> en cada solicitud.</li>
+</ul>
+<h3 id="12-2-base-de-datos-y-worker">12.2 Base de datos y worker</h3>
+<ul>
+<li>El cliente no conoce credenciales de PostgreSQL ni service role.</li>
+<li>La API accede a PostgreSQL desde el servidor mediante variables de entorno.</li>
+<li>La Edge Function usa service role solo dentro de su entorno y consume un esquema RPC estrecho, no una interfaz general de tablas.</li>
+<li>Las funciones <code>SECURITY DEFINER</code> fijan <code>search_path</code> seguro y sus permisos se limitan al rol requerido.</li>
+<li>Los roles <code>anon</code> y <code>authenticated</code> no necesitan permisos directos sobre las tablas internas de recordatorios.</li>
+<li>El endpoint Edge puede tener verificación JWT de plataforma desactivada porque no recibe un JWT de usuario; su autenticación específica es <code>x-cron-secret</code> y la llamada se origina desde cron/Vault.</li>
+</ul>
+<h3 id="12-3-red-y-configuracion">12.3 Red y configuración</h3>
+<ul>
+<li>Render termina TLS y Express confía en un solo proxy para recuperar IP.</li>
+<li>CORS permite orígenes configurados, desarrollo local y previews Netlify reconocibles.</li>
+<li>Los secretos esperados se inyectan en despliegue; no deben imprimirse en logs ni representarse en diagramas.</li>
+<li>Los límites de frecuencia protegen login, registro y envío manual, aunque la implementación actual es local a una instancia.</li>
+<li>Los mensajes de error públicos no exponen SQL, hashes, tokens ni detalles del proveedor.</li>
+</ul>
+<h3 id="12-4-amenazas-mitigadas-y-pendientes">12.4 Amenazas mitigadas y pendientes</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Riesgo</th>
+<th>Control actual</th>
+<th>Mejora futura</th>
+</tr></thead><tbody>
+<tr>
+<td>Reserva simultánea</td>
+<td>Transacción, advisory lock e índice único parcial.</td>
+<td>Prueba de carga y métricas de conflicto.</td>
+</tr>
+<tr>
+<td>Acceso por rol incorrecto</td>
+<td>Middleware y rol vigente desde DB.</td>
+<td>Auditoría persistente de acciones admin.</td>
+</tr>
+<tr>
+<td>Enumeración/fuerza bruta</td>
+<td>Mensajes normalizados y rate limit.</td>
+<td>Limitador distribuido y alertas.</td>
+</tr>
+<tr>
+<td>Duplicado push</td>
+<td>Claims, índice de job, cooldown, collapse/tag.</td>
+<td>Idempotency key externa y recibos Expo.</td>
+</tr>
+<tr>
+<td>Worker público</td>
+<td>Secreto cron y RPC mínima.</td>
+<td>Rotación documentada y monitoreo de 401/403.</td>
+</tr>
+<tr>
+<td>Token inválido</td>
+<td>Desactivación tras <code>DeviceNotRegistered</code>.</td>
+<td>Limpieza programada por antigüedad.</td>
+</tr>
+<tr>
+<td>Certificado DB</td>
+<td>Conexión cifrada según configuración actual.</td>
+<td>Evitar <code>rejectUnauthorized=false</code> cuando el entorno permita validar la cadena.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="13-despliegue-y-operacion">13. Despliegue y operación</h2>
+<h3 id="13-1-topologia-actual">13.1 Topología actual</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Artefacto</th>
+<th>Plataforma</th>
+<th>Proceso de entrega</th>
+</tr></thead><tbody>
+<tr>
+<td>Web estática</td>
+<td>Netlify</td>
+<td><code>expo export --platform web</code>; el host publica los recursos generados.</td>
+</tr>
+<tr>
+<td>APK Android</td>
+<td>Expo Application Services</td>
+<td>Perfil <code>preview</code>, distribución interna y <code>buildType: apk</code>.</td>
+</tr>
+<tr>
+<td>API Node/Express</td>
+<td>Render</td>
+<td>Instalación npm y ejecución de <code>node src/server.js</code> desde el backend según configuración del servicio.</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>Supabase</td>
+<td>Esquema y migraciones SQL aplicadas en orden.</td>
+</tr>
+<tr>
+<td>Worker</td>
+<td>Supabase Edge Functions</td>
+<td>Despliegue de <code>bright-endpoint</code>.</td>
+</tr>
+<tr>
+<td>Cron</td>
+<td>Supabase PostgreSQL</td>
+<td><code>pg_cron</code> + <code>pg_net</code> + Vault mediante script de programación.</td>
+</tr>
+<tr>
+<td>Push</td>
+<td>Expo Push + Firebase Cloud Messaging</td>
+<td><code>google-services.json</code> y plugin nativo de <code>expo-notifications</code> durante la compilación.</td>
+</tr>
+</tbody></table></div>
+<h3 id="13-2-configuracion-por-entorno">13.2 Configuración por entorno</h3>
+<p>Sin publicar valores, las categorías necesarias son:</p>
+<ul>
+<li>URL pública de API para el frontend.</li>
+<li>cadena de conexión PostgreSQL y configuración TLS para Render.</li>
+<li>secreto de firma JWT.</li>
+<li>orígenes CORS autorizados.</li>
+<li>URL y service role de Supabase dentro de la Edge Function.</li>
+<li>secreto compartido de cron en Edge y Vault.</li>
+<li>proyecto EAS, paquete Android y configuración Firebase.</li>
+<li>opcionalmente credenciales de Expo necesarias para el envío del proyecto.</li>
+</ul>
+<h3 id="13-3-migraciones-requeridas">13.3 Migraciones requeridas</h3>
+<p><code>schema.sql</code> describe buena parte del estado final, pero la reconstrucción completa del subsistema de recordatorios requiere aplicar, en orden:</p>
+<ol>
+<li><code>20260823_attendance_reminders.sql</code></li>
+<li><code>20260823_reminder_api_boundary.sql</code></li>
+<li><code>20260824_reminder_reliability.sql</code></li>
+<li><code>20260825_manual_attendance_reminders.sql</code></li>
+</ol>
+<p>Después se habilitan <code>pg_net</code> y <code>pg_cron</code>, se crea el secreto en Vault, se despliega la Edge Function y se ejecuta <code>schedule-appointment-reminders.sql</code>. <code>database/init.js</code> prueba conectividad; no debe asumirse como un gestor de migraciones.</p>
+<h3 id="13-4-observabilidad-operativa-actual">13.4 Observabilidad operativa actual</h3>
+<ul>
+<li><code>/api/health</code> comprueba que el proceso HTTP responde.</li>
+<li>Render presenta eventos y logs del servicio.</li>
+<li>Supabase muestra invocaciones y logs de la Edge Function.</li>
+<li><code>net._http_response</code> permite inspeccionar el resultado de llamadas de <code>pg_net</code>.</li>
+<li><code>cron.job</code>/historial asociado permite verificar que el schedule existe y se ejecuta.</li>
+<li>La respuesta agregada del worker informa <code>claimed</code>, <code>sent</code>, <code>skipped</code>, <code>retrying</code> y <code>failed</code>, separados entre automático y manual.</li>
+<li>Los trabajos manuales preservan intentos, errores y resultados por cita.</li>
+</ul>
+<hr>
+<h2 id="14-matriz-de-trazabilidad-completa">14. Matriz de trazabilidad completa</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Req.</th>
+<th>Pantalla/interfaz</th>
+<th>Módulo frontend</th>
+<th>Endpoint / componente backend</th>
+<th>Datos principales</th>
+</tr></thead><tbody>
+<tr>
+<td>RF-01</td>
+<td>Registro</td>
+<td><code>auth/register.tsx</code>, <code>AuthContext</code></td>
+<td><code>POST /auth/register</code>; auth controller/service</td>
+<td><code>users</code>: nombre, apellido, celular, hash, rol</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Login / redirección inicial</td>
+<td><code>auth/login.tsx</code>, <code>app/index.tsx</code>, <code>AuthContext</code></td>
+<td><code>POST /auth/login</code>; auth controller/service</td>
+<td><code>users</code>, JWT</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Arranque de aplicación</td>
+<td><code>AuthContext</code>, almacenamiento de plataforma</td>
+<td><code>GET /auth/me</code>; auth middleware/service</td>
+<td>sesión local y <code>users</code></td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Menú de usuario</td>
+<td><code>UserMenu</code>, <code>AuthContext</code>, <code>NotificationContext</code></td>
+<td><code>DELETE /notifications/device</code> como mejor esfuerzo; limpieza local</td>
+<td>JWT local, <code>push_device_tokens.active</code></td>
+</tr>
+<tr>
+<td>RF-05</td>
+<td>Agendar cita</td>
+<td><code>client/appointment.tsx</code></td>
+<td><code>GET /appointments/availability</code>, <code>/next-availability</code>; appointment service</td>
+<td><code>appointments</code>, horario y política</td>
+</tr>
+<tr>
+<td>RF-06</td>
+<td>Confirmación de reserva</td>
+<td><code>client/appointment.tsx</code></td>
+<td><code>POST /appointments</code>; transacción e índice único</td>
+<td>nueva fila <code>appointments</code> <code>PENDING</code></td>
+</tr>
+<tr>
+<td>RF-07</td>
+<td>Mis citas — Próximas</td>
+<td><code>client/my-appointments.tsx</code></td>
+<td><code>GET /appointments/my</code></td>
+<td>citas <code>PENDING</code>/<code>ACCEPTED</code></td>
+</tr>
+<tr>
+<td>RF-08</td>
+<td>Mis citas — Historial</td>
+<td><code>client/my-appointments.tsx</code></td>
+<td><code>GET /appointments/my</code></td>
+<td>citas <code>COMPLETED</code>/<code>REJECTED</code>/<code>CANCELLED</code></td>
+</tr>
+<tr>
+<td>RF-09</td>
+<td>Acción Cancelar cita</td>
+<td><code>client/my-appointments.tsx</code></td>
+<td><code>PATCH /appointments/:id/cancel</code>; appointment service</td>
+<td>estado, fecha/hora, propietario</td>
+</tr>
+<tr>
+<td>RF-10</td>
+<td>Gestión de citas</td>
+<td><code>admin/appointments.tsx</code></td>
+<td><code>GET /admin/appointments</code>; admin controller/service</td>
+<td>citas, usuario, conteos y paginación</td>
+</tr>
+<tr>
+<td>RF-11</td>
+<td>Acción Aceptar</td>
+<td><code>admin/appointments.tsx</code></td>
+<td><code>PATCH /admin/appointments/:id/accept</code></td>
+<td><code>appointments.status</code></td>
+</tr>
+<tr>
+<td>RF-12</td>
+<td>Acción Rechazar</td>
+<td><code>admin/appointments.tsx</code></td>
+<td><code>PATCH /admin/appointments/:id/reject</code></td>
+<td>estado y liberación del índice activo</td>
+</tr>
+<tr>
+<td>RF-13</td>
+<td>Agenda</td>
+<td><code>admin/schedule.tsx</code></td>
+<td><code>GET /admin/appointments?startDate&amp;endDate&amp;status</code></td>
+<td>citas por rango, conteos</td>
+</tr>
+<tr>
+<td>RF-14</td>
+<td>Acción Cancelar administrativa</td>
+<td><code>admin/appointments.tsx</code>, <code>admin/schedule.tsx</code></td>
+<td><code>PATCH /admin/appointments/:id/cancel</code></td>
+<td>estado y fecha/hora</td>
+</tr>
+<tr>
+<td>RF-15</td>
+<td>Acción Completar</td>
+<td>vistas administrativas</td>
+<td><code>PATCH /admin/appointments/:id/complete</code></td>
+<td>estado y fecha/hora</td>
+</tr>
+<tr>
+<td>RF-16</td>
+<td>Layouts protegidos</td>
+<td><code>_layout.tsx</code>, <code>client/_layout.tsx</code>, <code>admin/_layout.tsx</code></td>
+<td>auth/client/admin middleware</td>
+<td>JWT y <code>users.role</code></td>
+</tr>
+<tr>
+<td>RF-17</td>
+<td>Acción de WhatsApp</td>
+<td>detalle de cita administrativa</td>
+<td>Composición local de <code>wa.me</code>; sin API de escritura</td>
+<td>celular y mensaje contextual</td>
+</tr>
+<tr>
+<td>RF-18</td>
+<td>Tarjeta “Recibe el recordatorio…”</td>
+<td><code>NotificationContext</code>, vistas cliente</td>
+<td><code>PUT/DELETE /notifications/device</code>; notification service</td>
+<td><code>push_device_tokens</code></td>
+</tr>
+<tr>
+<td>RF-19</td>
+<td>Notificación Android</td>
+<td>manejador global de notificaciones</td>
+<td>cron + Edge <code>bright-endpoint</code> + RPC</td>
+<td>claims de <code>appointments</code>, tokens activos</td>
+</tr>
+<tr>
+<td>RF-20</td>
+<td>“Confirmo mi asistencia”</td>
+<td>notificación y <code>client/my-appointments.tsx</code></td>
+<td><code>PATCH /appointments/:id/confirm-attendance</code></td>
+<td><code>client_attendance_confirmed_at</code></td>
+</tr>
+<tr>
+<td>RF-21</td>
+<td>Badge/estado de asistencia</td>
+<td><code>AttendanceBadge</code>, vistas admin</td>
+<td>proyección en consultas de appointment service</td>
+<td>estado, fecha/hora, confirmación</td>
+</tr>
+<tr>
+<td>RF-22</td>
+<td>“Enviar recordatorio” / “Recordar a todos”</td>
+<td><code>admin/appointments.tsx</code></td>
+<td>summary + POST individual/masivo; admin reminder service y worker</td>
+<td><code>appointment_notification_jobs</code>, tokens, cita</td>
+</tr>
+</tbody></table></div>
+<h3 id="14-1-resultado-de-la-trazabilidad">14.1 Resultado de la trazabilidad</h3>
+<p>Cada requisito posee una interfaz o interacción identificable, una frontera técnica y una fuente de datos. No existe una pantalla independiente para el planificador porque RF-19 es un proceso automático; su representación observable está en la notificación del cliente, los estados administrativos y los registros operativos. <code>src/app/explore.tsx</code> es una ruta de compatibilidad/redirección y no representa un requisito funcional nuevo.</p>
+<hr>
+<h2 id="15-prototipo-actual-y-correspondencia-de-pantallas">15. Prototipo actual y correspondencia de pantallas</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Área</th>
+<th>Pantalla actual</th>
+<th>Requisitos representados</th>
+</tr></thead><tbody>
+<tr>
+<td>Pública</td>
+<td>Inicio/redirección</td>
+<td>RF-02, RF-03, RF-16</td>
+</tr>
+<tr>
+<td>Autenticación</td>
+<td>Iniciar sesión</td>
+<td>RF-02, RF-03</td>
+</tr>
+<tr>
+<td>Autenticación</td>
+<td>Crear cuenta</td>
+<td>RF-01</td>
+</tr>
+<tr>
+<td>Cliente</td>
+<td>Inicio</td>
+<td>acceso a RF-05, RF-07, RF-18</td>
+</tr>
+<tr>
+<td>Cliente</td>
+<td>Agendar cita</td>
+<td>RF-05, RF-06</td>
+</tr>
+<tr>
+<td>Cliente</td>
+<td>Mis citas</td>
+<td>RF-07, RF-08, RF-09, RF-20</td>
+</tr>
+<tr>
+<td>Cliente</td>
+<td>Activación de recordatorios</td>
+<td>RF-18</td>
+</tr>
+<tr>
+<td>Administración</td>
+<td>Inicio</td>
+<td>accesos y resumen; RF-10, RF-13, RF-16</td>
+</tr>
+<tr>
+<td>Administración</td>
+<td>Gestión de citas</td>
+<td>RF-10, RF-11, RF-12, RF-14, RF-15, RF-17, RF-21, RF-22</td>
+</tr>
+<tr>
+<td>Administración</td>
+<td>Agenda</td>
+<td>RF-13, RF-14, RF-15, RF-17, RF-21</td>
+</tr>
+</tbody></table></div>
+<p>El prototipo implementado ya contiene las representaciones necesarias para RF-01 a RF-22. Los procesos automáticos no requieren una pantalla artificial: se documentan mediante diagramas de secuencia y se manifiestan en la notificación, la respuesta de asistencia y los indicadores administrativos. Conviene actualizar los documentos formales <code>alcance-v1.md</code> y <code>requisitos-v1.md</code> para incluir RF-18 a RF-22, pero no crear pantallas duplicadas solo para satisfacer la matriz.</p>
+<hr>
+<h2 id="16-decisiones-arquitectonicas-y-compromisos">16. Decisiones arquitectónicas y compromisos</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Decisión</th>
+<th>Motivo</th>
+<th>Beneficio</th>
+<th>Costo o riesgo aceptado</th>
+</tr></thead><tbody>
+<tr>
+<td>Expo/React Native para Android y web</td>
+<td>Equipo y alcance reducidos.</td>
+<td>Reuso alto de UI, navegación, estado y tipos.</td>
+<td>Ajustes por plataforma y dependencia del ecosistema Expo.</td>
+</tr>
+<tr>
+<td>API REST central</td>
+<td>Una sola autoridad para reglas y roles.</td>
+<td>Contrato sencillo, depurable y consumible por ambas plataformas.</td>
+<td>Requiere red y sufre el cold start de Render gratuito.</td>
+</tr>
+<tr>
+<td>Monolito modular</td>
+<td>Volumen actual no justifica servicios separados.</td>
+<td>Despliegue, pruebas y transacciones simples.</td>
+<td>Los módulos comparten proceso y repositorio.</td>
+</tr>
+<tr>
+<td>SQL directo en servicios</td>
+<td>Reglas temporales y consultas complejas son explícitas.</td>
+<td>Control fino de PostgreSQL, rendimiento y transparencia.</td>
+<td>Mayor acoplamiento a PostgreSQL y ausencia de repository/ORM formal.</td>
+</tr>
+<tr>
+<td>PostgreSQL como autoridad concurrente</td>
+<td>La disponibilidad cambia entre lectura e inserción.</td>
+<td>Índice y transacción cierran carreras que el frontend no puede cerrar.</td>
+<td>Solución específica de PostgreSQL (<code>advisory lock</code>, índice parcial).</td>
+</tr>
+<tr>
+<td>JWT stateless</td>
+<td>Autenticación simple entre clientes y Render.</td>
+<td>No necesita sesión en memoria del servidor.</td>
+<td>No existe revocación inmediata ni refresh-token formal.</td>
+</tr>
+<tr>
+<td>Consultar rol vigente por solicitud</td>
+<td>El rol puede cambiar después de emitir el token.</td>
+<td>Autorización no depende de claims antiguos.</td>
+<td>Una consulta adicional por petición protegida.</td>
+</tr>
+<tr>
+<td>SecureStore en Android</td>
+<td>El token es sensible.</td>
+<td>Almacenamiento nativo más apropiado que texto plano.</td>
+<td>Web requiere otro mecanismo y tiene un perfil de seguridad distinto.</td>
+</tr>
+<tr>
+<td>Zona horaria fija de negocio</td>
+<td>La agenda representa hora local del establecimiento.</td>
+<td>Comparaciones consistentes entre plataformas.</td>
+<td>Un cambio de país/zona exige ajuste coordinado.</td>
+</tr>
+<tr>
+<td>Worker Edge separado de la API</td>
+<td>El cron no debe depender de un usuario ni de una pantalla abierta.</td>
+<td>Ejecución periódica y acceso controlado cerca de la DB.</td>
+<td>Dos despliegues y configuración adicional.</td>
+</tr>
+<tr>
+<td>RPC <code>reminder_api</code> mínima</td>
+<td>El worker requiere privilegio sin exponer toda la Data API.</td>
+<td>Menor superficie y operaciones atómicas de claim.</td>
+<td>Migraciones SQL más sofisticadas y dependencia de Supabase/PostgREST.</td>
+</tr>
+<tr>
+<td>Claim y revalidación</td>
+<td>Citas pueden cambiar mientras se envía.</td>
+<td>Reduce duplicados y envíos obsoletos.</td>
+<td>Más estados, funciones y caminos de error.</td>
+</tr>
+<tr>
+<td>Cola durable para manuales</td>
+<td>La acción del administrador debe sobrevivir al request HTTP.</td>
+<td>Auditoría, reintentos y estado explícito.</td>
+<td>Conviven dos modelos: claim directo automático y job manual.</td>
+</tr>
+<tr>
+<td>Expo Push + FCM</td>
+<td>Camino gratuito y compatible con Expo/Android.</td>
+<td>Implementación accesible y acciones de notificación.</td>
+<td>Dependencia de proveedores y tickets no equivalentes a entrega final.</td>
+</tr>
+<tr>
+<td>WhatsApp por deep link</td>
+<td>No se requiere costo ni aprobación de API empresarial.</td>
+<td>El administrador conserva control sobre el mensaje.</td>
+<td>No hay envío ni trazabilidad automática dentro del sistema.</td>
+</tr>
+<tr>
+<td>Rate limit en memoria</td>
+<td>Solución proporcional a una instancia pequeña.</td>
+<td>Bajo costo y fácil mantenimiento.</td>
+<td>No coordina varias instancias y se reinicia con el proceso.</td>
+</tr>
+</tbody></table></div>
+<h3 id="16-1-alternativas-no-seleccionadas">16.1 Alternativas no seleccionadas</h3>
+<ul>
+<li><strong>Microservicios:</strong> aumentarían despliegues, observabilidad y consistencia distribuida sin una necesidad de escala demostrada.</li>
+<li><strong>Acceso directo de Expo a Supabase:</strong> duplicaría reglas/seguridad en el cliente y rompería la frontera autoritativa actual.</li>
+<li><strong>Usar el estado de cita para la confirmación del cliente:</strong> mezclaría aprobación de la barbería con intención de asistencia y produciría transiciones ambiguas.</li>
+<li><strong>Enviar push directamente desde el botón admin:</strong> haría que el resultado dependiera de la duración del request y perdería el trabajo ante un fallo intermedio.</li>
+<li><strong>Temporizador dentro del teléfono:</strong> no funciona si la app no está abierta, cambia de dispositivo o el sistema suspende procesos.</li>
+<li><strong>API automática de WhatsApp:</strong> agrega costo, plantillas aprobadas y manejo de credenciales que no son necesarios para el objetivo actual.</li>
+</ul>
+<hr>
+<h2 id="17-limitaciones-conocidas-y-evolucion-recomendada">17. Limitaciones conocidas y evolución recomendada</h2>
+<h3 id="17-1-brechas-documentales-operativas">17.1 Brechas documentales/operativas</h3>
+<ol>
+<li>Los documentos formales base terminan en RF-17; deben incorporar RF-18 a RF-22.</li>
+<li>Los diagramas históricos anteriores al subsistema push ya no representan toda la solución; los 12 PlantUML de esta carpeta son la vista actual.</li>
+<li><code>schema.sql</code> no reemplaza el orden de las cuatro migraciones de recordatorios.</li>
+<li>No existe todavía un ejecutor automático y versionado de migraciones dentro del despliegue.</li>
+<li>El README debe explicar variables por categoría, orden de migración, Data API, cron y validación de push sin incluir valores.</li>
+<li>La ruta administrativa <code>/api/admin/test</code> es diagnóstica y puede retirarse en producción.</li>
+<li>El script <code>make-admin.js</code> debe recibir el usuario como entrada segura, no conservar un celular fijo.</li>
+</ol>
+<h3 id="17-2-limitaciones-tecnicas-actuales">17.2 Limitaciones técnicas actuales</h3>
+<ul>
+<li>Una solicitud <code>PENDING</code> pasada no se transforma automáticamente en un estado final; deja de bloquear por lógica temporal en algunas vistas, pero conviene definir una política explícita de expiración.</li>
+<li>Push remoto está orientado a Android nativo; no hay web push ni confirmación equivalente en iOS validada como parte de este alcance.</li>
+<li>No se procesan receipts finales de Expo, por lo que “sent” significa ticket aceptado.</li>
+<li>El rate limiter no es distribuido.</li>
+<li>La instancia gratuita de Render puede tardar en despertar.</li>
+<li>El patrón SQL directo exige disciplina para que controladores no absorban lógica de negocio.</li>
+<li>La política CORS de previews Netlify es deliberadamente amplia dentro del patrón de dominio; puede estrecharse para producción.</li>
+<li>La configuración actual de TLS PostgreSQL debe evolucionar hacia validación completa del certificado si el proveedor y el entorno lo permiten.</li>
+</ul>
+<h3 id="17-3-ruta-de-evolucion-proporcional">17.3 Ruta de evolución proporcional</h3>
+<ol>
+<li>Formalizar RF-18 a RF-22 y una guía de operación.</li>
+<li>Automatizar migraciones y comprobaciones de despliegue.</li>
+<li>Incorporar auditoría de acciones administrativas y métricas de jobs.</li>
+<li>Procesar receipts de Expo y diferenciar “aceptado”, “entregado” y “dispositivo inválido”.</li>
+<li>Mover rate limit a Redis/servicio compartido solo si se escalan instancias.</li>
+<li>Agregar expiración explícita de solicitudes <code>PENDING</code>.</li>
+<li>Extraer worker o módulos de la API únicamente cuando existan necesidades independientes de escala, disponibilidad o equipo.</li>
+</ol>
+<hr>
+<h2 id="18-organizacion-del-repositorio-y-evidencia-git">18. Organización del repositorio y evidencia Git</h2>
+<h3 id="18-1-ubicaciones-relevantes">18.1 Ubicaciones relevantes</h3>
+<pre><code>src/
+  app/                 pantallas y layouts Expo Router
+  api/                 adaptadores REST tipados
+  components/          componentes compartidos
+  context/             sesión, notificaciones y feedback
+  constants/           tema y constantes
+  utils/               fechas, validación y utilidades
+backend/src/
+  routes/              contratos HTTP
+  middleware/          identidad, roles y límites
+  controllers/         adaptación HTTP/casos de uso
+  services/            reglas y SQL
+  database/            conexión, esquema y migraciones
+  utils/               utilidades del servidor
+supabase/
+  functions/           worker Edge
+  cron/                programación del worker
+proyecto/docs/
+  alcance-v1.md
+  requisitos-v1.md
+  arquitectura-actual/
+    plantuml/           fuentes de los 12 diagramas
+    diagramas/          imágenes generadas</code></pre>
+<h3 id="18-2-evidencias-verificables">18.2 Evidencias verificables</h3>
+<ul>
+<li>El historial Git identifica autor, fecha y propósito de cada cambio.</li>
+<li>La carpeta <code>backend/src/**/*.test.js</code> verifica controladores, middleware, servicios y utilidades críticas.</li>
+<li><code>tests/notification-registration.test.js</code> protege el flujo de activación contra bloqueos y regresiones del token.</li>
+<li>TypeScript verifica contratos del frontend mediante <code>tsc --noEmit</code>.</li>
+<li>ESLint comprueba convenciones y errores estáticos.</li>
+<li>La exportación Expo comprueba que el bundle se genera para la plataforma objetivo.</li>
+<li>Los <code>.puml</code> permiten regenerar diagramas y revisar cambios arquitectónicos como texto versionable.</li>
+</ul>
+<p>Comandos de verificación representativos:</p>
+<pre><code>npm run lint
+npx tsc --noEmit
+npm run test:notifications
+Push-Location backend
+npm test
+Pop-Location</code></pre>
+<p>La evidencia Git no debe incluir <code>.env</code>, claves de Firebase Admin, claves privadas, JWT secrets, service role ni el valor de <code>x-cron-secret</code>.</p>
+<hr>
+<h2 id="19-reproduccion-de-los-diagramas-plantuml">19. Reproducción de los diagramas PlantUML</h2>
+<h3 id="19-1-validar-sintaxis">19.1 Validar sintaxis</h3>
+<p>Desde la raíz del repositorio, suponiendo que <code>plantuml.jar</code> está disponible en una ruta local:</p>
+<pre><code>java -jar "C:\ruta\plantuml.jar" `
+  -charset UTF-8 `
+  -checkonly `
+  "proyecto\docs\arquitectura-actual\plantuml\*.puml"</code></pre>
+<h3 id="19-2-generar-png-para-el-documento">19.2 Generar PNG para el documento</h3>
+<pre><code>java -DPLANTUML_LIMIT_SIZE=8192 `
+  -jar "C:\ruta\plantuml.jar" `
+  -charset UTF-8 `
+  -tpng `
+  -o "..\diagramas" `
+  "proyecto\docs\arquitectura-actual\plantuml\*.puml"</code></pre>
+<h3 id="19-3-generar-svg-editable-escalable">19.3 Generar SVG editable/escalable</h3>
+<pre><code>java -DPLANTUML_LIMIT_SIZE=8192 `
+  -jar "C:\ruta\plantuml.jar" `
+  -charset UTF-8 `
+  -tsvg `
+  -o "..\diagramas-svg" `
+  "proyecto\docs\arquitectura-actual\plantuml\*.puml"</code></pre>
+<p>PlantUML interpreta <code>-o</code> con relación a la carpeta de cada fuente. Por eso <code>..\diagramas</code> ubica las imágenes junto a la carpeta <code>plantuml</code>, dentro de <code>arquitectura-actual</code>.</p>
+<hr>
+<h2 id="20-justificacion-sintetica-solicitada-por-la-actividad">20. Justificación sintética solicitada por la actividad</h2>
+<p>El proyecto utiliza inicialmente una arquitectura cliente-servidor, por capas y organizada como monolito modular, con diseño basado en una API REST. Es adecuada porque Android y web comparten casos de uso, mientras las reglas de citas, seguridad y concurrencia necesitan una autoridad central. Expo/React Native se responsabiliza de la presentación y el estado de interacción; sus módulos <code>src/api</code> adaptan el contrato HTTP. Express recibe solicitudes, autentica, autoriza y delega; los servicios concentran las reglas y PostgreSQL mantiene datos, restricciones y transacciones. Los recordatorios se separan del tráfico interactivo mediante cron, una Edge Function y RPC limitadas. Así, cada requisito puede localizarse en una pantalla, un endpoint, un módulo y un conjunto de datos, sin asumir componentes que no existen ni introducir complejidad operativa prematura.</p>
+<hr>
+<h2 id="21-reflexion-final">21. Reflexión final</h2>
+<p><strong>¿Podemos identificar claramente qué componente de la arquitectura será responsable de implementar cada requisito?</strong></p>
+<p>Sí. La matriz de trazabilidad conecta los 22 requisitos vigentes con una interfaz, un adaptador, una operación del backend y sus datos. La arquitectura también distingue los requisitos interactivos de los procesos automáticos: una reserva termina en PostgreSQL mediante la API; una notificación se procesa mediante cron/worker; una confirmación regresa por la API con la identidad del cliente. Esta separación reduce ambigüedad y permite comprobar si un cambio pertenece a presentación, coordinación, dominio, persistencia o integración externa.</p>
+<p>La principal acción documental pendiente es promover RF-18 a RF-22 a los archivos formales de alcance y requisitos. Técnicamente, esos requisitos ya poseen representación en la interfaz y responsabilidad explícita. La arquitectura actual es suficiente para el tamaño y contexto del proyecto: preserva integridad y seguridad sin la carga de una plataforma distribuida innecesaria, y deja puntos de evolución claros para migraciones, telemetría, receipts de push y escalamiento futuro.</p>
+<hr>
+<h2 id="apendice-a-glosario">Apéndice A. Glosario</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Término</th>
+<th>Definición en este proyecto</th>
+</tr></thead><tbody>
+<tr>
+<td>Cita activa</td>
+<td>Cita en <code>PENDING</code> o <code>ACCEPTED</code>.</td>
+</tr>
+<tr>
+<td>Confirmación de la barbería</td>
+<td>Transición de <code>PENDING</code> a <code>ACCEPTED</code>.</td>
+</tr>
+<tr>
+<td>Confirmación de asistencia</td>
+<td>Timestamp registrado por el cliente sobre una cita aceptada; no es un estado de cita.</td>
+</tr>
+<tr>
+<td>Claim</td>
+<td>Lease temporal identificado por UUID que concede a un worker el derecho a procesar una fila.</td>
+</tr>
+<tr>
+<td>Cooldown</td>
+<td>Ventana de 15 minutos que evita un nuevo recordatorio manual redundante.</td>
+</tr>
+<tr>
+<td>Data API</td>
+<td>Exposición HTTP de PostgreSQL mediante Supabase/PostgREST; no es utilizada directamente por la app cliente para datos de negocio.</td>
+</tr>
+<tr>
+<td>Edge Function</td>
+<td>Función Deno desplegada en Supabase para procesar recordatorios.</td>
+</tr>
+<tr>
+<td>Expo Push token</td>
+<td>Dirección lógica asociada a una instalación y proyecto Expo, almacenada en <code>push_device_tokens</code>.</td>
+</tr>
+<tr>
+<td>FCM</td>
+<td>Firebase Cloud Messaging, transporte nativo utilizado para Android.</td>
+</tr>
+<tr>
+<td>Fuente de verdad</td>
+<td>Componente autoritativo; para usuarios/citas/trabajos es PostgreSQL.</td>
+</tr>
+<tr>
+<td>Idempotencia</td>
+<td>Propiedad por la que repetir una intención válida no crea efectos duplicados incompatibles.</td>
+</tr>
+<tr>
+<td>Job</td>
+<td>Registro durable de un recordatorio administrativo manual.</td>
+</tr>
+<tr>
+<td>Proyección de asistencia</td>
+<td>Etiqueta calculada a partir de estado, tiempo y timestamp de confirmación.</td>
+</tr>
+<tr>
+<td>RPC</td>
+<td>Función PostgreSQL invocada de forma remota por la Edge Function bajo permisos limitados.</td>
+</tr>
+</tbody></table></div>
+<h2 id="apendice-b-criterio-de-actualizacion-del-documento">Apéndice B. Criterio de actualización del documento</h2>
+<p>Este documento debe revisarse cuando cambie cualquiera de los siguientes elementos: estado o regla de una cita, frontera de autenticación, entidad persistida, endpoint público, proveedor de despliegue, mecanismo del worker o integración push. Un cambio exclusivamente visual puede documentarse en el prototipo; un cambio que altere responsabilidades o flujo de datos debe actualizar también la matriz y el diagrama correspondiente.</p></main>
+</div>
+</body>
+</html>

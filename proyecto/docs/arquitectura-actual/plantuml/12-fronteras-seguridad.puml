@@ -1,0 +1,138 @@
+@startuml
+title Barbería Cale — Fronteras de confianza y controles actuales
+
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam rectangleBorderColor #743B2F
+skinparam componentBorderColor #7A655D
+skinparam databaseBorderColor #7A655D
+skinparam cloudBorderColor #7A655D
+skinparam componentStyle rectangle
+
+rectangle "Zona no confiable: dispositivo / navegador" as client_zone #FFF8ED {
+  actor "Usuario" as user
+  component "UI Expo Router\nGuardas de navegación por rol" as ui
+  component "api-client\nBearer JWT + timeout" as clientapi
+  component "AuthContext" as authctx
+  component "NotificationContext" as notifctx
+  database "SecureStore Android" as secure
+  database "AsyncStorage Web / intent push" as local
+
+  user --> ui
+  ui --> authctx
+  ui --> clientapi
+  notifctx --> clientapi
+  authctx --> secure : JWT + usuario público\nsi rememberMe
+  authctx --> local : sesión web
+  notifctx --> local : {appointmentId, acción, fecha}\nsin JWT/PII
+}
+
+cloud "Internet / TLS" as internet
+
+rectangle "Frontera pública: Render" as render_zone #F4EFE6 {
+  component "Proxy TLS de Render" as proxy
+  component "CORS + express.json" as cors
+  component "Rate limit por IP" as ratelimit
+  component "authenticateToken" as authenticate
+  component "requireClient / requireAdmin" as authorize
+  component "Controllers\nvalidación de input" as controllers
+  component "Services\nreglas + SQL parametrizado" as services
+
+  proxy --> cors
+  cors --> ratelimit
+  ratelimit --> authenticate
+  authenticate --> authorize
+  authorize --> controllers
+  controllers --> services
+}
+
+rectangle "Frontera de datos: proyecto Supabase" as data_zone #F0F5F0 {
+  database "PostgreSQL public" as postgres
+  component "Constraints, índices parciales,\ntransacciones y triggers" as integrity
+  component "PostgREST / Data API" as postgrest
+  component "Schema reminder_api\nSECURITY DEFINER" as reminderapi
+  component "pg_cron + pg_net" as cron
+  database "Vault\ncron secret" as vault
+
+  postgres -- integrity
+  postgrest --> reminderapi
+  reminderapi --> postgres
+  cron --> vault
+}
+
+rectangle "Frontera de ejecución server-to-server" as worker_zone #F7F3ED {
+  component "Supabase Edge Function\nbright-endpoint" as worker
+  component "Validación x-cron-secret" as croncheck
+  component "Cliente Supabase\nservice_role" as serviceclient
+
+  worker --> croncheck
+  croncheck --> serviceclient
+}
+
+rectangle "Proveedores externos" as providers #F3F3F3 {
+  cloud "Expo Push Service" as expo
+  cloud "Firebase Cloud Messaging" as fcm
+  cloud "WhatsApp wa.me" as whatsapp
+}
+
+clientapi --> internet : HTTPS JSON\nAuthorization: Bearer JWT
+internet --> proxy
+authenticate --> postgres : jwt.verify(JWT_SECRET)\n+ SELECT users por userId
+services --> postgres : TLS / DATABASE_URL\nconsultas parametrizadas
+
+cron --> worker : POST cada minuto\nx-cron-secret desde Vault
+serviceclient --> postgrest : HTTPS + SUPABASE_SERVICE_ROLE_KEY\nsolo RPC reminder_api
+worker --> expo : HTTPS, payload por dispositivo\nsin JWT de usuario
+expo --> fcm
+fcm --> notifctx : Push Android
+ui --> whatsapp : Deep link; usuario revisa y envía
+
+note top of render_zone
+  Secretos de entorno de Render:
+  JWT_SECRET, DATABASE_URL, CORS_ORIGINS.
+  CORS limita navegadores; JWT + rol autorizan operaciones.
+end note
+
+note bottom of authenticate
+  El claim role del JWT no decide la autorización final.
+  Cada request consulta users y coloca el rol vigente en req.user.
+end note
+
+note bottom of data_zone
+  Acceso directo revocado para PUBLIC, anon y authenticated
+  sobre tablas/secuencias de la aplicación.
+  reminder_api concede EXECUTE únicamente a service_role.
+  RLS está habilitado en push_device_tokens y jobs.
+end note
+
+note top of worker_zone
+  Secretos de entorno del worker:
+  SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+  APPOINTMENT_REMINDER_CRON_SECRET.
+  La función tiene verify_jwt=false y autentica el cron con header secreto.
+end note
+
+note bottom of integrity
+  Controles de consistencia autoritativos:
+  • slot activo único;
+  • ownership en UPDATE/DELETE;
+  • leases y SKIP LOCKED;
+  • claims consistentes;
+  • triggers que invalidan recordatorios obsoletos.
+end note
+
+legend right
+  |= Dato / credencial |= Ubicación y uso |
+  | JWT de usuario | Cliente ↔ API Render |
+  | JWT_SECRET | Solo proceso API |
+  | DATABASE_URL | API Render → PostgreSQL |
+  | x-cron-secret | Vault → cron → Edge |
+  | service_role key | Solo Edge → reminder_api |
+  | ExpoPushToken | App → API → tabla → worker → Expo |
+endlegend
+
+caption Las guardas del frontend son de experiencia; las fronteras autoritativas son middleware/SQL en Render y RPC service_role en Supabase.
+@enduml

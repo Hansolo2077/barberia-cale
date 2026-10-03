@@ -139,6 +139,7 @@ alt Sin sesión válida
 else Sesión ADMIN
   context --> client : Pedir cuenta CLIENT; conservar intención
 else Sesión CLIENT válida
+  auth --> context : user CLIENT + JWT vigente
 end
 
 context -> context : router.push(/client/my-appointments,\nappointmentId, intent=attendance)

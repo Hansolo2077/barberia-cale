@@ -132,11 +132,11 @@ note right of jobs
   • RLS habilitado y acceso directo revocado
 end note
 
-rectangle "Lógica de integridad en PostgreSQL" as db_logic #F0F5F0 {
-  component "Trigger clear_ineligible_appointment_reminder_claim\nlimpia el lease si cambia estado, confirmación, envío o tiempo" as trigger_claim
-  component "Trigger skip_ineligible_appointment_notification_jobs\nmarca jobs activos SKIPPED al dejar de ser elegibles" as trigger_jobs
-  component "Funciones public\nclaim / revalidate / mark / release" as public_functions
-  component "Schema reminder_api\nwrappers SECURITY DEFINER\nEXECUTE solo service_role" as api_functions
+package "Lógica de integridad en PostgreSQL" as db_logic #F0F5F0 {
+  class "Trigger clear_ineligible_appointment_reminder_claim\nlimpia el lease si cambia estado, confirmación, envío o tiempo" as trigger_claim <<trigger>>
+  class "Trigger skip_ineligible_appointment_notification_jobs\nmarca jobs activos SKIPPED al dejar de ser elegibles" as trigger_jobs <<trigger>>
+  class "Funciones public\nclaim / revalidate / mark / release" as public_functions <<functions>>
+  class "Schema reminder_api\nwrappers SECURITY DEFINER\nEXECUTE solo service_role" as api_functions <<RPC>>
 }
 
 appointments ..> trigger_claim

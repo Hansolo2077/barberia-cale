@@ -1,0 +1,55 @@
+id,user_id,service,appointment_date,appointment_time,status,created_at,client_attendance_confirmed_at,reminder_sent_at,reminder_claimed_at,reminder_claim_token,reminder_attempts
+1,2,Corte de cabello,2026-08-22,08:00:00,CANCELLED,2026-08-21 07:04:40.643001+00,null,null,null,null,0
+2,2,Corte de cabello,2026-08-22,09:00:00,CANCELLED,2026-08-21 07:05:25.003037+00,null,null,null,null,0
+3,2,Corte de cabello,2026-08-22,08:00:00,CANCELLED,2026-08-21 07:11:01.920318+00,null,null,null,null,0
+4,2,Corte de cabello,2026-08-22,09:00:00,CANCELLED,2026-08-21 07:11:20.475794+00,null,null,null,null,0
+5,2,Corte de cabello,2026-08-22,08:00:00,CANCELLED,2026-08-21 07:15:29.246498+00,null,null,null,null,0
+6,2,Corte de cabello,2026-08-22,08:00:00,REJECTED,2026-08-21 07:15:43.132415+00,null,null,null,null,0
+7,2,Corte de cabello,2026-08-22,08:00:00,REJECTED,2026-08-21 07:17:11.21402+00,null,null,null,null,0
+8,2,Corte de cabello,2026-08-22,09:00:00,CANCELLED,2026-08-21 07:17:16.602153+00,null,null,null,null,0
+9,2,Corte de cabello,2026-08-23,08:00:00,REJECTED,2026-08-21 07:25:34.505345+00,null,null,null,null,0
+10,2,Corte de cabello,2026-08-24,08:00:00,CANCELLED,2026-08-21 07:25:49.678969+00,null,null,null,null,0
+11,6,Corte de cabello,2026-08-22,08:00:00,CANCELLED,2026-08-21 08:26:53.494453+00,null,null,null,null,0
+12,6,Corte de cabello,2026-08-22,08:00:00,CANCELLED,2026-08-21 08:27:11.536635+00,null,null,null,null,0
+13,2,Corte de cabello,2026-08-22,09:00:00,COMPLETED,2026-08-21 09:14:45.548225+00,null,null,null,null,0
+14,7,Corte de cabello,2026-08-22,10:00:00,COMPLETED,2026-08-21 14:57:38.269869+00,null,null,null,null,0
+15,8,Corte de cabello,2026-08-22,11:00:00,CANCELLED,2026-08-21 15:14:29.014626+00,null,null,null,null,0
+16,9,Corte de cabello,2026-08-24,08:00:00,CANCELLED,2026-08-21 15:25:06.256128+00,null,null,null,null,0
+17,9,Corte de cabello,2026-08-25,17:00:00,CANCELLED,2026-08-21 15:27:05.602931+00,null,null,null,null,0
+18,10,Corte de cabello,2026-08-22,12:00:00,REJECTED,2026-08-21 16:08:27.643594+00,null,null,null,null,0
+19,11,Corte de cabello,2026-08-22,13:00:00,CANCELLED,2026-08-21 23:54:29.824046+00,null,null,null,null,0
+20,2,Corte de cabello,2026-08-23,08:00:00,REJECTED,2026-08-22 03:14:09.523526+00,null,null,null,null,0
+21,2,Corte de cabello,2026-08-23,08:00:00,CANCELLED,2026-08-22 03:56:53.081268+00,null,null,null,null,0
+22,2,Corte de cabello,2026-08-23,08:00:00,CANCELLED,2026-08-22 03:58:43.417129+00,null,null,null,null,0
+23,6,Corte de cabello,2026-08-23,08:00:00,CANCELLED,2026-08-22 05:26:55.858716+00,null,null,null,null,0
+24,6,Corte de cabello,2026-08-23,08:00:00,REJECTED,2026-08-22 05:30:56.698822+00,null,null,null,null,0
+25,13,Corte de cabello,2026-08-23,10:00:00,CANCELLED,2026-08-22 05:40:03.181708+00,null,null,null,null,0
+26,6,Corte de cabello,2026-08-24,12:00:00,CANCELLED,2026-08-22 13:59:59.930419+00,null,null,null,null,0
+27,9,Corte de cabello,2026-08-23,16:00:00,CANCELLED,2026-08-22 21:26:47.276581+00,null,null,null,null,0
+28,5,Corte de cabello,2026-08-23,08:00:00,CANCELLED,2026-08-22 22:34:30.508363+00,null,null,null,null,0
+29,5,Corte de cabello,2026-08-26,15:00:00,REJECTED,2026-08-22 22:38:49.061066+00,null,null,null,null,0
+30,5,Corte de cabello,2026-08-31,17:00:00,CANCELLED,2026-08-22 23:04:27.971966+00,null,null,null,null,0
+31,5,Corte de cabello,2026-08-23,08:00:00,CANCELLED,2026-08-22 23:24:34.194088+00,null,null,null,null,0
+32,2,Corte de cabello,2026-08-24,15:00:00,CANCELLED,2026-08-23 00:00:38.170961+00,null,null,null,null,0
+33,5,Corte de cabello,2026-08-24,16:00:00,REJECTED,2026-08-23 00:11:22.300775+00,null,null,null,null,0
+34,15,Corte de cabello,2026-08-24,09:00:00,ACCEPTED,2026-08-23 02:10:40.136877+00,null,null,null,null,60
+35,2,Corte de cabello,2026-08-25,09:00:00,REJECTED,2026-08-23 14:32:40.880509+00,null,null,null,null,0
+36,2,Corte de cabello,2026-08-24,15:00:00,REJECTED,2026-08-23 14:34:53.141117+00,null,null,null,null,0
+37,5,Corte de cabello,2026-08-24,08:00:00,CANCELLED,2026-08-23 14:36:26.096959+00,null,null,null,null,0
+38,16,Corte de cabello,2026-08-31,08:00:00,CANCELLED,2026-08-23 15:03:13.954394+00,null,null,null,null,0
+39,16,Corte de cabello,2026-08-31,08:00:00,ACCEPTED,2026-08-23 15:03:37.780544+00,null,null,null,null,60
+40,17,Corte de cabello,2026-08-24,10:00:00,CANCELLED,2026-08-23 16:57:46.963346+00,null,null,null,null,0
+41,2,Corte de cabello,2026-08-24,12:00:00,ACCEPTED,2026-08-23 21:18:55.86051+00,2026-08-24 07:30:29.152859+00,null,null,null,0
+42,2,Corte de cabello,2026-08-30,08:00:00,REJECTED,2026-08-24 01:26:36.662525+00,null,null,null,null,0
+43,6,Corte de cabello,2026-08-25,10:00:00,ACCEPTED,2026-08-24 06:19:03.691278+00,2026-08-24 06:26:30.603785+00,null,null,null,0
+44,6,Corte de cabello,2026-09-01,08:00:00,ACCEPTED,2026-08-24 07:22:33.838201+00,2026-08-24 07:27:40.910009+00,null,null,null,0
+45,2,Corte de cabello,2026-09-15,12:00:00,ACCEPTED,2026-08-24 07:28:23.54498+00,2026-08-24 07:31:17.293598+00,null,null,null,0
+46,6,Corte de cabello,2026-09-30,16:00:00,CANCELLED,2026-08-24 07:41:33.497579+00,2026-08-24 07:48:25.156963+00,null,null,null,0
+47,6,Corte de cabello,2026-08-26,08:00:00,ACCEPTED,2026-08-24 07:46:39.414062+00,null,2026-08-26 13:00:01.440289+00,null,null,1
+48,6,Corte de cabello,2026-09-02,09:00:00,PENDING,2026-08-27 00:04:49.118537+00,null,null,null,null,0
+49,6,Corte de cabello,2026-09-08,08:00:00,PENDING,2026-09-03 18:00:41.000558+00,null,null,null,null,0
+50,19,Corte de cabello,2026-09-08,13:00:00,ACCEPTED,2026-09-07 18:12:37.012565+00,null,null,null,null,60
+51,2,Corte de cabello,2026-09-14,09:00:00,PENDING,2026-09-13 14:23:00.035967+00,null,null,null,null,0
+52,2,Corte de cabello,2026-10-04,10:00:00,CANCELLED,2026-10-03 15:02:30.335266+00,2026-10-03 15:08:02.45667+00,null,null,null,0
+53,2,Corte de cabello,2026-10-04,10:00:00,REJECTED,2026-10-03 15:09:27.356989+00,null,null,null,null,0
+54,21,Corte de cabello,2026-10-04,10:00:00,CANCELLED,2026-10-03 15:17:13.23745+00,null,null,null,null,0
