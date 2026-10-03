@@ -1,0 +1,109 @@
+@startuml
+title Barbería Cale — Contenedores y despliegue actual
+
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam nodeBorderColor #743B2F
+skinparam componentBorderColor #7A655D
+skinparam databaseBorderColor #7A655D
+skinparam cloudBorderColor #7A655D
+skinparam artifactBorderColor #7A655D
+skinparam componentStyle rectangle
+
+cloud "EAS Build" as eas {
+  artifact "APK Android\ncom.hanssel957.barberiacale" as apk
+}
+
+node "Teléfono Android físico" as android {
+  component "Barbería Cale\nExpo SDK 57 / React Native 0.86" as mobile
+  component "Expo Router\nUI y navegación" as router
+  component "expo-notifications\ncanal appointment-reminders-v1\ncategoría attendance_reminder" as notifications
+  component "Expo SecureStore" as secure
+  component "AsyncStorage" as asyncstore
+
+  mobile -- router
+  mobile -- notifications
+  mobile -- secure
+  mobile -- asyncstore
+}
+
+node "Navegador" as browser {
+  component "Sitio estático\nReact Native Web" as webapp
+  component "AsyncStorage web" as webstore
+  webapp -- webstore
+}
+
+cloud "Netlify" as netlify {
+  artifact "Exportación web estática\nExpo Router" as staticweb
+}
+
+cloud "Render" as render {
+  node "Proceso Node.js" as nodeapi {
+    component "API REST\nExpress 5 / CommonJS" as api
+    component "Pool pg" as pgpool
+    api --> pgpool
+  }
+}
+
+cloud "Proyecto Supabase" as supabase {
+  database "PostgreSQL" as postgres {
+    component "Tablas public\nusers, appointments,\npush_device_tokens,\nappointment_notification_jobs" as tables
+    component "pg_cron + pg_net" as cron
+    component "Vault\nappointment_reminder_cron_secret" as vault
+    component "Funciones SQL\npublic + reminder_api" as rpcsql
+  }
+
+  component "PostgREST / Data API\nschema reminder_api\nservice_role" as postgrest
+
+  node "Supabase Edge Runtime (Deno)" as edge {
+    component "bright-endpoint\nworker de recordatorios" as worker
+  }
+
+  cron --> vault : Lee secreto
+  cron --> worker : POST cada minuto\npg_net + x-cron-secret
+  worker --> postgrest : RPC HTTPS\nSUPABASE_SERVICE_ROLE_KEY
+  postgrest --> rpcsql : Ejecuta SECURITY DEFINER
+  rpcsql --> tables : Reclama, revalida\ny actualiza
+}
+
+cloud "Expo Push Service" as expopush
+cloud "Firebase Cloud Messaging" as fcm
+cloud "WhatsApp Web / aplicación" as wa
+
+eas ..> mobile : Compila e instala\nAPK (no Expo Go)
+netlify --> staticweb
+staticweb ..> webapp : Descarga HTML/JS/assets
+
+mobile --> api : HTTPS JSON\nAuthorization: Bearer JWT
+webapp --> api : HTTPS JSON\nCORS para Netlify
+pgpool --> postgres : TLS / DATABASE_URL\nSQL parametrizado
+
+mobile --> expopush : Obtiene ExpoPushToken\nprojectId de EAS
+worker --> expopush : POST /--/api/v2/push/send
+expopush --> fcm : Enrutamiento push Android
+fcm --> notifications : Entrega remota
+
+mobile --> wa : Linking.openURL(wa.me)
+webapp --> wa : window.open(wa.me)
+
+note bottom of mobile
+  El soporte push de la implementación actual se habilita solo en Android
+  y fuera de Expo Go. El navegador funciona como no-op para notificaciones.
+end note
+
+note bottom of api
+  URL predeterminada del cliente:
+  https://barberia-cale.onrender.com/api
+  Puede reemplazarse con EXPO_PUBLIC_API_URL.
+end note
+
+note bottom of postgres
+  America/Managua es la zona horaria de negocio autoritativa.
+  La API accede por conexión PostgreSQL; el worker usa RPC de reminder_api.
+end note
+
+caption Tecnologías reales: Expo SDK 57, React 19, React Native/Web, Express 5, Node.js, pg, PostgreSQL/Supabase, Deno Edge, Expo Push y FCM.
+@enduml

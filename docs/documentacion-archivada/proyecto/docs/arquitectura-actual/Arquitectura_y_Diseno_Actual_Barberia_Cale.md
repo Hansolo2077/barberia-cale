@@ -3,10 +3,10 @@
 **Documento técnico de la versión actual**  
 **Proyecto:** Barbería Cale  
 **Versión del alcance documentado:** 1.0 ampliada  
-**Fecha de revisión:** 3 de octubre de 2026 (código base: ad017f1)  
+**Fecha de corte:** 27 de agosto de 2026  
 **Propósito académico:** evidencia para la actividad “Diseño de la Arquitectura Inicial del Proyecto”  
 
-> Este documento describe la arquitectura implementada según el código revisado. Las exportaciones HTML/PDF anteriores están en [documentación archivada](../../../docs/documentacion-archivada/README.md) y no contienen esta revisión. No presenta una arquitectura idealizada ni una propuesta de microservicios inexistente. Las referencias a archivos, módulos, contratos, tablas y configuración de despliegue corresponden al repositorio; esto no certifica el estado operativo de cada servicio externo.
+> Este documento describe exclusivamente la arquitectura que implementa la versión actual del sistema. No presenta una arquitectura idealizada ni una propuesta de microservicios inexistente. Las referencias a archivos, módulos, contratos, tablas y despliegues corresponden al repositorio actual.
 
 ---
 
@@ -79,7 +79,7 @@ Desarrollar una aplicación móvil y web para Barbería Cale que permita gestion
 
 ## 3. Requisitos funcionales actualizados
 
-Los RF-01 a RF-22 están formalizados en [requisitos actuales](../requisitos-actuales.md) y [alcance actual](../alcance-actual.md). Las versiones anteriores están conservadas en el archivo documental.
+Los RF-01 a RF-17 corresponden al alcance funcional base. Los RF-18 a RF-22 formalizan funciones que ya existen en la versión actual y que deben incorporarse a los documentos formales de requisitos y alcance para eliminar la brecha documental.
 
 | ID | Requisito funcional actual |
 |---|---|
@@ -87,13 +87,13 @@ Los RF-01 a RF-22 están formalizados en [requisitos actuales](../requisitos-act
 | RF-02 | El sistema autenticará mediante celular y contraseña y dirigirá al usuario al área correspondiente según su rol. |
 | RF-03 | El sistema permitirá conservar opcionalmente el token y los datos públicos necesarios para restaurar y validar una sesión. |
 | RF-04 | El sistema permitirá finalizar la sesión, limpiar los datos locales de autenticación, intentar desactivar el dispositivo de notificaciones y regresar al acceso público. |
-| RF-05 | El cliente podrá consultar horarios disponibles para una fecha válida; se muestran bloques disponibles y bloqueados, pero solo se habilitan los que cumplen al menos 24 horas reales de anticipación y no tienen una cita activa que los bloquee. |
+| RF-05 | El cliente podrá consultar horarios disponibles para una fecha válida; solo se mostrarán horarios con al menos 24 horas reales de anticipación y sin una cita activa que los bloquee. |
 | RF-06 | El cliente podrá reservar un horario disponible con estado inicial `PENDING`; el backend impedirá la doble reserva, más de una cita activa del cliente en el mismo día y más de dos citas activas en una ventana móvil de siete días. |
-| RF-07 | El cliente podrá consultar sus citas futuras `PENDING` y `ACCEPTED`, ordenadas por fecha y hora ascendente. |
-| RF-08 | El cliente podrá consultar el historial de citas `COMPLETED`, `REJECTED` y `CANCELLED`, además de citas vencidas `PENDING` o `ACCEPTED` pendientes de cierre administrativo. |
+| RF-07 | El cliente podrá consultar sus citas activas `PENDING` y `ACCEPTED`, ordenadas para favorecer las próximas visitas. |
+| RF-08 | El cliente podrá consultar el historial de citas `COMPLETED`, `REJECTED` y `CANCELLED`. |
 | RF-09 | El cliente podrá cancelar una cita propia activa hasta exactamente 60 minutos antes de su inicio; la cita cancelada dejará de bloquear el horario. |
 | RF-10 | El administrador podrá consultar, buscar, paginar y filtrar solicitudes/citas para su gestión. |
-| RF-11 | El administrador podrá cambiar una solicitud `PENDING` futura a `ACCEPTED`; una solicitud cuya hora ya pasó no puede aceptarse. |
+| RF-11 | El administrador podrá cambiar una solicitud `PENDING` a `ACCEPTED`. |
 | RF-12 | El administrador podrá cambiar una solicitud `PENDING` a `REJECTED`, liberando el horario. |
 | RF-13 | El administrador podrá consultar una agenda por rango de fechas y filtrar por estados aplicables. |
 | RF-14 | El administrador podrá cancelar administrativamente una cita `ACCEPTED` futura cuando la regla temporal lo permita, liberando el horario. |
@@ -102,7 +102,7 @@ Los RF-01 a RF-22 están formalizados en [requisitos actuales](../requisitos-act
 | RF-17 | Después de aceptar o rechazar una cita, el administrador podrá abrir el chat del cliente con un mensaje contextual preparado para revisión y envío manual. |
 | RF-18 | Un cliente autenticado podrá autorizar notificaciones y registrar o desactivar de forma idempotente el token push de su dispositivo. |
 | RF-19 | El sistema preparará y enviará un recordatorio automático a las citas `ACCEPTED`, futuras, sin confirmación de asistencia y dentro de la ventana de una hora, siempre que exista un dispositivo activo. |
-| RF-20 | El cliente podrá confirmar su asistencia desde la notificación o desde “Mis citas” mientras la cita siga `ACCEPTED` y no haya iniciado; repetir la operación conserva la primera confirmación sin duplicar efectos. |
+| RF-20 | El cliente podrá confirmar su asistencia desde la notificación o desde “Mis citas” mientras la cita siga `ACCEPTED`, no haya iniciado y no haya sido confirmada previamente. |
 | RF-21 | El administrador podrá distinguir de forma legible si el cliente confirmó, está pendiente o no respondió, sin confundir ese dato con el estado operativo de la cita. |
 | RF-22 | El administrador podrá solicitar recordatorios para una cita elegible o en lote para todas las elegibles; cada solicitud manual será persistente, auditable, limitada, protegida contra duplicados y reintentable. |
 
@@ -356,7 +356,7 @@ pg_cron → pg_net → Edge Function → RPC reminder_api
 | Método y ruta | Caso de uso | Regla autoritativa |
 |---|---|---|
 | `GET /api/admin/appointments` | Gestión o agenda con estado, búsqueda y rango. | Rol `ADMIN`, paginación y rango máximo de 93 días. |
-| `PATCH /api/admin/appointments/:id/accept` | Aceptar. | Solo desde `PENDING` y con fecha/hora futura. |
+| `PATCH /api/admin/appointments/:id/accept` | Aceptar. | Solo desde `PENDING`. |
 | `PATCH /api/admin/appointments/:id/reject` | Rechazar. | Solo desde `PENDING`; libera horario. |
 | `PATCH /api/admin/appointments/:id/cancel` | Cancelar administrativamente. | Solo `ACCEPTED` y futura según regla. |
 | `PATCH /api/admin/appointments/:id/complete` | Completar. | Solo `ACCEPTED` cuando la hora llegó o pasó. |
@@ -618,8 +618,8 @@ Después se habilitan `pg_net` y `pg_cron`, se crea el secreto en Vault, se desp
 | RF-04 | Menú de usuario | `UserMenu`, `AuthContext`, `NotificationContext` | `DELETE /notifications/device` como mejor esfuerzo; limpieza local | JWT local, `push_device_tokens.active` |
 | RF-05 | Agendar cita | `client/appointment.tsx` | `GET /appointments/availability`, `/next-availability`; appointment service | `appointments`, horario y política |
 | RF-06 | Confirmación de reserva | `client/appointment.tsx` | `POST /appointments`; transacción e índice único | nueva fila `appointments` `PENDING` |
-| RF-07 | Mis citas — Próximas | `client/my-appointments.tsx` | `GET /appointments/my` | citas futuras `PENDING`/`ACCEPTED` |
-| RF-08 | Mis citas — Historial | `client/my-appointments.tsx` | `GET /appointments/my` | estados finales y citas vencidas pendientes de cierre |
+| RF-07 | Mis citas — Próximas | `client/my-appointments.tsx` | `GET /appointments/my` | citas `PENDING`/`ACCEPTED` |
+| RF-08 | Mis citas — Historial | `client/my-appointments.tsx` | `GET /appointments/my` | citas `COMPLETED`/`REJECTED`/`CANCELLED` |
 | RF-09 | Acción Cancelar cita | `client/my-appointments.tsx` | `PATCH /appointments/:id/cancel`; appointment service | estado, fecha/hora, propietario |
 | RF-10 | Gestión de citas | `admin/appointments.tsx` | `GET /admin/appointments`; admin controller/service | citas, usuario, conteos y paginación |
 | RF-11 | Acción Aceptar | `admin/appointments.tsx` | `PATCH /admin/appointments/:id/accept` | `appointments.status` |
@@ -656,7 +656,7 @@ Cada requisito posee una interfaz o interacción identificable, una frontera té
 | Administración | Gestión de citas | RF-10, RF-11, RF-12, RF-14, RF-15, RF-17, RF-21, RF-22 |
 | Administración | Agenda | RF-13, RF-14, RF-15, RF-17, RF-21 |
 
-El prototipo implementado ya contiene las representaciones necesarias para RF-01 a RF-22. Los procesos automáticos no requieren una pantalla artificial: se documentan mediante diagramas de secuencia y se manifiestan en la notificación, la respuesta de asistencia y los indicadores administrativos. Los documentos formales de [alcance](../alcance-actual.md) y [requisitos](../requisitos-actuales.md) incluyen RF-18 a RF-22. La presencia de una interfaz no equivale a una validación de entrega push en dispositivo.
+El prototipo implementado ya contiene las representaciones necesarias para RF-01 a RF-22. Los procesos automáticos no requieren una pantalla artificial: se documentan mediante diagramas de secuencia y se manifiestan en la notificación, la respuesta de asistencia y los indicadores administrativos. Conviene actualizar los documentos formales `alcance-v1.md` y `requisitos-v1.md` para incluir RF-18 a RF-22, pero no crear pantallas duplicadas solo para satisfacer la matriz.
 
 ---
 
@@ -696,7 +696,7 @@ El prototipo implementado ya contiene las representaciones necesarias para RF-01
 
 ### 17.1 Brechas documentales/operativas
 
-1. Mantener sincronizados los 22 requisitos actuales con código, contratos y evidencia de ejecución. La línea base v1 permanece archivada.
+1. Los documentos formales base terminan en RF-17; deben incorporar RF-18 a RF-22.
 2. Los diagramas históricos anteriores al subsistema push ya no representan toda la solución; los 12 PlantUML de esta carpeta son la vista actual.
 3. `schema.sql` no reemplaza el orden de las cuatro migraciones de recordatorios.
 4. No existe todavía un ejecutor automático y versionado de migraciones dentro del despliegue.
@@ -717,7 +717,7 @@ El prototipo implementado ya contiene las representaciones necesarias para RF-01
 
 ### 17.3 Ruta de evolución proporcional
 
-1. Mantener RF-01 a RF-22 y completar una guía de operación con validación de recordatorios.
+1. Formalizar RF-18 a RF-22 y una guía de operación.
 2. Automatizar migraciones y comprobaciones de despliegue.
 3. Incorporar auditoría de acciones administrativas y métricas de jobs.
 4. Procesar receipts de Expo y diferenciar “aceptado”, “entregado” y “dispositivo inválido”.
@@ -750,8 +750,8 @@ supabase/
   functions/           worker Edge
   cron/                programación del worker
 proyecto/docs/
-  alcance-actual.md
-  requisitos-actuales.md
+  alcance-v1.md
+  requisitos-v1.md
   arquitectura-actual/
     plantuml/           fuentes de los 12 diagramas
     diagramas/          imágenes generadas
@@ -833,7 +833,7 @@ El proyecto utiliza inicialmente una arquitectura cliente-servidor, por capas y 
 
 Sí. La matriz de trazabilidad conecta los 22 requisitos vigentes con una interfaz, un adaptador, una operación del backend y sus datos. La arquitectura también distingue los requisitos interactivos de los procesos automáticos: una reserva termina en PostgreSQL mediante la API; una notificación se procesa mediante cron/worker; una confirmación regresa por la API con la identidad del cliente. Esta separación reduce ambigüedad y permite comprobar si un cambio pertenece a presentación, coordinación, dominio, persistencia o integración externa.
 
-RF-18 a RF-22 ya están incorporados en los archivos formales de alcance y requisitos actuales. La siguiente acción es ampliar la evidencia de validación de esos flujos. Técnicamente, esos requisitos ya poseen representación en la interfaz y responsabilidad explícita. La arquitectura actual es suficiente para el tamaño y contexto del proyecto: preserva integridad y seguridad sin la carga de una plataforma distribuida innecesaria, y deja puntos de evolución claros para migraciones, telemetría, receipts de push y escalamiento futuro.
+La principal acción documental pendiente es promover RF-18 a RF-22 a los archivos formales de alcance y requisitos. Técnicamente, esos requisitos ya poseen representación en la interfaz y responsabilidad explícita. La arquitectura actual es suficiente para el tamaño y contexto del proyecto: preserva integridad y seguridad sin la carga de una plataforma distribuida innecesaria, y deja puntos de evolución claros para migraciones, telemetría, receipts de push y escalamiento futuro.
 
 ---
 

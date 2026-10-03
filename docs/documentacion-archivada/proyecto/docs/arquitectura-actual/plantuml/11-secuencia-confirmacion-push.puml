@@ -1,0 +1,114 @@
+@startuml
+title Barbería Cale — Confirmación de asistencia desde push
+
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam sequenceLifeLineBorderColor #743B2F
+skinparam sequenceParticipantBorderColor #743B2F
+skinparam sequenceGroupBorderColor #9A7C70
+skinparam sequenceGroupBackgroundColor #FFF8ED
+autonumber
+
+actor Cliente as client
+participant "FCM / bandeja Android" as android
+participant "expo-notifications" as notifications
+participant "NotificationContext" as context
+database "AsyncStorage\npending intent" as pending
+participant "AuthContext" as auth
+participant "Expo Router" as router
+participant "appointments.api.ts\n+ api-client.ts" as clientapi
+participant "Express\nauthenticateToken + requireClient" as security
+participant "appointment.controller" as controller
+participant "appointment.service" as service
+database "PostgreSQL" as db
+
+android -> notifications : Notificación con channelId\nappointment-reminders-v1 y categoryId\nattendance_reminder
+client -> android : Toca cuerpo o\n"Confirmar asistencia"
+
+alt Proceso React activo / app en background
+  notifications -> context : addNotificationResponseReceivedListener(response)
+else Aplicación terminada (cold start)
+  notifications -> context : getLastNotificationResponse()
+  context -> notifications : clearLastNotificationResponse()
+end
+
+context -> context : Dedupe por request.identifier\n+ actionIdentifier
+context -> context : Validar data.kind = appointment_reminder
+context -> context : Validar version = 1
+context -> context : Normalizar appointmentId\nentero seguro > 0
+
+alt Payload inválido o respuesta duplicada
+  context --> client : Ignorar sin navegar ni mutar
+else Payload válido
+  context -> pending : setItem({appointmentId,\nconfirmAttendance, createdAt})
+  note right of pending
+    No guarda JWT, nombre, teléfono ni otra PII.
+    La intención expira después de 24 horas.
+  end note
+  context -> auth : ¿Terminó restauración? ¿token + user?
+
+  alt Auth todavía loading
+    auth --> context : Esperar efecto posterior
+  else No hay sesión
+    context -> router : replace(/auth/login)
+    context --> client : Solicitar inicio de sesión
+    client -> auth : Inicia sesión
+    auth --> context : Sesión restaurada
+  else user.role = ADMIN
+    context --> client : Aviso: usar cuenta CLIENT
+  else user.role = CLIENT
+    auth --> context : user CLIENT + JWT vigente
+  end
+
+  context -> pending : Leer y revalidar intención
+  alt Intención ausente, corrupta o vencida
+    context -> pending : removeItem()
+  else CLIENT válido
+    context -> router : push(/client/my-appointments,\nappointmentId, intent=attendance)
+
+    alt Toque en cuerpo\n(DEFAULT_ACTION_IDENTIFIER)
+      context -> pending : removeItem()
+      router --> client : Mostrar Mis citas
+    else actionIdentifier = confirm_attendance
+      context -> clientapi : confirmAttendance(jwt, appointmentId)
+      clientapi -> security : PATCH /api/appointments/:id/confirm-attendance
+      security -> db : Validar JWT y consultar usuario/rol vigente
+      db --> security : CLIENT
+      security -> controller : req.user.userId
+      controller -> controller : Validar id entero positivo
+      controller -> service : confirmAppointmentAttendance(userId, id)
+      service -> db : UPDATE appointments\nWHERE id + user_id propio\nAND status ACCEPTED\nAND appointment_at > NOW
+      service -> db : client_attendance_confirmed_at =\nCOALESCE(actual, NOW)\nreminder_claim_* = NULL
+      db -> db : Trigger salta jobs manuales activos\npor ATTENDANCE_ALREADY_CONFIRMED
+
+      alt Actualización exitosa
+        db --> service : cita + attendanceStatus CONFIRMED
+        service --> context : 200 "Tu asistencia quedó confirmada"
+        context -> pending : removeItem()
+        context --> client : Mensaje de éxito
+      else Ya estaba confirmada y cita ACCEPTED/COMPLETED
+        service -> db : SELECT estado actual
+        db --> service : client_attendance_confirmed_at existente
+        service --> context : 200 idempotente
+        context -> pending : removeItem()
+      else No pertenece al usuario
+        service --> context : 404
+        context -> pending : removeItem()
+      else Estado no ACCEPTED o cita iniciada
+        service --> context : 409
+        context -> pending : removeItem()
+      else 401 sesión expirada
+        security --> auth : Handler global expira sesión
+        context -> pending : Conservar para login posterior
+      else Red / timeout / servidor
+        clientapi --> context : ApiError recuperable
+        context -> pending : Conservar para reintento
+      end
+    end
+  end
+end
+
+caption La confirmación es una mutación autenticada, con ownership y tiempo verificados en SQL; la acción del sistema operativo nunca contiene credenciales.
+@enduml

@@ -54,4 +54,4 @@ cd backend
 npm test
 ```
 
-Los requisitos y el alcance están en `proyecto/docs`. Los comandos habituales de Git y EAS están guardados en `how-to-git.md` y `how-to-eas.md`.
+La [documentación vigente](proyecto/docs/README.md) reúne alcance, requisitos RF-01 a RF-22, arquitectura y trazabilidad. Las [versiones archivadas](docs/documentacion-archivada/README.md) se conservan como antecedentes y no describen el estado actual completo. Las [evidencias de ejecución](docs/README.md) conservan la fecha y los límites de cada prueba. Los comandos habituales de Git y EAS están guardados en `how-to-git.md` y `how-to-eas.md`.
