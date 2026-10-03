@@ -39,6 +39,9 @@ Thumbs.db
 .env.*
 backend/.env
 
+# Accidental local credential note (must never be committed)
+Ruddy cuenta dummy.txt
+
 # Local databases
 *.db
 *.sqlite
