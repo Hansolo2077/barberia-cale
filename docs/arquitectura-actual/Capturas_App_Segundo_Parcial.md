@@ -2,7 +2,7 @@
 
 Capturas reales obtenidas del emulador Android el 3 de octubre de 2026. Este documento es un banco de evidencias para incorporar al documento final del Segundo Parcial; cada PNG conserva su resolución original de 1080 × 2280.
 
-Los códigos RF corresponden a `proyecto/docs/requisitos-v1.md`. Algunas imágenes incluyen el botón de herramientas de Expo y un aviso de desarrollo de DateTimePicker; se conservan tal como fueron capturadas. No son prototipos ni imágenes recreadas.
+Los códigos RF corresponden a `docs/documentacion-archivada/proyecto/docs/requisitos-v1.md`. Algunas imágenes incluyen el botón de herramientas de Expo y un aviso de desarrollo de DateTimePicker; se conservan tal como fueron capturadas. No son prototipos ni imágenes recreadas.
 
 ## Pruebas listas para incorporar
 

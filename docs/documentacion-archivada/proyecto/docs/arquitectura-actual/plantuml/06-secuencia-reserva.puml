@@ -1,0 +1,121 @@
+@startuml
+title Barbería Cale — Secuencia actual de consulta y reserva
+
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam sequenceLifeLineBorderColor #743B2F
+skinparam sequenceParticipantBorderColor #743B2F
+skinparam sequenceGroupBorderColor #9A7C70
+skinparam sequenceGroupBackgroundColor #FFF8ED
+autonumber
+
+actor Cliente as cliente
+participant "Pantalla Agendar\nclient/appointment.tsx" as ui
+participant "appointments.api.ts" as adapter
+participant "api-client.ts" as http
+participant "Router Express\n/api/appointments" as router
+participant "authenticateToken\n+ requireClient" as security
+participant "appointment.controller" as controller
+participant "appointment.service" as service
+participant "pg.Pool / transacción" as pool
+database "PostgreSQL\nappointments" as db
+
+== Consulta de fecha y horarios ==
+cliente -> ui : Selecciona/ingresa fecha
+ui -> adapter : getAvailability(jwt, fecha)
+adapter -> http : GET /appointments/availability?date=AAAA-MM-DD
+http -> router : HTTPS + Bearer JWT
+router -> security : Autenticar y exigir CLIENT
+security -> db : SELECT users por userId del JWT
+db --> security : usuario y rol vigentes
+security -> controller : req.user
+controller -> controller : Validar fecha ISO
+controller -> service : getAvailability(fecha, userId)
+service -> db : Obtener corte de 24 h\n(NOW en America/Managua)
+service -> db : SELECT slots activos del día\nPENDING o ACCEPTED
+service -> db : Contar citas del cliente\npor día y ventanas móviles de 7 días
+db --> service : ocupación + elegibilidad
+service -> service : Combinar 08:00…17:00\ncon corte, ocupación y política
+service --> controller : times + eligibility + policy
+controller --> http : 200 JSON
+http --> adapter : respuesta tipada
+adapter --> ui : horarios disponibles
+ui --> cliente : Muestra hora seleccionable\ny motivo si no es elegible
+
+opt No hay disponibilidad en la fecha
+  cliente -> ui : Solicita siguiente fecha
+  ui -> adapter : getNextAvailability(jwt, startDate)
+  adapter -> http : GET /appointments/next-availability
+  http -> router : HTTPS + JWT
+  router -> security : Autenticar CLIENT
+  security -> controller
+  controller -> service : getNextAvailableDate(startDate, userId)
+  service -> db : generate_series hasta 60 días × horarios\nexcluir slots activos y límites del cliente
+  db --> service : primera fecha elegible
+  service --> controller : fecha + times + policy
+  controller --> ui : 200 JSON
+end
+
+== Confirmación de reserva ==
+cliente -> ui : Confirma Corte de cabello + fecha + hora
+ui -> adapter : createAppointment(jwt, datos)
+adapter -> http : POST /appointments\n{service,date,time}
+http -> router : HTTPS + Bearer JWT
+router -> security : Autenticar y exigir CLIENT
+security -> db : Revalidar usuario/rol actual
+db --> security : CLIENT vigente
+security -> controller
+controller -> controller : Validar body, servicio permitido,\nfecha ISO e identificador de usuario
+controller -> service : createAppointment(userId, servicio, fecha, hora)
+service -> service : Validar hora contra AVAILABLE_TIMES
+service -> pool : connect() + BEGIN
+pool -> db : BEGIN
+service -> db : pg_advisory_xact_lock(userId)
+note right of db
+  Serializa reservas simultáneas
+  del mismo cliente.
+end note
+service -> db : Comprobar fecha/hora >= NOW + 24 h
+service -> db : Recalcular 1 activa/día y\n2 activas en toda ventana de 7 días
+
+alt Regla temporal o cupo personal incumplido
+  db --> service : no elegible
+  service -> pool : ROLLBACK
+  service --> controller : error 400 o 409
+  controller --> ui : JSON con motivo
+else Elegible
+  service -> db : SELECT slot activo por fecha/hora
+  alt Slot ya ocupado
+    db --> service : id existente
+    service -> pool : ROLLBACK
+    service --> controller : 409 horario no disponible
+    controller --> ui : Solicita actualizar horarios
+  else Slot todavía libre
+    service -> db : INSERT appointments\nstatus = PENDING
+    note right of db
+      idx_unique_active_appointment protege
+      fecha + hora para PENDING/ACCEPTED,
+      incluso ante carreras entre clientes.
+    end note
+    alt unique_violation 23505 por concurrencia
+      db --> service : conflicto
+      service -> pool : ROLLBACK
+      service --> controller : 409 horario no disponible
+      controller --> ui : Reconciliar disponibilidad
+    else Inserción exitosa
+      db --> service : cita creada + proyección de asistencia
+      service -> pool : COMMIT
+      service --> controller : appointment
+      controller --> http : 201 Cita solicitada correctamente
+      http --> ui : AppointmentMutationResponse
+      ui -> ui : showMessage + limpiar selección
+      ui -> ui : router.replace(/client,\nreservation=success, fecha, hora)
+      ui --> cliente : Confirmación; estado PENDING
+    end
+  end
+end
+
+caption La base de datos y el servicio vuelven a validar todas las reglas; la disponibilidad mostrada por UI no reserva el slot.
+@enduml

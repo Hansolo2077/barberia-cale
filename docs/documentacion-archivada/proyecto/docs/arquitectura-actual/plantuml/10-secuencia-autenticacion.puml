@@ -1,0 +1,148 @@
+@startuml
+title Barbería Cale — Autenticación, restauración y autorización actual
+
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam sequenceLifeLineBorderColor #743B2F
+skinparam sequenceParticipantBorderColor #743B2F
+skinparam sequenceGroupBorderColor #9A7C70
+skinparam sequenceGroupBackgroundColor #FFF8ED
+autonumber
+
+actor Usuario as user
+participant "Pantalla Login / Registro" as ui
+participant "AuthContext" as authctx
+participant "auth.api.ts\n+ api-client.ts" as clientapi
+participant "Auth Router\nExpress" as route
+participant "Rate limiter\npor IP" as limiter
+participant "auth.controller" as controller
+participant "auth.service" as service
+participant "bcryptjs" as bcrypt
+participant "jsonwebtoken" as jwt
+database "PostgreSQL\nusers" as db
+database "SecureStore Android /\nAsyncStorage Web" as storage
+participant "Layouts Expo Router" as guards
+participant "NotificationContext" as notifctx
+
+== Registro e inicio automático ==
+user -> ui : Nombre, apellido, celular,\ncontraseña, confirmación, recordar
+ui -> ui : Validación local y coincidencia
+ui -> authctx : signUp(datos)
+authctx -> clientapi : POST /api/auth/register
+clientapi -> route : HTTPS JSON
+route -> limiter : Máx. 10 registros / hora / IP
+limiter -> controller
+controller -> controller : Validar tipos, nombres <= 100,\nteléfono, contraseña 6..72 bytes
+controller -> service : registerUser(...)
+service -> db : SELECT por phone
+service -> bcrypt : hash(password, 10)
+bcrypt --> service : password_hash
+service -> db : INSERT users role CLIENT
+db --> service : usuario público
+service --> controller : user
+controller -> jwt : sign({userId, role}, JWT_SECRET)\n8 h o 30 d según rememberMe
+jwt --> controller : token
+controller --> authctx : 201 {token,user}
+authctx -> authctx : Guardar sesión en memoria
+alt rememberMe = true
+  authctx -> storage : Persistir {token,user público}
+else rememberMe = false
+  authctx -> storage : Eliminar sesión persistida anterior
+end
+authctx -> guards : user.role = CLIENT
+guards --> user : router.replace(/client, account=created)
+
+== Inicio de sesión ==
+user -> ui : Celular, contraseña, recordar
+ui -> authctx : signIn(datos)
+authctx -> clientapi : POST /api/auth/login
+clientapi -> route : HTTPS JSON
+route -> limiter : Máx. 20 intentos / 15 min / IP
+limiter -> controller
+controller -> service : findUserByPhone(phone)
+service -> db : SELECT credenciales + role
+db --> service : fila o vacío
+service -> bcrypt : compare(password, password_hash)
+bcrypt --> controller : válido / inválido
+alt Credenciales inválidas
+  controller --> ui : 401 mensaje genérico
+else Credenciales válidas
+  controller -> jwt : sign userId + role\n8 h o 30 d
+  jwt --> controller : token
+  controller --> authctx : 200 {token,user público}
+  authctx -> storage : Persistir solo si rememberMe
+  authctx -> guards : Identidad en memoria
+  alt role = ADMIN
+    guards --> user : /admin
+  else role = CLIENT
+    guards --> user : /client
+  end
+end
+
+== Restauración al iniciar la aplicación ==
+authctx -> storage : Leer sesión actual\n(migra clave heredada si existe)
+storage --> authctx : JSON o vacío
+alt Sin sesión o JSON inválido
+  authctx -> storage : Limpiar dato inválido
+  authctx -> guards : user = null, loading = false
+else Sesión parseable
+  authctx -> clientapi : GET /api/auth/me\nBearer JWT guardado
+  clientapi -> route : HTTPS
+  route -> jwt : verify(token, JWT_SECRET)
+  jwt --> route : userId o error
+  route -> service : findPublicUserById(userId)
+  service -> db : SELECT usuario y rol actuales
+  db --> service : usuario actual / inexistente
+  alt JWT inválido, expirado o usuario inexistente
+    route --> authctx : 401 / 404
+    authctx -> storage : Eliminar sesión
+    authctx -> guards : Redirigir a login
+  else Sesión validada
+    route --> authctx : 200 user actual
+    authctx -> storage : Actualizar identidad pública si cambió
+    authctx -> guards : Redirigir por rol vigente
+  else Error de red/servidor
+    alt Identidad guardada era CLIENT
+      authctx -> authctx : Continuidad local no administrativa
+      note right of authctx
+        Cada endpoint protegido seguirá validando
+        JWT y rol en el servidor antes de mutar datos.
+      end note
+    else Identidad guardada era ADMIN
+      authctx -> guards : No autorizar área ADMIN offline
+    end
+  end
+end
+
+== Autorización en cada request protegido ==
+clientapi -> route : Bearer JWT
+route -> jwt : verify firma y expiración
+route -> service : SELECT usuario actual por userId
+service -> db : users
+db --> route : role vigente
+alt Endpoint CLIENT y role != CLIENT
+  route --> clientapi : 403 requireClient
+else Endpoint ADMIN y role != ADMIN
+  route --> clientapi : 403 requireAdmin
+else Autorizado
+  route --> clientapi : Continúa al controller
+end
+
+opt Cualquier request responde 401
+  clientapi -> authctx : Handler global para el JWT rechazado
+  authctx -> storage : Eliminar sesión
+  authctx -> authctx : user/token = null
+end
+
+== Cierre de sesión ==
+user -> authctx : signOut()
+authctx -> storage : Eliminar token y usuario local
+authctx -> authctx : Limpiar memoria aun si storage falla
+authctx --> notifctx : Cambio de identidad
+notifctx -> route : DELETE /api/notifications/device\ncon JWT anterior (best effort)
+guards --> user : /auth/login
+
+caption El JWT no confía en el rol guardado por el cliente: authenticateToken consulta users y requireClient/requireAdmin decide con el rol vigente.
+@enduml

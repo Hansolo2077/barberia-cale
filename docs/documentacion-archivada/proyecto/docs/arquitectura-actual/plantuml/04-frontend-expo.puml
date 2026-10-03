@@ -1,0 +1,160 @@
+@startuml
+title Barbería Cale — Arquitectura detallada del frontend Expo
+
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FCFAF6
+skinparam defaultFontName Arial
+skinparam ArrowColor #5C4038
+skinparam packageBorderColor #743B2F
+skinparam componentBorderColor #7A655D
+skinparam databaseBorderColor #7A655D
+skinparam componentStyle rectangle
+
+package "src/app — Expo Router" as routes #F4EFE6 {
+  component "_layout.tsx\nSafeAreaProvider\nAuthProvider\nNotificationProvider\nFeedbackProvider\nStack + ErrorBoundary" as rootlayout
+
+  package "Público / Auth" as authscreens {
+    component "index.tsx\nPortada y redirección por rol" as landing
+    component "auth/_layout.tsx\nGuarda de sesión" as authlayout
+    component "auth/login.tsx\nAcceso" as login
+    component "auth/register.tsx\nRegistro" as register
+  }
+
+  package "CLIENT — Tabs" as clientscreens {
+    component "client/_layout.tsx\nGuarda CLIENT + aviso contextual push" as clientlayout
+    component "client/index.tsx\nResumen y próxima cita" as clienthome
+    component "client/appointment.tsx\nDisponibilidad y reserva" as booking
+    component "client/my-appointments.tsx\nPróximas, historial, cancelar, confirmar" as myappointments
+  }
+
+  package "ADMIN — Stack" as adminscreens {
+    component "admin/_layout.tsx\nGuarda ADMIN" as adminlayout
+    component "admin/index.tsx\nIndicadores y próxima cita" as adminhome
+    component "admin/appointments.tsx\nGestión, búsqueda, estados,\nrecordatorios y WhatsApp" as manage
+    component "admin/schedule.tsx\nAgenda por rango/estado" as schedule
+  }
+}
+
+package "src/context — estado transversal" as contexts #FFF8ED {
+  component "AuthContext" as authctx
+  note right of authctx
+    • login, registro y /auth/me
+    • JWT + usuario público en memoria
+    • SecureStore Android / AsyncStorage web
+    • limpieza y handler global de 401
+  end note
+
+  component "NotificationContext" as notifctx
+  note right of notifctx
+    • Android fuera de Expo Go
+    • permiso solo por acción contextual
+    • canal/category/foreground handler
+    • token nativo → ExpoPushToken → API
+    • warm/cold response y rotación de token
+    • intención segura en AsyncStorage (24 h)
+  end note
+}
+
+package "src/api — adaptadores REST tipados" as apis #FFFDF9 {
+  component "api-client.ts\nfetch + AbortController (15 s)\nApiError + mapeo HTTP + JWT" as apiclient
+  component "auth.api.ts\nregister, login, me" as authapi
+  component "appointments.api.ts\navailability, next, create, my,\ncancel, confirm attendance" as appointmentsapi
+  component "admin.api.ts\nlistado/agenda, estados,\nsummary/queue reminders" as adminapi
+  component "notifications.api.ts\nPUT/DELETE device" as notificationsapi
+}
+
+package "src/components y src/utils" as shared #F7F3ED {
+  component "FeedbackProvider\n+ show-message.ts" as feedback
+  component "UserMenu / BackButton / AppIcon\nAttendanceBadge / Date inputs\nAppErrorFallback" as components
+  component "business.ts + business-date.ts\ndate-format.ts + phone-validation.ts" as utils
+  component "notification-registration.ts\ntimeouts y opciones Expo token" as pushutils
+  component "app-theme.ts / global.css / assets" as style
+}
+
+database "Almacenamiento del dispositivo" as storage {
+  component "Expo SecureStore\nsesión Android" as securestore
+  component "AsyncStorage\nsesión web, intención push" as asyncstorage
+}
+
+cloud "Servicios y capacidades externas" as external {
+  component "API REST Render" as api
+  component "Servicios Expo / FCM" as push
+  component "SO Android\npermisos, canal, AppState" as android
+  component "WhatsApp wa.me" as whatsapp
+}
+
+rootlayout --> landing
+rootlayout --> authlayout
+rootlayout --> clientlayout
+rootlayout --> adminlayout
+authlayout --> login
+authlayout --> register
+clientlayout --> clienthome
+clientlayout --> booking
+clientlayout --> myappointments
+adminlayout --> adminhome
+adminlayout --> manage
+adminlayout --> schedule
+
+rootlayout --> authctx
+rootlayout --> notifctx
+rootlayout --> feedback
+landing --> authctx
+authlayout --> authctx
+clientlayout --> authctx
+adminlayout --> authctx
+login --> authctx
+register --> authctx
+clienthome --> authctx
+booking --> authctx
+myappointments --> authctx
+adminhome --> authctx
+manage --> authctx
+schedule --> authctx
+
+clientlayout --> notifctx
+clienthome --> notifctx
+myappointments --> notifctx
+
+authctx --> authapi
+notifctx --> notificationsapi
+notifctx --> appointmentsapi : Acción confirmar
+clienthome --> appointmentsapi
+booking --> appointmentsapi
+myappointments --> appointmentsapi
+adminhome --> adminapi
+manage --> adminapi
+schedule --> adminapi
+
+authapi --> apiclient
+appointmentsapi --> apiclient
+adminapi --> apiclient
+notificationsapi --> apiclient
+apiclient --> api : HTTPS JSON
+
+authctx --> securestore
+authctx --> asyncstorage
+notifctx --> asyncstorage
+notifctx --> push
+notifctx --> android
+notifctx --> pushutils
+manage --> whatsapp : Linking / window.open
+
+routes ..> components
+routes ..> utils
+routes ..> style
+contexts ..> feedback
+
+note bottom of rootlayout
+  Los layouts protegen la experiencia y redirigen por rol.
+  Cada endpoint vuelve a autenticar el JWT y autorizar contra el usuario actual.
+end note
+
+note bottom of apiclient
+  EXPO_PUBLIC_API_URL puede sobrescribir la URL publicada.
+  Un 401 notifica a AuthContext para expirar solo la sesión que usó ese JWT.
+end note
+
+caption Entrada: expo-router/entry. Plataformas de UI: Android y React Native Web; push actual: Android únicamente.
+@enduml
