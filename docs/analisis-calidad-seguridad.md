@@ -1,5 +1,7 @@
 # Análisis de calidad y seguridad — Barbería Cale
 
+> Informe histórico de PR #7, fusionado en `c83933eb130d4ec7e6f40e4e90df46d1b900ede4`. Los estados y conteos siguientes describen sus cortes de análisis originales. La entrega posterior y sus evidencias se documentan en [Remediación posterior al PR 7](remediacion-seguridad-pr8.md).
+
 Fecha: 17 de octubre de 2026. Repositorio: `Hansolo2077/barberia-cale`, rama `dev`, PR #7.
 Base: commit `36ca8e8`. Entorno: Windows, Node.js `24.16.0`, npm `11.13.0`.
 

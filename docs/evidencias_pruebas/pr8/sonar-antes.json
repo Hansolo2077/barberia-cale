@@ -1,0 +1,64 @@
+{
+  "source": "https://sonarcloud.io/api/issues/search?componentKeys=Hansolo2077_barberia-cale&branch=dev&rules=githubactions%3AS6505%2Cgithubactions%3AS8543&resolved=false&ps=100",
+  "branch": "dev",
+  "baseline": "5b68e6bf4f069c502ede408ab0a744727863a6a1",
+  "total": 8,
+  "issues": [
+    {
+      "key": "AaFKS--96UnJJxTUffC9",
+      "rule": "githubactions:S6505",
+      "line": 29,
+      "status": "OPEN",
+      "message": "Omitting \"--ignore-scripts\" allows lifecycle scripts to run during package installation."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffC-",
+      "rule": "githubactions:S6505",
+      "line": 32,
+      "status": "OPEN",
+      "message": "\"npx\" can install packages on-demand and run their lifecycle scripts."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffC_",
+      "rule": "githubactions:S8543",
+      "line": 32,
+      "status": "OPEN",
+      "message": "Define exact package version to avoid installing unverified releases."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDA",
+      "rule": "githubactions:S6505",
+      "line": 41,
+      "status": "OPEN",
+      "message": "Omitting \"--ignore-scripts\" allows lifecycle scripts to run during package installation."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDC",
+      "rule": "githubactions:S6505",
+      "line": 176,
+      "status": "OPEN",
+      "message": "Omitting \"--ignore-scripts\" allows lifecycle scripts to run during package installation."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDD",
+      "rule": "githubactions:S6505",
+      "line": 179,
+      "status": "OPEN",
+      "message": "Omitting \"--ignore-scripts\" allows lifecycle scripts to run during package installation."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDE",
+      "rule": "githubactions:S6505",
+      "line": 182,
+      "status": "OPEN",
+      "message": "Omitting \"--ignore-scripts\" allows lifecycle scripts to run during package installation."
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDF",
+      "rule": "githubactions:S8543",
+      "line": 182,
+      "status": "OPEN",
+      "message": "Using dependencies without locking resolved versions is security-sensitive."
+    }
+  ]
+}
