@@ -3,6 +3,66 @@
 Fecha: 17 de octubre de 2026. Repositorio: `Hansolo2077/barberia-cale`, rama `dev`, PR #7.
 Base: commit `36ca8e8`. Entorno: Windows, Node.js `24.16.0`, npm `11.13.0`.
 
+## Resultados finales comprobados en GitHub Actions
+
+Consulta del 17 de octubre de 2026. Se comparan la [ejecución inicial #6, intento 2](https://github.com/Hansolo2077/barberia-cale/actions/runs/39041407379/attempts/2), sobre `36ca8e8`, y la [ejecución final #8, intento 2](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/attempts/2), sobre `1392a691e8f6703cb70316be51441d03085286bc`, del PR #7. La ejecución final terminó el 17 de octubre a las 15:17 UTC (09:17 en Guatemala). Son resultados de ese commit; el posterior commit documental no se presenta como una nueva ejecución ya aprobada.
+
+### Snyk: Antes / Después
+
+Ambos escaneos usan `snyk test --file=package.json --severity-threshold=high`, cada uno desde su proyecto. Por tanto, el conteo corresponde a hallazgos altos y críticos reportados con ese umbral, no a una certificación de ausencia de vulnerabilidades de cualquier severidad.
+
+| Proyecto / métrica | Antes | Después | Reducción |
+| --- | ---: | ---: | ---: |
+| Frontend | 20 | 5 | 75.0% |
+| Backend | 2 | 0 | 100% |
+| Total | 22 | 5 | **77.3%** |
+| Críticas, ambos proyectos | 2 | 0 | 100% |
+
+Reducción total: `(22 - 5) / 22 × 100 = 77.2727…%`, redondeada a 77.3%. Inicialmente había una crítica en frontend (`shell-quote`) y una en backend (`proxy-addr`); el análisis final reporta cinco altas y ninguna crítica.
+
+Evidencias verificables:
+
+- [Snyk inicial: frontend, paso 8](https://github.com/Hansolo2077/barberia-cale/actions/runs/39041407379/job/117422531188#step:8:1): 578 dependencias, 20 issues y 51 rutas vulnerables.
+- [Snyk inicial: backend, paso 9](https://github.com/Hansolo2077/barberia-cale/actions/runs/39041407379/job/117422531188#step:9:1): 98 dependencias, 2 issues y 3 rutas vulnerables.
+- [Snyk final: frontend, paso 8](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/job/117429947103#step:8:1): 578 dependencias, 5 issues y 14 rutas vulnerables; exit code 1.
+- [Snyk final: backend, paso 9](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/job/117429947103#step:9:1): 98 dependencias, ninguna ruta vulnerable; paso aprobado.
+
+El job Snyk general permanece **failure** por los cinco hallazgos altos del frontend. El backend sí se ejecuta después del fallo del frontend; no se ocultan hallazgos ni se usa `continue-on-error`.
+
+### Pipeline y resultados de los servicios
+
+Orden obligatorio conservado: **Tests → SonarCloud → DeepSource → Snyk**.
+
+| Job de Actions | Resultado final comprobado | Evidencia |
+| --- | --- | --- |
+| Tests | `success`: instalaciones frontend/backend, TypeScript, ESLint y pruebas aprobados. | [Job Tests](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/job/117429576903) |
+| SonarCloud | `success`: scanner ejecutado y reporte enviado. Esto no significa que el Quality Gate haya pasado. | [Job SonarCloud](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/job/117429721063) |
+| DeepSource | `success`: la API confirmó `SUCCESS` para el SHA `1392a69…`, con finalización `2026-10-17T15:01:38.800772+00:00`. | [Job DeepSource](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/job/117429924656) |
+| Snyk | `failure`: frontend con cinco altas; backend aprobado. | [Job Snyk](https://github.com/Hansolo2077/barberia-cale/actions/runs/39043072399/job/117429947103) |
+
+**SonarCloud:** el check independiente [SonarCloud Code Analysis](https://github.com/Hansolo2077/barberia-cale/runs/117429934735) del mismo SHA está en `failure`, con título **Quality Gate failed**. La condición fallida es **Security Rating on New Code: C**, frente al mínimo requerido **A**. El [dashboard del PR #7](https://sonarcloud.io/dashboard?id=Hansolo2077_barberia-cale&pullRequest=7) enlaza el reporte. El workflow no espera el resultado del Quality Gate, por lo que su job de scanner puede pasar mientras el check del servicio falla. Se comprobó el resumen publicado por la integración en GitHub; no se obtuvieron métricas adicionales de cobertura, bugs, code smells o número total de issues desde el dashboard/API. No se afirma que SonarCloud esté libre de issues. La corrección de este Quality Gate queda pendiente, fuera de esta actualización documental.
+
+**DeepSource:** además del job, los estados oficiales [JavaScript](https://app.deepsource.com/gh/Hansolo2077/barberia-cale/run/4b6fff27-f12d-49ad-b310-11e8811a7e61/javascript/), [SQL](https://app.deepsource.com/gh/Hansolo2077/barberia-cale/run/4b6fff27-f12d-49ad-b310-11e8811a7e61/sql/) y [Secrets](https://app.deepsource.com/gh/Hansolo2077/barberia-cale/run/4b6fff27-f12d-49ad-b310-11e8811a7e61/secrets/) figuran como `success` en el SHA analizado. No se obtuvo un desglose numérico global de issues; estos estados no prueban que todo el repositorio esté libre de hallazgos históricos o excluidos por las reglas del servicio.
+
+### Cinco hallazgos altos de Snyk pendientes
+
+Estos son los cinco issues reales del log final; no deben confundirse con las cinco dependencias raíz del reporte separado de npm audit.
+
+| Dependencia | Hallazgo / reporte oficial | Decisión de compatibilidad |
+| --- | --- | --- |
+| `braces@3.0.3` | [Uncontrolled Recursion — 19963945](https://security.snyk.io/vuln/SNYK-JS-BRACES-19963945) | Snyk indica que no hay upgrade o parche disponible. Llega por micromatch y Metro. |
+| `image-size@1.2.1` | [Infinite loop — 17295814](https://security.snyk.io/vuln/SNYK-JS-IMAGESIZE-17295814) | Corregido en 2.0.3, fuera del rango 1.x de Metro y con cambio de API. |
+| `image-size@1.2.1` | [Infinite loop — 17295816](https://security.snyk.io/vuln/SNYK-JS-IMAGESIZE-17295816) | Segundo issue independiente del mismo paquete; requiere la misma actualización compatible del consumidor. |
+| `node-forge@1.4.0` | [Improper Verification of Cryptographic Signature — 19635204](https://security.snyk.io/vuln/SNYK-JS-NODEFORGE-19635204) | Snyk indica que no hay upgrade o parche disponible; llega por las herramientas de Expo. |
+| `zod@3.25.76` | [Allocation of Resources Without Limits or Throttling — 20510278](https://security.snyk.io/vuln/SNYK-JS-ZOD-20510278) | Corregido en 4.6.6; @expo/cli instalado exige `^3.25.76`. No se fuerza una migración mayor de Zod sin adaptar/verificar el consumidor. |
+
+### Trazabilidad de correcciones y commits
+
+- [02ca9b6 — CSS y TypeScript](https://github.com/Hansolo2077/barberia-cale/commit/02ca9b6f8c2af311d19564293973eb5c281c13ad): añade `src/types/expo.d.ts` para cargar tipos oficiales de Expo en el checkout de CI, conservando el import CSS y las validaciones.
+- [36ca8e8 — comprobación real de DeepSource](https://github.com/Hansolo2077/barberia-cale/commit/36ca8e8e199b8dd229e2a5e2e3aa1c855504dfc6): añade la consulta oficial por SHA, encadena Snyk con `needs: deepsource` y permite escanear backend después de un fallo frontend sin convertirlo en éxito.
+- [5e69cae — dependencias transitivas](https://github.com/Hansolo2077/barberia-cale/commit/5e69caeb60b28b791801c6da5f02afb4a3bddc7c): contiene **todas** las actualizaciones de las tablas Backend y Frontend de este documento. Su diff muestra las versiones anteriores y nuevas, sin cambiar los manifiestos ni las APIs directas. En Snyk desaparecen User Impersonation de `proxy-addr`, Uncaught Exception de `qs`, Command Injection de `shell-quote`, dos avisos de `brace-expansion`, uno de `compression`, uno de `js-yaml` y diez de `@xmldom/xmldom`: 17 issues corregidos en total. La actualización de `source-map-js` y de instancias de desarrollo también corrige avisos de npm, pero no se cuenta como una reducción Snyk adicional porque no figuraba entre los 22 issues iniciales.
+- [1392a69 — acciones Node.js 24 y auditorías](https://github.com/Hansolo2077/barberia-cale/commit/1392a691e8f6703cb70316be51441d03085286bc): actualiza checkout, setup-node, Sonar y github-script a las versiones documentadas, y conserva los reportes npm Antes/Después. No elimina validaciones ni cambia el umbral `high` de Snyk.
+
 ## Alcance y compatibilidad
 
 Se actualizaron dependencias transitivas en los dos `package-lock.json` y las versiones de las acciones del workflow. Los dos `package.json`, Express `5.2.1`, Expo `57.0.15`, React Native `0.86.2` y las funcionalidades permanecen sin cambios.
@@ -97,9 +157,9 @@ Se mantiene **Tests → SonarCloud → DeepSource → Snyk** mediante `needs`. D
 
 La instalación también avisa que `uuid@7` y `eslint@9` están fuera de soporte. Quedan como mantenimiento pendiente; no se fuerza una migración mayor de las herramientas de Expo.
 
-Snyk no se ejecutó localmente: no hay CLI instalada ni `SNYK_TOKEN` disponible en el entorno. No se leyó ni copió ningún secreto de GitHub. Los 20 hallazgos frontend comunicados en la tarea son contexto del usuario, no una medición reproducida aquí: el conteo Snyk Antes/Después queda pendiente del escaneo autenticado en Actions. Las versiones corregidas están comprobadas por el lockfile y npm audit; no se afirma que Snyk esté en verde.
+Snyk no se ejecutó localmente durante la corrección de dependencias por falta de CLI y autenticación. Posteriormente se consultaron los logs autenticados de GitHub Actions: la comparación Snyk real y sus cinco hallazgos altos pendientes están registrados al inicio de este documento. Los conteos npm y Snyk se mantienen separados por sus diferentes bases de avisos, alcances y umbrales.
 
-Falta revisar el pipeline remoto tras el push y mantener `SONAR_TOKEN`, `DEEPSOURCE_PAT` y `SNYK_TOKEN` configurados. No se ejecutaron builds nativos Android/iOS ni se certifica la compatibilidad de los overrides descartados. No se modificó `main`, ni se hizo merge o cierre del PR #7.
+Los pasos de verificación de `SONAR_TOKEN`, `DEEPSOURCE_PAT` y `SNYK_TOKEN` pasan en la ejecución final consultada. Quedan pendientes las cinco altas de Snyk y el Quality Gate de SonarCloud, además del mantenimiento señalado por npm/Expo. No se ejecutaron builds nativos Android/iOS ni se certifica la compatibilidad de los overrides descartados. Esta actualización cambia documentación; no modifica el workflow ni el código, no modifica `main` y mantiene abierto el PR #7 sin merge.
 
 ## Fuentes oficiales
 
