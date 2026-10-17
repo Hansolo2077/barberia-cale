@@ -1,0 +1,304 @@
+{
+  "repository": "Hansolo2077/barberia-cale",
+  "pullRequest": 8,
+  "commit": "154f3a158388ca7b673568d6f7d2a95e3db3734f",
+  "workflowRun": "https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623",
+  "jobs": [
+    {
+      "id": 117440324329,
+      "name": "Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440324329",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Checkout repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install frontend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "TypeScript validation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "ESLint validation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Frontend tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Install backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Backend tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Checkout repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 117440424039,
+      "name": "SonarCloud",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440424039",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Checkout repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify SonarCloud token",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "SonarCloud analysis",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Checkout repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ]
+    },
+    {
+      "id": 117440612541,
+      "name": "DeepSource",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440612541",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Wait for DeepSource analysis of this commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        }
+      ]
+    },
+    {
+      "id": 117440629711,
+      "name": "Snyk",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440629711",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Checkout repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Verify Snyk token",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install frontend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Install Snyk CLI",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Scan frontend dependencies",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 8
+        },
+        {
+          "name": "Scan backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Post Checkout repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    }
+  ],
+  "sonarCheck": [
+    {
+      "id": 117440608321,
+      "conclusion": "success",
+      "title": "Quality Gate passed",
+      "summary": "Issues  \n![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed.svg '') [0 New issues](https://sonarcloud.io/project/issues?id=Hansolo2077_barberia-cale&pullRequest=8&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)  \n![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/accepted.svg '') [0 Accepted issues](https://sonarcloud.io/project/issues?id=Hansolo2077_barberia-cale&pullRequest=8&issueStatuses=ACCEPTED)\n\nMeasures  \n![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed.svg '') [0 Security Hotspots](https://sonarcloud.io/project/security_hotspots?id=Hansolo2077_barberia-cale&pullRequest=8&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true)  \n![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed.svg '') [0.0% Coverage on New Code](https://sonarcloud.io/component_measures?id=Hansolo2077_barberia-cale&pullRequest=8&metric=new_coverage&view=list)  \n![](https://sonarsource.github.io/sonarcloud-github-static-resources/v2/common/passed.svg '') [0.0% Duplication on New Code](https://sonarcloud.io/component_measures?id=Hansolo2077_barberia-cale&pullRequest=8&metric=new_duplicated_lines_density&view=list)  \n  \n[See analysis details on SonarQube Cloud](https://sonarcloud.io/dashboard?id=Hansolo2077_barberia-cale&pullRequest=8)\n\n",
+      "url": "https://github.com/Hansolo2077/barberia-cale/runs/117440608321",
+      "report": "https://sonarcloud.io/dashboard?id=Hansolo2077_barberia-cale&pullRequest=8"
+    }
+  ],
+  "snyk": {
+    "cliVersion": "1.1308.1",
+    "linuxSha256": "a8b2e420af6d8e61bf1d367c064475ccf699d767fc8763efb0072b9cac250f9a",
+    "checksumPassed": true,
+    "before": {
+      "frontendHigh": 5,
+      "backendHigh": 0,
+      "critical": 0
+    },
+    "after": {
+      "frontendHigh": 5,
+      "backendHigh": 0,
+      "critical": 0
+    },
+    "frontendDependencies": 578,
+    "frontendVulnerablePaths": 14,
+    "backendDependencies": 98,
+    "findings": [
+      {
+        "id": "SNYK-JS-BRACES-19963945",
+        "severity": "high",
+        "line": "✗ Uncontrolled Recursion [High Severity][https://security.snyk.io/vuln/SNYK-JS-BRACES-19963945] in braces@3.0.3"
+      },
+      {
+        "id": "SNYK-JS-IMAGESIZE-17295814",
+        "severity": "high",
+        "line": "✗ Infinite loop [High Severity][https://security.snyk.io/vuln/SNYK-JS-IMAGESIZE-17295814] in image-size@1.2.1"
+      },
+      {
+        "id": "SNYK-JS-IMAGESIZE-17295816",
+        "severity": "high",
+        "line": "✗ Infinite loop [High Severity][https://security.snyk.io/vuln/SNYK-JS-IMAGESIZE-17295816] in image-size@1.2.1"
+      },
+      {
+        "id": "SNYK-JS-NODEFORGE-19635204",
+        "severity": "high",
+        "line": "✗ Improper Verification of Cryptographic Signature [High Severity][https://security.snyk.io/vuln/SNYK-JS-NODEFORGE-19635204] in node-forge@1.4.0"
+      },
+      {
+        "id": "SNYK-JS-ZOD-20510278",
+        "severity": "high",
+        "line": "✗ Allocation of Resources Without Limits or Throttling [High Severity][https://security.snyk.io/vuln/SNYK-JS-ZOD-20510278] in zod@3.25.76"
+      }
+    ]
+  },
+  "deepsource": {
+    "commit": "154f3a158388ca7b673568d6f7d2a95e3db3734f",
+    "status": "SUCCESS",
+    "finishedAt": "2026-10-17T16:07:14.780141+00:00",
+    "source": "https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440612541"
+  },
+  "mergeDecision": "No fusionar: cinco vulnerabilidades altas de Snyk pendientes. PR abierto."
+}

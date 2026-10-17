@@ -1,0 +1,123 @@
+{
+  "checkedAtUtc": "2026-10-17T16:09:18.9635299Z",
+  "commit": "154f3a158388ca7b673568d6f7d2a95e3db3734f",
+  "pullRequest": 8,
+  "sources": [
+    "https://sonarcloud.io/api/issues/search?componentKeys=Hansolo2077_barberia-cale&branch=dev&rules=githubactions%3AS6505%2Cgithubactions%3AS8543%2Cgithubactions%3AS6506&resolved=false&ps=100",
+    "https://sonarcloud.io/api/issues/search?componentKeys=Hansolo2077_barberia-cale&branch=dev&rules=githubactions%3AS6505%2Cgithubactions%3AS8543%2Cgithubactions%3AS6506&resolved=true&ps=100",
+    "https://sonarcloud.io/api/qualitygates/project_status?projectKey=Hansolo2077_barberia-cale&pullRequest=8"
+  ],
+  "open": 0,
+  "fixed": [
+    {
+      "key": "AaFKm5-hiWlr6GefTdjF",
+      "rule": "githubactions:S6506",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffC9",
+      "rule": "githubactions:S6505",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffC-",
+      "rule": "githubactions:S6505",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffC_",
+      "rule": "githubactions:S8543",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDA",
+      "rule": "githubactions:S6505",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDC",
+      "rule": "githubactions:S6505",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDD",
+      "rule": "githubactions:S6505",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDE",
+      "rule": "githubactions:S6505",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    },
+    {
+      "key": "AaFKS--96UnJJxTUffDF",
+      "rule": "githubactions:S8543",
+      "status": "CLOSED",
+      "issueStatus": "FIXED",
+      "resolution": "FIXED"
+    }
+  ],
+  "qualityGate": {
+    "status": "OK",
+    "conditions": [
+      {
+        "status": "OK",
+        "metricKey": "new_reliability_rating",
+        "comparator": "GT",
+        "periodIndex": 1,
+        "errorThreshold": "1",
+        "actualValue": "1"
+      },
+      {
+        "status": "OK",
+        "metricKey": "new_security_rating",
+        "comparator": "GT",
+        "periodIndex": 1,
+        "errorThreshold": "1",
+        "actualValue": "1"
+      },
+      {
+        "status": "OK",
+        "metricKey": "new_maintainability_rating",
+        "comparator": "GT",
+        "periodIndex": 1,
+        "errorThreshold": "1",
+        "actualValue": "1"
+      },
+      {
+        "status": "OK",
+        "metricKey": "new_duplicated_lines_density",
+        "comparator": "GT",
+        "periodIndex": 1,
+        "errorThreshold": "3",
+        "actualValue": "0.0"
+      },
+      {
+        "status": "OK",
+        "metricKey": "new_security_hotspots_reviewed",
+        "comparator": "LT",
+        "periodIndex": 1,
+        "errorThreshold": "100",
+        "actualValue": "100.0"
+      }
+    ],
+    "periods": [],
+    "ignoredConditions": false
+  }
+}

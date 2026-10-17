@@ -24,7 +24,7 @@ El primer análisis del nuevo PR identificó además `githubactions:S6506` en la
 
 ## Seguridad de los scripts de instalación
 
-Se revisó `hasInstallScript` de ambos lockfiles: solo `unrs-resolver@1.12.2` del frontend declara un script de instalación; backend no declara ninguno. Su postinstall prepara bindings de plataforma. El cargador admite los paquetes nativos opcionales bloqueados en el lockfile; no se utiliza `--omit=optional`. Después de una instalación limpia sin scripts, `require('unrs-resolver')` y ESLint funcionan en Windows. El runner Ubuntu de Actions debe confirmar el mismo resultado en Linux; el resultado remoto se registra por separado.
+Se revisó `hasInstallScript` de ambos lockfiles: solo `unrs-resolver@1.12.2` del frontend declara un script de instalación; backend no declara ninguno. Su postinstall prepara bindings de plataforma. El cargador admite los paquetes nativos opcionales bloqueados en el lockfile; no se utiliza `--omit=optional`. Después de una instalación limpia sin scripts, `require('unrs-resolver')` y ESLint funcionan en Windows. El [job Tests de Ubuntu](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440324329) también aprobó instalaciones, TypeScript, ESLint y pruebas sin ejecutar postinstall.
 
 Los scripts explícitos de pruebas y lint permanecen habilitados. `--ignore-scripts` se aplica a la instalación y no elimina pruebas, lint ni TypeScript. No se añadieron excepciones de seguridad ni se autorizó la ejecución general de postinstall. No se certifican builds nativos Android/iOS con esta validación de CI.
 
@@ -44,11 +44,11 @@ No se cambiaron versiones de dependencias de aplicación, sus manifiestos o lock
 
 | Medición Snyk | Antes de PR #8 | Después de PR #8 |
 | --- | ---: | --- |
-| Frontend, altas/críticas | 5 | Pendiente del escaneo autenticado en Actions. |
-| Backend, altas/críticas | 0 | Pendiente del escaneo autenticado en Actions. |
-| Críticas totales | 0 | Pendiente del escaneo autenticado en Actions. |
+| Frontend, altas/críticas | 5 | 5 altas, 0 críticas. |
+| Backend, altas/críticas | 0 | 0. |
+| Críticas totales | 0 | 0. |
 
-No hay `SNYK_TOKEN` disponible localmente; los escaneos autenticados se ejecutan en Actions y no se presentan como aprobados antes de consultar sus logs. npm audit y Snyk son mediciones diferentes.
+No hay `SNYK_TOKEN` disponible localmente. Se consultaron los [logs autenticados finales de Actions](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440629711): frontend analiza 578 dependencias y conserva cinco issues/14 rutas vulnerables (exit 1); backend analiza 98 dependencias sin rutas vulnerables y pasa. La CLI oficial 1.1308.1 se descargó, pasó el checksum y la comprobación de versión antes de ambos escaneos. npm audit y Snyk son mediciones diferentes. No se atribuye ninguna reducción de vulnerabilidades Snyk a este PR; sus correcciones verificadas corresponden a la seguridad del pipeline.
 
 ## Pipeline y reproducción
 
@@ -86,8 +86,31 @@ Para escanear, instalar la versión exacta oficial de Snyk para la plataforma, v
 | `npm test --prefix backend` | Exit 0; 47/47. |
 | Binding `unrs-resolver` sin postinstall | Carga correcta en la instalación limpia. |
 | YAML y sintaxis Bash | Válidos; orden, SHAs, permisos, gate DeepSource y umbral Snyk preservados. |
-| Binario Linux y escaneos autenticados | Pendientes de Actions; no ejecutables como tales en el entorno Windows sin credenciales Snyk. |
+| Binario Linux y escaneos autenticados | Verificados en Actions, no localmente: hash/versión correctos, frontend falla por cinco altas y backend pasa. |
 
 ## Verificación remota y decisión de merge
 
-Se completará esta sección con enlaces y resultados de la ejecución del nuevo PR. La ausencia de parches compatibles no equivale a un resultado de seguridad exitoso. Si Snyk conserva las cinco altas, el PR debe permanecer abierto; tampoco procede un merge si fallan el Quality Gate, las reglas objetivo, las revisiones requeridas o cualquier comprobación obligatoria. No se eluden protecciones de rama ni se fuerza un resultado exitoso.
+El [PR #8](https://github.com/Hansolo2077/barberia-cale/pull/8) permanece **abierto, sin merge**. La revisión de implementación comprobada es `154f3a158388ca7b673568d6f7d2a95e3db3734f`; la [ejecución de PR #8](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623) terminó con fallo únicamente en el job Snyk. El commit documental posterior registra esta revisión y no se presenta como una nueva ejecución ya aprobada.
+
+| Etapa | Resultado comprobado |
+| --- | --- |
+| [Tests](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440324329) | `success`: ambas instalaciones limpias, TypeScript, ESLint y pruebas. |
+| [SonarCloud, scanner](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440424039) | `success`. |
+| [SonarCloud Code Analysis](https://github.com/Hansolo2077/barberia-cale/runs/117440608321) | **Quality Gate passed**. API: Security Rating en código nuevo A; check: 0 issues nuevos, 0 aceptados y 0 hotspots nuevos. La cobertura informada en código nuevo es 0.0%; no se presenta como cobertura global ni como prueba de la aplicación. |
+| [DeepSource](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440612541) | `success`: API confirma `SUCCESS` para el SHA completo, finalizado `2026-10-17T16:07:14.780141+00:00`. No se obtuvo conteo global de issues. |
+| [Snyk](https://github.com/Hansolo2077/barberia-cale/actions/runs/39047932623/job/117440629711) | `failure`: cinco altas frontend; backend ejecutado y aprobado. El fallo permanece visible. |
+
+La API de la rama `dev` confirmó **0 abiertos y 9 FIXED** en las tres reglas tratadas: seis `S6505`, dos `S8543` y el `S6506` identificado y corregido durante este PR. Se contrastaron las claves con la evidencia inicial; no se suprimió ni aceptó ningún hallazgo para mejorar el resultado. El Quality Gate aprobado corresponde al PR y al código nuevo, no certifica que no haya issues históricos en todo el proyecto.
+
+Evidencias versionadas:
+
+- [SonarCloud antes](evidencias_pruebas/pr8/sonar-antes.json): ocho issues originales.
+- [SonarCloud después](evidencias_pruebas/pr8/sonar-despues.json): nueve claves FIXED, cero abiertas en las reglas tratadas y condiciones reales del Quality Gate.
+- [Validación remota](evidencias_pruebas/pr8/validacion-remota.json): commit, jobs/pasos, resumen SonarCloud, cinco IDs Snyk y confirmación DeepSource.
+
+Commits de implementación:
+
+- [b4dc571](https://github.com/Hansolo2077/barberia-cale/commit/b4dc571884ef72b11f4532734f551802c5c55393): instalaciones sin lifecycle scripts, compilador local y Snyk exacto con checksum; documentación y línea base SonarCloud.
+- [154f3a1](https://github.com/Hansolo2077/barberia-cale/commit/154f3a158388ca7b673568d6f7d2a95e3db3734f): restricción HTTPS/TLS de descarga y redirecciones para `S6506`.
+
+**Decisión: no fusionar.** Persisten cinco vulnerabilidades altas sin corrección compatible acreditada en este conjunto Expo/Metro. No se cumple la condición de seguridad necesaria para el merge, aunque Tests, SonarCloud y DeepSource pasen. No se eluden protecciones de rama ni se cambia `main`; tampoco se afirma que todas las comprobaciones o toda la remediación estén completas. Cuando existan parches compatibles, deberán actualizarse los lockfiles, repetirse las pruebas y confirmar los escaneos sobre el commit exacto antes de considerar el merge.
