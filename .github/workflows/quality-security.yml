@@ -26,10 +26,10 @@ jobs:
           cache: npm
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: TypeScript validation
-        run: npx tsc --noEmit
+        run: node ./node_modules/typescript/bin/tsc --noEmit
 
       - name: ESLint validation
         run: npm run lint
@@ -38,7 +38,7 @@ jobs:
         run: npm run test:notifications
 
       - name: Install backend dependencies
-        run: npm ci --prefix backend
+        run: npm ci --prefix backend --ignore-scripts
 
       - name: Backend tests
         run: npm test --prefix backend
@@ -173,13 +173,25 @@ jobs:
           fi
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install backend dependencies
-        run: npm ci --prefix backend
+        run: npm ci --prefix backend --ignore-scripts
 
       - name: Install Snyk CLI
-        run: npm install -g snyk
+        # Official standalone release; no npm lifecycle scripts or floating dependencies.
+        # https://downloads.snyk.io/cli/v1.1308.1/release.json
+        run: |
+          mkdir -p "$RUNNER_TEMP/snyk-cli"
+          curl --fail --silent --show-error --location --retry 3 \
+            https://downloads.snyk.io/cli/v1.1308.1/snyk-linux \
+            --output "$RUNNER_TEMP/snyk-cli/snyk"
+          printf '%s  %s\n' \
+            'a8b2e420af6d8e61bf1d367c064475ccf699d767fc8763efb0072b9cac250f9a' \
+            "$RUNNER_TEMP/snyk-cli/snyk" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/snyk-cli/snyk"
+          test "$("$RUNNER_TEMP/snyk-cli/snyk" --version)" = '1.1308.1'
+          echo "$RUNNER_TEMP/snyk-cli" >> "$GITHUB_PATH"
 
       - name: Scan frontend dependencies
         id: snyk_frontend
