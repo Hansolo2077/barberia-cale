@@ -183,7 +183,8 @@ jobs:
         # https://downloads.snyk.io/cli/v1.1308.1/release.json
         run: |
           mkdir -p "$RUNNER_TEMP/snyk-cli"
-          curl --fail --silent --show-error --location --retry 3 \
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 \
+            --fail --silent --show-error --location --retry 3 \
             https://downloads.snyk.io/cli/v1.1308.1/snyk-linux \
             --output "$RUNNER_TEMP/snyk-cli/snyk"
           printf '%s  %s\n' \

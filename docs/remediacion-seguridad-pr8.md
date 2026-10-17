@@ -20,6 +20,8 @@ La [API pública de issues de la rama dev](https://sonarcloud.io/api/issues/sear
 
 SHA-256 oficial del binario Linux: `a8b2e420af6d8e61bf1d367c064475ccf699d767fc8763efb0072b9cac250f9a`, obtenido del [manifiesto versionado oficial](https://downloads.snyk.io/cli/v1.1308.1/release.json). La verificación compara con el hash literal versionado en el workflow, no con un checksum descargado dinámicamente durante la ejecución. Una descarga, hash o versión incorrectos detienen el job. Se siguió el método oficial de [instalación de binarios](https://docs.snyk.io/developer-tools/snyk-cli/install-the-snyk-cli) y [verificación de checksums](https://docs.snyk.io/developer-tools/snyk-cli/install-the-snyk-cli/verifying-cli-standalone-binaries).
 
+El primer análisis del nuevo PR identificó además `githubactions:S6506` en la descarga: permitir redirecciones sin restringir el protocolo podría degradar HTTPS. Se añadieron `--proto '=https' --proto-redir '=https' --tlsv1.2`, además del hash fijo. La descarga y cada redirección quedan restringidas a HTTPS; no se ignora la regla.
+
 ## Seguridad de los scripts de instalación
 
 Se revisó `hasInstallScript` de ambos lockfiles: solo `unrs-resolver@1.12.2` del frontend declara un script de instalación; backend no declara ninguno. Su postinstall prepara bindings de plataforma. El cargador admite los paquetes nativos opcionales bloqueados en el lockfile; no se utiliza `--omit=optional`. Después de una instalación limpia sin scripts, `require('unrs-resolver')` y ESLint funcionan en Windows. El runner Ubuntu de Actions debe confirmar el mismo resultado en Linux; el resultado remoto se registra por separado.
