@@ -1,0 +1,170 @@
+{
+  "retrievedAt": "2026-10-31T17:19:49.762Z",
+  "source": "GitHub connector; PR metadata and review submissions",
+  "pullRequests": [
+    {
+      "number": 1,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/1",
+      "title": "docs: agregar evidencias del segundo parcial y flujo colaborativo",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-03T16:09:50Z",
+      "headSha": "8b45e0a2a5c24b3006decef5bc4bac87e957eebd",
+      "mergeCommit": "be007d854bd58db4b828f762953d9cf146937954",
+      "reviews": [
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfasQA",
+          "state": "COMMENTED",
+          "body": "Revisé la organización de las capturas, sus descripciones y la relación con los requisitos funcionales. El documento identifica las pruebas realizadas y las limitaciones de la evidencia. La guía de Git explica el flujo de ramas, commits, PR y revisión, aclarando que se adoptó en esta etapa. La documentación es clara y útil para consolidar la entrega. Aprobado.",
+          "submittedAt": "2026-10-03T16:25:03Z",
+          "author": "ruddygalope95"
+        },
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfv55Q",
+          "state": "APPROVED",
+          "body": "Revisé la organización de las capturas, sus descripciones y la relación con los requisitos funcionales. El documento identifica las pruebas realizadas y las limitaciones de la evidencia. La guía de Git explica el flujo de ramas, commits, PR y revisión, aclarando que se adoptó en esta etapa. La documentación es clara y útil para consolidar la entrega. Aprobado.",
+          "submittedAt": "2026-10-03T18:05:16Z",
+          "author": "ruddygalope95"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/2",
+      "title": "fix: separar selección y cancelación del calendario de reservas",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-03T16:10:17Z",
+      "headSha": "057ffe6d7e847ea407683c4b67bdc3b7bc1057b3",
+      "mergeCommit": "28bcae967e5b10420c279dae7f0e394d4eb822e5",
+      "reviews": [
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfallQ",
+          "state": "COMMENTED",
+          "body": "La separación entre onValueChange y onDismiss permite cancelar el calendario sin modificar la fecha seleccionada ni volver a consultar disponibilidad. Al confirmar una fecha, se conserva el flujo de búsqueda y la restricción de anticipación mínima. El cambio está acotado al calendario de reservas. Aprobado.",
+          "submittedAt": "2026-10-03T16:24:28Z",
+          "author": "ruddygalope95"
+        },
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfwZuw",
+          "state": "APPROVED",
+          "body": "La separación entre onValueChange y onDismiss permite cancelar el calendario sin modificar la fecha seleccionada ni volver a consultar disponibilidad. Al confirmar una fecha, se conserva el flujo de búsqueda y la restricción de anticipación mínima. El cambio está acotado al calendario de reservas. Aprobado.",
+          "submittedAt": "2026-10-03T18:06:46Z",
+          "author": "ruddygalope95"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/3",
+      "title": "fix: separar selección y cancelación del rango de agenda",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-03T16:10:54Z",
+      "headSha": "d7c025df4f514404188b729e65ffe7ee42646928",
+      "mergeCommit": "ea50ba15f2414fbecf38c199868e47421f39181b",
+      "reviews": [
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfZ_aA",
+          "state": "COMMENTED",
+          "body": "La separación entre onValueChange y onDismiss es adecuada: confirmar una fecha ejecuta la actualización del rango y cancelar únicamente cierra el selector, conservando las fechas y los errores de validación.\n\nVerifiqué la selección de fecha inicial y final, el ajuste automático de la fecha final cuando la inicial es posterior y la cancelación de ambos calendarios. El comportamiento fue el esperado.\n\nCambio acotado a la agenda administrativa y consistente con la API actual de DateTimePicker. No encontré observaciones adicionales. Aprobado.",
+          "submittedAt": "2026-10-03T16:21:20Z",
+          "author": "ruddygalope95"
+        },
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfwM2w",
+          "state": "APPROVED",
+          "body": "La separación entre onValueChange y onDismiss es adecuada: confirmar una fecha ejecuta la actualización del rango y cancelar únicamente cierra el selector, conservando las fechas y los errores de validación.\n\nVerifiqué la selección de fecha inicial y final, el ajuste automático de la fecha final cuando la inicial es posterior y la cancelación de ambos calendarios. El comportamiento fue el esperado.\n\nCambio acotado a la agenda administrativa y consistente con la API actual de DateTimePicker. No encontré observaciones adicionales. Aprobado.",
+          "submittedAt": "2026-10-03T18:06:08Z",
+          "author": "ruddygalope95"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/4",
+      "title": "docs: agregar arquitectura actual y evidencias de Supabase",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-03T18:04:41Z",
+      "headSha": "ad017f1e767312d41b128ae367e4af534eebe631",
+      "mergeCommit": "1b72f5c036f4b08b9abfff2d88ae9305731398ab",
+      "reviews": [
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQfvoQg",
+          "state": "APPROVED",
+          "body": "Revisé la documentación de arquitectura, los diagramas y las evidencias de Supabase. Los archivos permiten consultar el diseño del sistema y complementar las pruebas de persistencia con capturas y exportaciones de datos. Las correcciones de PlantUML son coherentes con los flujos documentados. Se excluyeron los archivos con hashes de contraseñas, tokens push y datos de cuenta. El cambio está limitado a documentación y evidencias. No tengo observaciones adicionales; aprobado para integrar.",
+          "submittedAt": "2026-10-03T18:04:30Z",
+          "author": "ruddygalope95"
+        },
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQf3kYQ",
+          "state": "APPROVED",
+          "body": "Revisé la documentación de arquitectura, los diagramas y las evidencias de Supabase. La organización permite relacionar los componentes del sistema con las tablas y los flujos documentados. Las capturas y exportaciones complementan la evidencia de persistencia. No tengo observaciones adicionales sobre este cambio.\nEsta revisión se realizó después del merge y corresponde únicamente a los archivos del PR #4; no incluye la reorganización documental posterior.",
+          "submittedAt": "2026-10-03T18:32:02Z",
+          "author": "stevenros23"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/5",
+      "title": "docs: archivar versiones anteriores y sincronizar RF-01 a RF-22",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-03T18:42:59Z",
+      "headSha": "6eb2b02e78dd1fb9742154346ac4d539614b444e",
+      "mergeCommit": "e8134c99e11f02e38dd15c94bcfb71e92a70e2f2",
+      "reviews": [
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQf6yRg",
+          "state": "APPROVED",
+          "body": "Aprobado / LGTM (Looks Good To Me)\n\nExcelente trabajo en el saneamiento y reorganización de la documentación. El desglose del alcance actual y la preservación del archivo histórico aportan mucha claridad al repositorio y facilitan la trazabilidad del proyecto.\n\nResumen de Cambios y Mejoras:\nLínea Base y Requisitos (RF-01 a RF-22): Se definió el alcance actual de forma precisa, separando la documentación histórica en docs/documentacion-archivada y publicando los 22 requisitos funcionales vigentes.\n\nActualización de Arquitectura: Se actualizaron las especificaciones para incluir la disponibilidad seleccionable, gestión de citas (futuras/vencidas), aceptación de solicitudes y la confirmación de asistencia idempotente.\n\nPreservación del Histórico: Las exportaciones e índices anteriores mantienen intactos sus recursos y trazabilidad en el archivo histórico.\n\nVerificaciones Realizadas:\nIntegridad de Enlaces: 114 enlaces locales verificados sin referencias rotas.\n\nVerificación de Integritat (SHA-256): 12 archivos originales movidos verificados mediante hash.\n\nRequisitos: Cobertura completa de los 22 RFs.\n\nSeguridad y Limpieza: git diff --check validado (permitiendo formato Markdown) y archivos locales con sensibles/tokens completamente excluidos.\n\n¡Aprobado y listo para mergear!",
+          "submittedAt": "2026-10-03T18:42:41Z",
+          "author": "stevenros23"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/6",
+      "title": "chore: impedir publicación de archivo local de credenciales",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-03T18:41:10Z",
+      "headSha": "e1dde7738afaba27c3f6625a8a417eab78a78947",
+      "mergeCommit": "2bfe1fceebeb0d1a14f77607c907c70c5f53e340",
+      "reviews": [
+        {
+          "id": "PRR_kwDOT_O_OM8AAAABQf58Mw",
+          "state": "APPROVED",
+          "body": "Aprobado / LGTM (Looks Good To Me)\n\nExcelente manejo del incidente. La mitigación aplicada en este Pull Request es adecuada y los pasos de verificación confirmaron la corrección del problema.\n\nResumen de Cambios y Validaciones:\nProtección preventiva: Se añadió la regla al .gitignore para excluir el archivo de credenciales por nombre de forma global en cualquier directorio del proyecto.\n\nEstado de versionado: Se verificó que el archivo local fue eliminado y no quedó rastreado en el historial ni en las ramas de barberia-cale ni cale-project-public.\n\nPruebas realizadas:\n\ngit check-ignore: Confirma que la regla del .gitignore captura el archivo correctamente.\n\nTest-Path: Confirma la ausencia del archivo en el entorno local.\n\ngit diff --check: Libre de errores de formato o marcadores residuales.\n\nNota de seguridad: Dado que el archivo de credenciales nunca llegó a estar versionado en los commits del historial remoto, no se requirió reescritura de historial (git filter-repo / BFG). De todas formas, si las credenciales llegaron a estar expuestas localmente en algún servicio o entorno compartido, recomiendo rotar/regenerar dichas llaves por protocolo estándar.\n\n¡Listo para fusionar!",
+          "submittedAt": "2026-10-03T18:40:52Z",
+          "author": "stevenros23"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/7",
+      "title": "Análisis de calidad y seguridad - Barbería Cale",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-17T15:43:53Z",
+      "headSha": "5b68e6bf4f069c502ede408ab0a744727863a6a1",
+      "mergeCommit": "c83933eb130d4ec7e6f40e4e90df46d1b900ede4",
+      "reviews": []
+    },
+    {
+      "number": 8,
+      "url": "https://github.com/Hansolo2077/barberia-cale/pull/8",
+      "title": "Refuerzo de seguridad: SonarCloud, Snyk y documentación CI/CD",
+      "state": "closed",
+      "merged": true,
+      "mergedAt": "2026-10-17T16:14:59Z",
+      "headSha": "a8aa5b8b4f051f06a4f7114ff535514b7638ae28",
+      "mergeCommit": "ab73b3a18839f08825bc441f024e426455b41d4e",
+      "reviews": []
+    }
+  ]
+}

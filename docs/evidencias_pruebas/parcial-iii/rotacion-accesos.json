@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-31T17:15:07.800Z",
+  "source": "Anexo A del PDF del II Parcial",
+  "accounts": [
+    {
+      "role": "ADMIN",
+      "rotatedThisRun": true,
+      "oldHashRejected": true,
+      "newHashVerified": true,
+      "httpOld": 401,
+      "httpNew": 200,
+      "status": "PASS"
+    },
+    {
+      "role": "CLIENT",
+      "rotatedThisRun": true,
+      "oldHashRejected": true,
+      "newHashVerified": true,
+      "httpOld": 401,
+      "httpNew": 200,
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "Cambiar contrasenas no revoca JWT emitidos anteriormente. No se publican claves ni datos personales en este registro."
+  ],
+  "finishedAt": "2026-10-31T17:15:36.243Z"
+}

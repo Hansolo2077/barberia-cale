@@ -1,0 +1,67 @@
+{
+  "reviewedAt": "2026-10-31T18:24:28.050Z",
+  "evidenceType": "Capturas aportadas por el estudiante e inspeccionadas visualmente",
+  "studentStatement": {
+    "deliveryOrigin": "AUTOMATIC",
+    "statement": "Llegó automáticamente",
+    "date": "2026-10-31"
+  },
+  "sourceCommit": "No identificado en las imágenes",
+  "observedDate": "La bandeja Android muestra Sat, Oct 31; la cita muestra domingo 1 de noviembre a las 13:00.",
+  "cases": [
+    {
+      "id": "NF-01",
+      "requirements": [
+        "RF-19"
+      ],
+      "source": "proyecto/entregas/Others/Notificaciones/notificaciones.jpg",
+      "sha256": "785f6cef48f9263e1bcbcb768209965d7ab352841d7543b0f1a22741b0edc273",
+      "bytes": 47110,
+      "observation": "Notificación de Barbería Cale visible en la bandeja Android; solicita confirmar una cita para el domingo 1 de noviembre a las 13:00.",
+      "result": "Recepción visible comprobada; origen automático informado expresamente por el estudiante.",
+      "status": "VISUALLY_CONFIRMED"
+    },
+    {
+      "id": "NF-02",
+      "requirements": [
+        "RF-20"
+      ],
+      "source": "proyecto/entregas/Others/Notificaciones/antes de confirmar.jpg",
+      "sha256": "e09612da67f4f7bd940f2b018899ece77fa6eb18d3cfaac4c49e49e4c49ece50",
+      "bytes": 62818,
+      "observation": "Cita aceptada; la interfaz del cliente muestra Confirmar asistencia.",
+      "result": "Estado anterior a la confirmación documentado.",
+      "status": "VISUALLY_CONFIRMED"
+    },
+    {
+      "id": "NF-03",
+      "requirements": [
+        "RF-20"
+      ],
+      "source": "proyecto/entregas/Others/Notificaciones/asistencia confirmada.jpg",
+      "sha256": "7e82bb7124b71017e1abbc956c85c33cdc80d0c6672b1a48cd81a2ba1ab98ff3",
+      "bytes": 65855,
+      "observation": "Aviso Asistencia confirmada y estado de asistencia actualizado para la misma fecha y hora visibles.",
+      "result": "Confirmación visible del cliente documentada.",
+      "status": "VISUALLY_CONFIRMED"
+    },
+    {
+      "id": "NF-04",
+      "requirements": [
+        "RF-21"
+      ],
+      "source": "proyecto/entregas/Others/Notificaciones/confirmacion desde cuenta admin.png",
+      "sha256": "e2168ec92922567b1c25888ab93149de2d75d6e08ae1c8d833de75e2faade876",
+      "bytes": 104155,
+      "observation": "ADMIN muestra la cita #55 con Confirmó asistencia, domingo 1 de noviembre a las 13:00.",
+      "result": "Resultado visible del lado administrativo documentado.",
+      "status": "VISUALLY_CONFIRMED"
+    }
+  ],
+  "limitations": [
+    "Las imágenes no muestran SHA/build, ID del job, ticket o receipt del proveedor.",
+    "El origen automático se atribuye al testimonio del estudiante; no se deduce solamente de la imagen.",
+    "La bandeja indica 31 de octubre y la cita 1 de noviembre. Sin correlación de reloj/ambiente/job no se usa esta secuencia para demostrar la ventana automática de una hora.",
+    "La secuencia documenta confirmación en Mis citas; no acredita por sí sola una acción de confirmación ejecutada desde la propia notificación."
+  ]
+}

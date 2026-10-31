@@ -1,0 +1,15 @@
+Extracto de finalización observado en la consola local el 31/10/2026.
+No es el log íntegro de la compilación.
+
+Directorio: android
+Comando: .\gradlew.bat :app:assembleRelease --console=plain
+Código de salida: 0
+
+> Task :app:packageRelease
+> Task :app:assembleRelease
+BUILD SUCCESSFUL in 24m 58s
+607 actionable tasks: 604 executed, 3 up-to-date
+
+APK: android/app/build/outputs/apk/release/app-release.apk
+Firma: debug del proyecto; artefacto de verificación, no distribución de producción.
+La compilación emitió avisos de APIs/Gradle deprecados; no se interpretan como pruebas UI.

@@ -8,5 +8,6 @@ La especificación vigente está en [proyecto/docs](../proyecto/docs/README.md).
 | [Capturas de Supabase](capturas%20de%20Supabase%20Schema/) | Evidencia de tablas, funciones, triggers, esquema y Edge Function. Es una fotografía del momento de captura. |
 | [Exportaciones de Supabase](Supabase%20Outputs/) | CSV publicados de citas y trabajos de notificación; no constituyen un respaldo completo ni una consulta en tiempo real. |
 | [Documentación archivada](documentacion-archivada/README.md) | Versiones anteriores que no representan el estado actual completo. |
+| [Evidencia del cierre del Parcial III](evidencias_pruebas/parcial-iii/README.md) | Campaña HTTP/PostgreSQL, regresión, controles, p95, rotación sin secretos y revisiones GitHub del corte del 31/10/2026. |
 
 Los archivos locales de cuentas, hashes de contraseñas y tokens push están excluidos de la publicación. Su presencia local no los convierte en documentación vigente ni en evidencia apta para el repositorio público.

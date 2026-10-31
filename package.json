@@ -46,7 +46,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test:notifications": "node --test tests/notification-registration.test.js"
+    "test:notifications": "node --test tests/notification-registration.test.js",
+    "quality:checks": "node scripts/quality-checks.cjs",
+    "quality:integration": "node scripts/quality-integration.cjs",
+    "quality:package": "node scripts/quality-package.cjs"
   },
   "private": true
 }

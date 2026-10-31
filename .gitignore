@@ -38,6 +38,7 @@ Thumbs.db
 .env
 .env.*
 backend/.env
+.quality-private/
 
 # Accidental local credential note (must never be committed)
 Ruddy cuenta dummy.txt
@@ -59,3 +60,17 @@ Ruddy cuenta dummy.txt
 .claude/
 CLAUDE.md
 AGENTS.md
+
+# Local build and document authoring intermediates
+/tmp/
+/output/
+
+# Defense materials are kept outside the repository
+**/[Dd]efensa/
+**/[Dd]efesa/
+**/*_Defensa_*.pptx
+**/*_Defensa_*.pdf
+
+# Raw database screenshots contain account hashes and device tokens
+docs/capturas de Supabase Schema/Tabla Usuarios.png
+docs/capturas de Supabase Schema/Tabla push_device_tokens.png

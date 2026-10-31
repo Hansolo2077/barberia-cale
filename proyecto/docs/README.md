@@ -10,6 +10,7 @@ Revisión documental: 3 de octubre de 2026, sobre el código de la revisión `ad
 | [Evidencias de ejecución](../../docs/README.md) | Capturas Android y evidencias de Supabase, con sus límites. |
 | [Instalación y ejecución](../../README.md) | Comandos y configuración básica. |
 | [Flujo de Git](../../how-to-git.md) | Ramas, commits, PR y revisión. |
+| [Preparación técnica del Parcial III](calidad-final/README.md) | Corte del 31/10/2026: Plan de Calidad, correcciones, DoD, KPI, pruebas, hallazgos y trazabilidad; distingue pendientes y resultados medidos. |
 
 Las versiones v1, la matriz Excel anterior y las exportaciones antiguas de arquitectura están en [documentación archivada](../../docs/documentacion-archivada/README.md). El Markdown de arquitectura es la referencia vigente; los PDF y HTML archivados no contienen esta revisión. No se presenta una exportación antigua como si estuviera sincronizada.
 

@@ -1,0 +1,24 @@
+{
+  "startedAt": "2026-10-31T18:15:48.269Z",
+  "reason": "User-requested change for both evaluation accounts exposed in the historical PDF",
+  "accounts": [
+    {
+      "role": "ADMIN",
+      "newHashVerified": true,
+      "oldHashRejected": true,
+      "httpNew": 200,
+      "status": "PASS"
+    },
+    {
+      "role": "CLIENT",
+      "newHashVerified": true,
+      "oldHashRejected": true,
+      "httpNew": 200,
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "Password changes do not revoke previously issued JWT sessions."
+  ],
+  "finishedAt": "2026-10-31T18:15:52.034Z"
+}

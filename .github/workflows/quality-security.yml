@@ -14,6 +14,20 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_DB: qa_iii
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_iii"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout repository
@@ -42,6 +56,16 @@ jobs:
 
       - name: Backend tests
         run: npm test --prefix backend
+
+      - name: Prepare disposable integration database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/qa_iii?sslmode=disable
+        run: node scripts/quality-ci-db.cjs
+
+      - name: HTTP and PostgreSQL regression campaign
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/qa_iii?sslmode=disable
+        run: node scripts/quality-integration.cjs docs/evidencias_pruebas/parcial-iii/ci-integracion.json
 
   sonarcloud:
     name: SonarCloud
@@ -73,6 +97,7 @@ jobs:
             -Dsonar.organization=hansolo2077
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
+            -Dsonar.qualitygate.wait=true
 
   deepsource:
     name: DeepSource

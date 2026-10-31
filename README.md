@@ -55,3 +55,5 @@ npm test
 ```
 
 La [documentación vigente](proyecto/docs/README.md) reúne alcance, requisitos RF-01 a RF-22, arquitectura y trazabilidad. Las [versiones archivadas](docs/documentacion-archivada/README.md) se conservan como antecedentes y no describen el estado actual completo. Las [evidencias de ejecución](docs/README.md) conservan la fecha y los límites de cada prueba. Los comandos habituales de Git y EAS están guardados en `how-to-git.md` y `how-to-eas.md`.
+
+El [paquete de preparación del Parcial III](proyecto/docs/calidad-final/README.md) centraliza los registros finales de calidad. `npm run quality:checks` guarda los controles y devuelve un fallo si alguna comprobación o auditoría no cumple. `npm run quality:integration` ejecuta la campaña HTTP/PostgreSQL en esquemas temporales, usando una conexión configurada fuera de Git. Los resultados locales no certifican el despliegue ni sustituyen las pruebas de interfaz.

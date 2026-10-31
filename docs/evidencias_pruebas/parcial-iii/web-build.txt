@@ -1,0 +1,12 @@
+Extracto de finalización observado en la consola local el 31/10/2026.
+No es el log íntegro de la compilación.
+
+Comando: npx expo export --platform web --output-dir .quality-private/web-export
+Código de salida: 0
+
+Web Bundled 67847ms node_modules\expo-router\entry.js (922 modules)
+Static routes: 12
+Exported: .quality-private/web-export
+
+La compilación no equivale a una campaña de interacción visual.
+Los hashes de archivos exportados están en compilaciones.json.

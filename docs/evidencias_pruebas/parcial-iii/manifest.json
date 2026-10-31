@@ -1,0 +1,877 @@
+{
+  "generatedAt": "2026-10-31T18:24:59.768Z",
+  "baseCommit": "ab73b3a18839f08825bc441f024e426455b41d4e",
+  "branch": "chore/cierre-calidad-parcial-iii",
+  "workingTreeChanges": true,
+  "description": "Las huellas identifican el contenido probado; el commit base no incluye cambios locales. No incluye .env ni accesos privados.",
+  "files": [
+    {
+      "path": ".github/workflows/quality-security.yml",
+      "sha256": "c42b7365661b12539ba674299b9b91b66d564d279fb6596733f7a977af449f7d"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "d711f994a1f954c6abecadde9d922d780070e615a93e29660c5a7e1c10068724"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f1db83459ca25baa5d0b8e3d2911c2c3f5877bbcf045dc4a55c54b8766d767d4"
+    },
+    {
+      "path": "app.json",
+      "sha256": "6ca3c373bee470ccd044ae0332e209360cf5a493a9f88d73ce21d3bcf7ed65d4"
+    },
+    {
+      "path": "assets/expo.icon/Assets/expo-symbol 2.svg",
+      "sha256": "ad117d20fd819f4ec71876ce09c0e8b9275b1f20c5ec3c9d7d1914977ceffec6"
+    },
+    {
+      "path": "assets/expo.icon/Assets/grid.png",
+      "sha256": "8247d79a2b31328fe4e330a973e6fae16924ed9aebd72c64d464d6856ab18c72"
+    },
+    {
+      "path": "assets/expo.icon/icon.json",
+      "sha256": "747c56e178222a6255c6dd61c5de011b286cdc935febe89f04d1b191c3d076fe"
+    },
+    {
+      "path": "assets/images/android-icon-background.png",
+      "sha256": "fb139c2dee362ebf2070e23b96da6fc0d43f8492de38b8af1fd7223e19b5861d"
+    },
+    {
+      "path": "assets/images/android-icon-foreground.png",
+      "sha256": "9e3d0315a33c6799de601dd34cd8bf8cc3a8d16f3bf75592baec2ceb7240b391"
+    },
+    {
+      "path": "assets/images/android-icon-monochrome.png",
+      "sha256": "6371fc2c12e33ad2215a86c281db3d682a81bebe7c957a842c13b8bf00cceb83"
+    },
+    {
+      "path": "assets/images/expo-badge-white.png",
+      "sha256": "d9ba28c5e93aea3c2dabd901ee96fea3bb296ad8e648f6f64706dae11a1a62bd"
+    },
+    {
+      "path": "assets/images/expo-badge.png",
+      "sha256": "ff353c7efadbd379903923cb604fca11c908cba0d4658cc2bd1f147d98317249"
+    },
+    {
+      "path": "assets/images/expo-logo.png",
+      "sha256": "27b060a757a29038c9618586baa0ba3894dbe60d084c6059df497ff429c2d92f"
+    },
+    {
+      "path": "assets/images/favicon.png",
+      "sha256": "a4e030697a7571b3e95d31860e4da55d2f98e5e861e2b55e414f45a8556828ba"
+    },
+    {
+      "path": "assets/images/icon.png",
+      "sha256": "7a667804bb80a6a424a5daf18a2599c4f32237cf06fe78fc0de45dbb09e0eccf"
+    },
+    {
+      "path": "assets/images/logo-cale.png",
+      "sha256": "1c6730c2cf5279a96fadee087deff89d7ae5b2930d311ea31f8445b2aefeefe5"
+    },
+    {
+      "path": "assets/images/logo-glow.png",
+      "sha256": "bbd98a3f3c12d090f4df6065b7462fcdf6bc266209d002b4ef5fe554c245f66c"
+    },
+    {
+      "path": "assets/images/react-logo.png",
+      "sha256": "224b7636b15e672801579b5b418077cbc2ca42f0146389062364356b0ecb5c5c"
+    },
+    {
+      "path": "assets/images/react-logo@2x.png",
+      "sha256": "fa600be9ad2f869c7a8dbaffc78bb15af741123e1319c948f0be51753a153cde"
+    },
+    {
+      "path": "assets/images/react-logo@3x.png",
+      "sha256": "cd84e02a5d542a3e71b7fa10a685c1b9fb51db4aff92aca6c0da6461ce17be16"
+    },
+    {
+      "path": "assets/images/splash-icon.png",
+      "sha256": "27b060a757a29038c9618586baa0ba3894dbe60d084c6059df497ff429c2d92f"
+    },
+    {
+      "path": "assets/images/tabIcons/explore.png",
+      "sha256": "e2dea1c2d20929d83e8eebd74818e808b1b72e376d3a1f3a03679fff0255d073"
+    },
+    {
+      "path": "assets/images/tabIcons/explore@2x.png",
+      "sha256": "1b54913b3a0acc3e1fb72d3b9b79ad04814304b35bbb9d03a533e6130ad6c26a"
+    },
+    {
+      "path": "assets/images/tabIcons/explore@3x.png",
+      "sha256": "2f3e43801df70ebe83273b90a7d170bacf5ca74a8a8dc5c154a020c2c8b06609"
+    },
+    {
+      "path": "assets/images/tabIcons/home.png",
+      "sha256": "3829632ec7d495225395f5da3d0942935d7d055979b174613d1ade82fe420e76"
+    },
+    {
+      "path": "assets/images/tabIcons/home@2x.png",
+      "sha256": "21c5a07df9017d97464a0a8256e265288f2fca0741ca651de05e12b32f32f5ab"
+    },
+    {
+      "path": "assets/images/tabIcons/home@3x.png",
+      "sha256": "fe5b397975e7cb70ae7a122472d174ed12ec2ae106f7b49c968225ad37f8b3b8"
+    },
+    {
+      "path": "assets/images/tutorial-web.png",
+      "sha256": "e372ec23ad6262e2e0dc2799ce416b495a631a565bcd24f0615d4afc04dac3bd"
+    },
+    {
+      "path": "backend/package-lock.json",
+      "sha256": "ba0517aeda134ed17f58cc690f3022bd8291c70ab548e76e056e98566544a20c"
+    },
+    {
+      "path": "backend/package.json",
+      "sha256": "60a010dbfea89686db24657da78443b09ac6665ae88ec3c166887ab76f26f173"
+    },
+    {
+      "path": "backend/src/controllers/admin-reminder.controller.js",
+      "sha256": "14ff2dc68437ad2f5a8f5db85f90ee38541a1d42476fe876debda94742f0823b"
+    },
+    {
+      "path": "backend/src/controllers/admin-reminder.controller.test.js",
+      "sha256": "06dfe2525640f1bf7319fffb3c6228a42f7b53cb5d897f7b1f49df0a29add376"
+    },
+    {
+      "path": "backend/src/controllers/admin.controller.js",
+      "sha256": "e4ca1a9528b5b70777c1b7504601e3476d4e1a0421266748ca2f65643610e209"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "sha256": "4b333af1b4b39cf14ac5ebba3846b13f597c638cdb58bd5d8454d60255fbf14a"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.test.js",
+      "sha256": "b46654e1d504524aada31e225fb8af26a45b4bce06c8af4289b5c1a395c87968"
+    },
+    {
+      "path": "backend/src/controllers/auth.controller.js",
+      "sha256": "f42015dcca47c8b4b918378618a9ecb1c04aca47d22b6c08b54330fda4610531"
+    },
+    {
+      "path": "backend/src/controllers/auth.controller.test.js",
+      "sha256": "83d6b350afdc7a96804c242f5d6538dd5467224ced9a3a3cf34ba3eba34c0134"
+    },
+    {
+      "path": "backend/src/controllers/notification.controller.js",
+      "sha256": "0da4dba45c735a31fb637c22910999e39f497a0ff62e85c533714baaf21ace3e"
+    },
+    {
+      "path": "backend/src/controllers/notification.controller.test.js",
+      "sha256": "815b1c594fb1f530d669fde9f6543292aea51bb71471888f6801bb2c73fc90df"
+    },
+    {
+      "path": "backend/src/database/db.js",
+      "sha256": "a1a25d52a1333bc27e28ab089cd0a8f159de7bdc9c97ee103e4cbc2f4bff8769"
+    },
+    {
+      "path": "backend/src/database/init.js",
+      "sha256": "0530cb8f82bd694748bc6c7ceb90a90902307fc279b7586085b6841eda6779d8"
+    },
+    {
+      "path": "backend/src/database/make-admin.js",
+      "sha256": "6508fda1b6392a27161b92865ba5e10e6c30eb9eb0e2c9b76f72dd81613621bc"
+    },
+    {
+      "path": "backend/src/database/migrations/20260823_attendance_reminders.sql",
+      "sha256": "349abf633247e014c1d78cc15ca04691b27fa7a4c816387ee31befd9af3de368"
+    },
+    {
+      "path": "backend/src/database/migrations/20260823_reminder_api_boundary.sql",
+      "sha256": "876bd923182baddbaafdcc0bb97797f568f91ab8fe94352fee5d88cb89ded2f4"
+    },
+    {
+      "path": "backend/src/database/migrations/20260824_reminder_reliability.sql",
+      "sha256": "29a52fe08856a83025f8fa74e85f9f4166552748fc88e64adebafa8a62d0d0c6"
+    },
+    {
+      "path": "backend/src/database/migrations/20260825_manual_attendance_reminders.sql",
+      "sha256": "a09225ccbc155d30b420752d612457022506817fac7820d8097aeb9524431f54"
+    },
+    {
+      "path": "backend/src/database/schema.sql",
+      "sha256": "9618efa45ef4f591fdc09151c6b065cc74874f85a7ddff15a5848c911737094a"
+    },
+    {
+      "path": "backend/src/database/test-db.js",
+      "sha256": "23e108f79233490795151ed1411171d9ef3ca57a0d1bdf0670e7f3306047e230"
+    },
+    {
+      "path": "backend/src/middleware/admin.middleware.js",
+      "sha256": "ee9e5d502572c11d887ac8475427c45f4121527d51f753486c464e0acbf9f6f8"
+    },
+    {
+      "path": "backend/src/middleware/auth.middleware.js",
+      "sha256": "28de01a53b5995ef2d161ee5b2c480a36fa50ae48cfb9a290166804ba2679681"
+    },
+    {
+      "path": "backend/src/middleware/auth.middleware.test.js",
+      "sha256": "846d2e49d687930259069bb7afc3971772318810485f5c897519eee2d98e5363"
+    },
+    {
+      "path": "backend/src/middleware/client.middleware.js",
+      "sha256": "2406e4e06ceab303b8e13259d2cb6605054269b50be0723daeb8231c3762b342"
+    },
+    {
+      "path": "backend/src/middleware/client.middleware.test.js",
+      "sha256": "d82bad43ef88e4b6d39260869402d6e181ea191bc45ccffcf2415253f5aaebdd"
+    },
+    {
+      "path": "backend/src/middleware/json-parser.integration.test.js",
+      "sha256": "72c330fe594af09e7dafbae208d3c2dbd4ea4322f735be43bc515607eca4ecc4"
+    },
+    {
+      "path": "backend/src/middleware/rate-limit.middleware.js",
+      "sha256": "299d19c5a9c0ecf24f293570a1c98feaebc470971d317cb6d3486eef6f986565"
+    },
+    {
+      "path": "backend/src/middleware/rate-limit.middleware.test.js",
+      "sha256": "1100fb5e02e83d7ac5c7e76edb13d0a0952fd63472795167aa846fa218441afb"
+    },
+    {
+      "path": "backend/src/routes/admin.routes.js",
+      "sha256": "aae568dcbe4bdc00f4cf15a6ed429d4942987ab76780fb620279ed64f91d658d"
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "sha256": "faace8807553ac15d38e3bcebe1f72c5111f080370bb2e1c842f8178e0e6c392"
+    },
+    {
+      "path": "backend/src/routes/auth.routes.js",
+      "sha256": "f52339dade40eb795f8af9557f2068174e6c14c54eecb9aeb58e22af0418fe58"
+    },
+    {
+      "path": "backend/src/routes/health.routes.js",
+      "sha256": "fee9ae903b928a9402092052dad9885775c89b14f1cdd931eece4b904e7a70b5"
+    },
+    {
+      "path": "backend/src/routes/notification.routes.js",
+      "sha256": "00ced57987a3919bf2a3e5a8407183fc940076b958a6e10d960b6a3d095fba59"
+    },
+    {
+      "path": "backend/src/server.js",
+      "sha256": "87df70ad98eea46919a055fc3ee9028dba4db5536b6c6dfd423b601f7719cb5f"
+    },
+    {
+      "path": "backend/src/services/admin-reminder.service.js",
+      "sha256": "fead93a1347f88733c3b5b546ab65d0b4483cb10e5eebad9c10b3937617b1adb"
+    },
+    {
+      "path": "backend/src/services/admin-reminder.service.test.js",
+      "sha256": "2e6e257618d07bf791a82cb748315de70c8d11b7ac2462244f1b5818b323d414"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "sha256": "65d3a892c24f11667e48c0d69081035b1debd198f53b9c450215a2bc7d958b59"
+    },
+    {
+      "path": "backend/src/services/appointment.service.test.js",
+      "sha256": "702604e382e9ac72a9dcd5f47cc2c007c064c110fcaba06d5a4faf56aaf078d0"
+    },
+    {
+      "path": "backend/src/services/auth.service.js",
+      "sha256": "2e8232920b07f39ed2bd9dab8fbf33705de6d5b17c5293d3e4b778d5c85b82f7"
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "sha256": "c88c902bb140e12639c7a775ebdb233c84341e2c9f636df6c884cf791506e243"
+    },
+    {
+      "path": "backend/src/services/notification.service.test.js",
+      "sha256": "2fdea26a55ff4bc534b1de67214b75b3940b2a22cd381fcc70fee309350a1b22"
+    },
+    {
+      "path": "backend/src/utils/date.js",
+      "sha256": "df099ebdac12c536f9b6ddf1417c6b3dca480392e9b95aca2d46128c11faea03"
+    },
+    {
+      "path": "backend/src/utils/date.test.js",
+      "sha256": "668383af095ec5b3fd980da0ec46a86c35c7865e7e599aaa31fb63969075175e"
+    },
+    {
+      "path": "backend/src/utils/expo-push-token.js",
+      "sha256": "5dfcfaee0ded09ccd3b410286a076b30c7f20a34e43b0e17c536a3664be100b3"
+    },
+    {
+      "path": "backend/src/utils/expo-push-token.test.js",
+      "sha256": "d3707a7ff71bc68e5ecc3e6d90110dfdb4da79920f7b80c5c1bcf5b0e26d7323"
+    },
+    {
+      "path": "backend/src/utils/http-error.js",
+      "sha256": "2ad279e34422eee6c69b5d4d13260d5c7c0cdcc049469a34582ffee5bd82dd7e"
+    },
+    {
+      "path": "backend/src/utils/http-error.test.js",
+      "sha256": "feff36182f9c7f71fbc7f559c44cd4b3e06198390aff1efbf612612f86de2401"
+    },
+    {
+      "path": "backend/src/utils/pagination.js",
+      "sha256": "68c4b7b49e1fd01094a76fdcf083aa603813c772374258ca745795eaabe1dc93"
+    },
+    {
+      "path": "backend/src/utils/pagination.test.js",
+      "sha256": "02702b33c4d36095edabb75109afff0943c9f122088b9806fe92b66bc994e7fa"
+    },
+    {
+      "path": "backend/src/utils/phone.js",
+      "sha256": "6608c99fe0d1f896c40e0521d2d243d42a503ecb71f7182496e6884e5e523177"
+    },
+    {
+      "path": "backend/src/utils/phone.test.js",
+      "sha256": "ccbba1f8ea865e854ac7ac508eabf11511ec79a6c8e65ffda122b974630893c1"
+    },
+    {
+      "path": "docs/README.md",
+      "sha256": "65ae2974e673f72d952e55ac788ac88243197d4fd4103309fd746809c43025a8"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/README.md",
+      "sha256": "2a4372a2c12b4b8ec47814346ac7732026e7486c5f4ac02f504cf804791c5611"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/android-build.txt",
+      "sha256": "d39d42a5b2a9c6c9877a41d866cdbfe0aa7ea5a3ad0d5187df78122eaaa20182"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/audit-backend-antes.json",
+      "sha256": "e44a6484a2d9ab3314967db300b6326c3b9cbc7a6c32a1216a473e0d6b8b3165"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/audit-backend.json",
+      "sha256": "2b508fb09213c2239cc7aed174a94eac8ca8d5c06add09f7e06c71666ac122a5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/audit-frontend-antes.json",
+      "sha256": "a1ebc0b7b3028b1e1621b55afc9baaa85009dd00332af41f1a5db67c30f6b4c3"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/audit-frontend.json",
+      "sha256": "bfcb2f1d3e2e257b3a7b17840e1019c234700b755e53e0c308fc33efb7056afd"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/backend-tests.txt",
+      "sha256": "705e78f1723aff210085ae8c50d8acfc91df6cb1d2fc5f975c4297ab67c794ba"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/cambio-accesos-evaluacion.json",
+      "sha256": "3ff7b42ffa05d7d74ae3ae89a6c8caec23169cf0fc5b68e0426f915a4d4738a4"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/compilaciones.json",
+      "sha256": "32232426b265031f602eebeac190f38c9dd234dd4aa2ccaa1acfa1fe20ccc1fb"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/controles.json",
+      "sha256": "7147e0c87a2648181d03e625e23cd3e77459ab0394d8cf1910df968b44b1aaf3"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/despliegue.json",
+      "sha256": "60295e20f198fd49538c83142d8a72383bbf3b6fa5d1d12fcb636624aa565e0f"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/eslint.txt",
+      "sha256": "44aeb02c810b0f9b3e09ebdd8b51e69e2e431e7a959f003757e793e4e2d6810b"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/expo-compatibility-stderr.txt",
+      "sha256": "f2d17169a800bfdad8c7ae393f4b23c99895a74a14ed27a39425d98b13432faa"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/expo-compatibility.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/frontend-tests.txt",
+      "sha256": "b457935e269afbace42c460cdd7f537adece07b6b546281ada4f6efb78826088"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/integracion-regresion.json",
+      "sha256": "f4e6df460e227aa9c95c44501de59ebbb2970056fe0b851c8e1154ba4ec919bd"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/integracion.json",
+      "sha256": "e37025955e0dc5a4b07d3093c16f69202415d4d29a31870d342f1b59b63b6ad4"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/notificaciones-visuales.json",
+      "sha256": "6fa769fe874aed452b931ba39c22548ce0bb87cccb0d450c8635450ac3ba8bf6"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/revisiones-github.json",
+      "sha256": "a8a81249a003492d4ed798a4c00b054f441f0b0a0bb4f7219eb3f7666e39f4af"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/rotacion-accesos.json",
+      "sha256": "3bb95eaaf740fc71035e9d0b49cfa8b2a9c1f6bd5a4f84aa85a218471b08a124"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/typescript.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/parcial-iii/web-build.txt",
+      "sha256": "b216cd059f4dc762858879927d630a639d570c4348e29a41846c2a2ce6a1faac"
+    },
+    {
+      "path": "docs/remediacion-seguridad-pr8.md",
+      "sha256": "9df022bcab3dcf701e468e0c653dc345076e068a1693f5cf40e5f070b5b0be7e"
+    },
+    {
+      "path": "eas.json",
+      "sha256": "345435254951eec345a27acaaee05b4d315631da9168b5decabe65aa137d1637"
+    },
+    {
+      "path": "eslint.config.js",
+      "sha256": "6ea734f0e3f5b7c3c5720b3c467695516b14935724a78386b8534abc2959da12"
+    },
+    {
+      "path": "google-services.json",
+      "sha256": "07d4be00190e62c8719a3d5cd721d2f7358bc37d8b7dadebee6f93eaeaef5c00"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "3addab58968b354a381009bdc0814baa13b02cf869ed78a91b744160d1998cd1"
+    },
+    {
+      "path": "package.json",
+      "sha256": "060cc99ef784aff9c8d76c4d045a128917342c4ac50bbf293f95fbaf7a33a553"
+    },
+    {
+      "path": "proyecto/docs/README.md",
+      "sha256": "62f4b9500417d013c12b0943ab07bfe3607802066e4bab09bbf45e88172e333b"
+    },
+    {
+      "path": "proyecto/docs/alcance-actual.md",
+      "sha256": "8cf19ba031183a06b391fd7c5474aea08ee43ddb69f699311719c4990fef1c77"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/Arquitectura_y_Diseno_Actual_Barberia_Cale.md",
+      "sha256": "fc16138ef87a083531bb1a6ee392719b6c93dbdc052a106ded36ecc65b6d6fff"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/01-contexto.svg",
+      "sha256": "39086f62b10971201ce66ca8885362d365b0746b768b6e7aa4968de8003078b4"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/02-contenedores-despliegue.svg",
+      "sha256": "a99cce04a82b042c2c27c9506f1d99ccf48b9ad84dc17aa1bc2ff091ce7415ac"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/03-componentes-capasy-modulos.svg",
+      "sha256": "e295e84b212e9a16f131812f42252c7907b2ed5bd10502be6d9635b1044aa3fe"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/04-frontend-expo.svg",
+      "sha256": "472ca15b7e9357322425e1f9201f0b23f84f3987766c82a95751124fef58fc36"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/05-backend-api.svg",
+      "sha256": "7b56ff22db9c3c5dc9713b5e52bc7255c302bad74dba4dfd4f7f75bc6adaa4e4"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/06-secuencia-reserva.svg",
+      "sha256": "57bba7c31a01f1202588b28f25d6ed5de74a7f4ee65f46ea0612e6e63373ef6c"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/07-secuencia-recordatorios.svg",
+      "sha256": "c3d77305f8e12c03228681ab75f077ca8c79d5f8bbdaa2f4ca674b265738f451"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/08-modelo-datos.svg",
+      "sha256": "9ed240528b95641e1f96d697e440f7685591b328108f75a1c65f14abadc1c599"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/09-estados-cita.svg",
+      "sha256": "a52111a6f225b674e6b19bdde6a77e69a43d95c0e5c110cc139577c9ad6e5c2a"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/10-secuencia-autenticacion.svg",
+      "sha256": "eb2a05f834e6f495da2b2331ed188e6b4c580f43892aecb7eae02040355e8c88"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/11-secuencia-confirmacion-push.svg",
+      "sha256": "bf2d8acbb741bdcc4f6506a86c83df11b3348d3963d4d1d419debfa23b2c7641"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/12-fronteras-seguridad.svg",
+      "sha256": "f431b0d5440e32d51fef57fac0f2b6b168e7161b37f2bed054784955853b0e5f"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/01-contexto.png",
+      "sha256": "cfefa648d3d5c7c87f8f81483d799bf0c1f5fde515d0369f3383d1bc1b1740b9"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/02-contenedores-despliegue.png",
+      "sha256": "c4e3a6e3c831981dac0922d634fd053094780c1cd6f819369f74c14a96461c1b"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/03-componentes-capasy-modulos.png",
+      "sha256": "a2c0e7a3e54e1e8c908c0fbbcd5d97fd84c12f99f2d2d0e2b20c07b8ef7f29e7"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/04-frontend-expo.png",
+      "sha256": "a94d0439b507689be6eba3b5d260c7fed5c05096c4f7f784e1169f49fc44fc05"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/05-backend-api.png",
+      "sha256": "fe4fd22d9e476d518db99efe32bfff601611820dc4b347355b26f7bef6d665b5"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/06-secuencia-reserva.png",
+      "sha256": "0e71587b882081ff6cd467c6152f088ca8b958c3652ea873644eeeee69021bf5"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/07-secuencia-recordatorios.png",
+      "sha256": "4807b2732aa27dc9b123d0bea9347b54cc74ecf3379afcfb5c4861c9fea781e3"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/08-modelo-datos.png",
+      "sha256": "9b3c580acf225a769f4f0527c3d8661c6984b2f6b7c161596edea3d3b4922393"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/09-estados-cita.png",
+      "sha256": "cdb1a5d6da212b5433f480a241b3e1869c38657108633fa39f391914077cf41e"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/10-secuencia-autenticacion.png",
+      "sha256": "1dcbfce08a8906ba38b89a5101cfa0c513a440ad91bbdace196ded154c786f71"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/11-secuencia-confirmacion-push.png",
+      "sha256": "80f7182fcdd9a8654972960a2e4a1944c197f9365ea60c044756f72bd4092988"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/12-fronteras-seguridad.png",
+      "sha256": "0bc2b87af94defb9f19eeb95567ffc1a3fcc1116617154937ebddbf89453c86e"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/01-contexto.puml",
+      "sha256": "adf964b2861d93bc45dc5bb09544febc165cfb4d2555d86a0c1d2119a96d8687"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/02-contenedores-despliegue.puml",
+      "sha256": "91ba32952df23e37a63e78bf95a1621c045d022308dae5c568c2a4f53b7f8f7f"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/03-componentes-capasy-modulos.puml",
+      "sha256": "285ce74e59f625914e2278241158b0ceea5bc6e98cc3d19224fe232e6abf2cec"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/04-frontend-expo.puml",
+      "sha256": "01c0330b7e0de418049258b09b85c65cfbe04c5765074385d092f291f790cd33"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/05-backend-api.puml",
+      "sha256": "c371582e030a4a15219b39d1da614dbcaa9d8608dc2241d0d12c3062c8854f37"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/06-secuencia-reserva.puml",
+      "sha256": "f242bc26e9b6332766152548c1f60666256ddad651f4312ef43555eff8f32344"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/07-secuencia-recordatorios.puml",
+      "sha256": "4b8ab50c5b4967d5cb072d80e542868c3713c8593df50a08d3ee000026f67220"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/08-modelo-datos.puml",
+      "sha256": "f5748c098b81331805f8eeac2ff4e93cd35f3039209eba25ac900d9f042c7519"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/09-estados-cita.puml",
+      "sha256": "00b32396affe0d4e8bcbfdaa46833a81cf5d50fc60f27be4d7c763a845533d11"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/10-secuencia-autenticacion.puml",
+      "sha256": "fa70cd93ef61dabdada292ab0f227a0c5457a31e81cbc5db6767871da3785159"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/11-secuencia-confirmacion-push.puml",
+      "sha256": "1a6a94fb16a16fe7e3e77d839a7d2ed979ab59cc6169e314da4c595a97ba358b"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/12-fronteras-seguridad.puml",
+      "sha256": "c3d3908e61f881c72f8f6a6ac7ed680f1cfccec2ea66a19555ab6fce4bc634f0"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/README.md",
+      "sha256": "91dc2ad23e482bbb4bbfc285e49405c5203cb5d9c1fb430d9b5d28be15f5029d"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/acceso-seguro.md",
+      "sha256": "a7373596eb35c246ea45d64d418ecb64d21bc46ccdc03b6bf7941529162da543"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/antecedentes-verificados.md",
+      "sha256": "c926e69e704d1cd805843198fef1666d54ad5f262b9d5aeb8babab8f77a7fda4"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/auditoria-defectos.md",
+      "sha256": "64305df81ca162247fc1d4bbfe9d66ac30968ee4f7cf6b33891fbfad079447ec"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/correcciones.md",
+      "sha256": "c089d793c36b5367342a5774e6af29a8c3b8783446b7f335d1b9187f1e06c2df"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/dod-devops-backlog.md",
+      "sha256": "30b07fff9a6192e4eabf5658eb8e2be03857f3e455937dba34b9c04e8d3ed6bc"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/kpi-pdca.md",
+      "sha256": "c61b77e2c96da447572882867d393373392a888a75fe337e87fa8bcc48358528"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/notificaciones-verificadas.md",
+      "sha256": "8a7ccdee14b8c920e871b2d3f203eb0c194fc42cc4f877bf5441c6d2c9e8b587"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/plan-calidad-final.md",
+      "sha256": "9ccceafe3828384909ddba307643c6c45f968ca8f08d5fd9d0e3ae36161efa4d"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/pruebas-finales.md",
+      "sha256": "98f5c0f7a9f7082cd2b2277688850341acad5ffafa0ff7ab473eb73c9424dadd"
+    },
+    {
+      "path": "proyecto/docs/calidad-final/trazabilidad-final.md",
+      "sha256": "74fc0b91c8b52f4ba8610e09a41959c4d63dcd962ddc9e0b8e53d3f0e8fb85d7"
+    },
+    {
+      "path": "proyecto/docs/requisitos-actuales.md",
+      "sha256": "ddeed7c47f4071b2dd26e871bc1e3524be127f276eb04175cd8d53b70b5059ba"
+    },
+    {
+      "path": "scripts/quality-archive.py",
+      "sha256": "e2ecb7ac072174535eb9489c53ce08ab671e5c8dbb24002f3f8c7ee159812f92"
+    },
+    {
+      "path": "scripts/quality-build-record.cjs",
+      "sha256": "dc58121da5b176543db6c9585b4782decc15ddefa03f078a568332ec42e6950b"
+    },
+    {
+      "path": "scripts/quality-checks.cjs",
+      "sha256": "cfe9126c3caa04b8a7424abc53afb795e66eb33a62d9c7a60df9617b5c75bad5"
+    },
+    {
+      "path": "scripts/quality-ci-db.cjs",
+      "sha256": "ecf31155f70f246df45a46f400471b729914c0c50afb841bcd3f134fa4f683cc"
+    },
+    {
+      "path": "scripts/quality-integration.cjs",
+      "sha256": "6bbce62cb81057e86f8aa858eeaf12d32fb5bc5ad37da27987f39885d45a230c"
+    },
+    {
+      "path": "scripts/quality-live.cjs",
+      "sha256": "9e8eedfebd88d856cb91535c6516aff3d463116af6c0dae6ae6d86962499c60b"
+    },
+    {
+      "path": "scripts/quality-notification-evidence.cjs",
+      "sha256": "282a81126d5f93f802b19cb1a6b3febc2c32ec495b06a1d620ba84e5a11fbf5b"
+    },
+    {
+      "path": "scripts/quality-package.cjs",
+      "sha256": "9e9044bd0f2bed791dd25b4962b4c1ca77b1b3c783c831947bbf4d976ec2c1fb"
+    },
+    {
+      "path": "scripts/quality-preflight.cjs",
+      "sha256": "4d1248d8d61851769259e615ecfa58c7350d71b74ce04df5a18febabc4155222"
+    },
+    {
+      "path": "scripts/quality-rotate-access.cjs",
+      "sha256": "ec31ea17216deaf767f920492e13d1a30eff680bc488f689d1527c2cebcf939e"
+    },
+    {
+      "path": "scripts/quality-verify-package.cjs",
+      "sha256": "02050c7501d4b25d2acfb24acc43acb7b4fd737c2beec861c4c2defe49bfa9e6"
+    },
+    {
+      "path": "scripts/reset-project.js",
+      "sha256": "549922a40b983de34068b36d7879fcc8aed6c60b8d45b3c7b866267e766ae9fe"
+    },
+    {
+      "path": "src/api/admin.api.ts",
+      "sha256": "c75adc986376ebe4c1d289cd9a3abba848c70c77039834e975604b753de20cf2"
+    },
+    {
+      "path": "src/api/api-client.ts",
+      "sha256": "9e694a3b6dd0821b615d16d0d2129f142fe914479dc4e4abd4d0ca41b1db8ef6"
+    },
+    {
+      "path": "src/api/appointments.api.ts",
+      "sha256": "98305a1311b6e51440904e980c57fa0727ea0997ab8cf1bc7f2550da5ecf4513"
+    },
+    {
+      "path": "src/api/auth.api.ts",
+      "sha256": "d5ae25689e8036ad65b185b14b1e7da0bf7d2a1e37676bd0de74b344a5b28542"
+    },
+    {
+      "path": "src/api/notifications.api.ts",
+      "sha256": "6e001f4931ce5de9d74a091732a9842b30a27302fa45114e7a313ee452a0de13"
+    },
+    {
+      "path": "src/app/+not-found.tsx",
+      "sha256": "c186df9e8e1b35c4b145e2c00a64a26ede9cb3ccb7e75cde5f1a679443d3f6df"
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "sha256": "4cfee197f5017cfbc0ce3b0d6d7857e7bb9e22ee7023c6075498cb093bf021db"
+    },
+    {
+      "path": "src/app/admin/_layout.tsx",
+      "sha256": "d580587c4dedfb4f4850ea0a29eb3cf4456950f9c9634b7409e1776fec5144e0"
+    },
+    {
+      "path": "src/app/admin/appointments.tsx",
+      "sha256": "78d7bfa6900818bb69d443fd9fa4e098e682899278b2c0a5eb06fce2a097debf"
+    },
+    {
+      "path": "src/app/admin/index.tsx",
+      "sha256": "0769257fd4d3f46b3ca70f33f1c1ee67fb69798ca47cb6b7fe64331ac33fea57"
+    },
+    {
+      "path": "src/app/admin/schedule.tsx",
+      "sha256": "2dc5ca4b0fdecf84525fada6ab912e597e1d2d4da00b12aa9ee36220878c9311"
+    },
+    {
+      "path": "src/app/auth/_layout.tsx",
+      "sha256": "0ea3a3737cd1157cb3c3b98ece5a200b90569d833ecfb4ac451d11b888aa09af"
+    },
+    {
+      "path": "src/app/auth/login.tsx",
+      "sha256": "e4a954d2cd21031a9e4b407e20998d46539713c8a9a7e73850b8fd37bd7cf5bc"
+    },
+    {
+      "path": "src/app/auth/register.tsx",
+      "sha256": "62cde382a0ee7b8f91a8e080b51edf9a62e1d4e20aa2577aec424c79843f9e63"
+    },
+    {
+      "path": "src/app/client/_layout.tsx",
+      "sha256": "67d2f73ce5b95685d5973bcd8233bf5f669e693fb95f5c5a5dd821d71b5804d3"
+    },
+    {
+      "path": "src/app/client/appointment.tsx",
+      "sha256": "d1702e848a918a65642ed3109a1b570d5b283e7f7521d4aa28c28adbbacb07f6"
+    },
+    {
+      "path": "src/app/client/index.tsx",
+      "sha256": "dd8679139eac22566f2979d2455469ce3c4876ea812022a33956c3a7eef33fc3"
+    },
+    {
+      "path": "src/app/client/my-appointments.tsx",
+      "sha256": "7610dfa49557ecdec511b3074b1a689e6fb8ca7de190503c00b796af3fa3b794"
+    },
+    {
+      "path": "src/app/explore.tsx",
+      "sha256": "2fd527449d9ec8a4142f33cfb9c0e30d53527c51322c968df02c82dee5a00959"
+    },
+    {
+      "path": "src/app/index.tsx",
+      "sha256": "2caf9b956a3b799c58a8108f462f3fdf1097583de3ff9cd3dcd9adeac35e34d6"
+    },
+    {
+      "path": "src/components/AppErrorFallback.tsx",
+      "sha256": "ce683ac1d89bad60cd4b188d6b38631304981b9b088b48323afb2eaa35480861"
+    },
+    {
+      "path": "src/components/AppIcon.tsx",
+      "sha256": "dcf8dbfb33ba074d90345cc2af49d02794dacc9aed351ba18605db5dff29818c"
+    },
+    {
+      "path": "src/components/AttendanceBadge.tsx",
+      "sha256": "df2f06f42bc7daeadb52e22b6556a2072466a195073375c4b4ff383f28eeb43f"
+    },
+    {
+      "path": "src/components/BackButton.tsx",
+      "sha256": "5f68324be6b97dedb53497846e71a28adf562823d337791dbbc951b312744c51"
+    },
+    {
+      "path": "src/components/FeedbackProvider.tsx",
+      "sha256": "874d4664fe9623ed8f702975dcbf82142b9fc32ec5c3f8224b6f406a0e3166c8"
+    },
+    {
+      "path": "src/components/UserMenu.tsx",
+      "sha256": "4a1ef92f0596aa0819eb3b58f94ef83764df498233f95238a51a3c24a363d130"
+    },
+    {
+      "path": "src/components/WebDateInput.tsx",
+      "sha256": "d41a36c7d93e693dbcf4a00691961e35b1909bacc5439fc45a1bbc4469ac33d5"
+    },
+    {
+      "path": "src/components/WebDateInput.web.tsx",
+      "sha256": "f61d2bcee80db8db8a8e575c23763947fcd75b36c4f5e0fe417d3367cd313217"
+    },
+    {
+      "path": "src/constants/app-theme.ts",
+      "sha256": "46040f0caedff4ea5b8007763b05e9ee37081d8003b8df3592b388672f3433f5"
+    },
+    {
+      "path": "src/constants/business.ts",
+      "sha256": "8477ba17631523b608ecd4e6c853b51b3138ba0737d91362f9725bbf29f2b6f7"
+    },
+    {
+      "path": "src/context/AuthContext.tsx",
+      "sha256": "f55ad824714fb7705a246addf3a12b8c2b967ddae916918c43e411a6f6e80955"
+    },
+    {
+      "path": "src/context/NotificationContext.tsx",
+      "sha256": "e6a756f725acd519f06116a59d53ae1f8dade384d6cfd8e879340746f78497cd"
+    },
+    {
+      "path": "src/global.css",
+      "sha256": "e7f82ed6ea00ecc25037862056e5215ef82a2de934fd20da4bbf8962210a1dc1"
+    },
+    {
+      "path": "src/types/expo.d.ts",
+      "sha256": "30024b1aa3744920a1d80f59fdc88d63d93f057fec413dac3cd31587cea98917"
+    },
+    {
+      "path": "src/utils/business-date.ts",
+      "sha256": "f20022b64ec9372827b075f388584f09ad9bd12059279708c3f6b9c73f1e1767"
+    },
+    {
+      "path": "src/utils/date-format.ts",
+      "sha256": "606b613c78e10bb6ce85ac79132aff41ad9ff0923987c492c038a76c7be498e5"
+    },
+    {
+      "path": "src/utils/notification-registration.ts",
+      "sha256": "eb519adee58a6eb70bc247d0a9adec4999251ecd93018645304c67f5dfef9b52"
+    },
+    {
+      "path": "src/utils/phone-validation.ts",
+      "sha256": "0d59ddf495f5be534f746a9540a3b03bd3bd8290f5be58086d561dc837c769e7"
+    },
+    {
+      "path": "src/utils/show-message.ts",
+      "sha256": "4b8c55992da8eacd098738ec6497706db452a606130569be0eaf7c6985660ce9"
+    },
+    {
+      "path": "supabase/config.toml",
+      "sha256": "abd99cecf884044ed8619bb0a5e3a729117a9eba3b09d1b9862c25c43f25bb25"
+    },
+    {
+      "path": "supabase/cron/schedule-appointment-reminders.sql",
+      "sha256": "098ba250a2bc0cff991643dae5197baff7fe033820eaf742c987ee4b28ecc2ad"
+    },
+    {
+      "path": "supabase/functions/bright-endpoint/index.ts",
+      "sha256": "94daf2cabdd50653ae5cd345b4ed0230a5c0f5329869279df4efefbf0348244d"
+    },
+    {
+      "path": "tests/notification-registration.test.js",
+      "sha256": "75f8d9e02b2632983c749e990a75f8bf7fd1fe82f3f2de448955e10833912b1f"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "070afdadc785944c698c68bbcc49098fd92d4036503c118c13738c5db316dcbc"
+    }
+  ],
+  "publicationPackagingUpdate": {
+    "at": "2026-10-31T19:30:14.507108+00:00",
+    "scope": "Solo reglas .gitignore: exclusión de temporales, defensa y capturas crudas con hashes/tokens. Resultados técnicos y código probado sin cambios."
+  }
+}

@@ -1,5 +1,7 @@
 # Remediación de seguridad posterior al PR 7
 
+Actualización de estado del 31/10/2026: GitHub confirma que el PR #8 fue fusionado el 17/10/2026 en `ab73b3a18839f08825bc441f024e426455b41d4e`. Las frases posteriores sobre mantenerlo abierto describen la decisión registrada antes de esa fusión, no su estado actual. La fusión no demuestra que las vulnerabilidades quedaran resueltas. El [paquete de cierre](../proyecto/docs/calidad-final/README.md) conserva la consulta actual de revisiones y los nuevos resultados, sin cambiar las mediciones históricas siguientes.
+
 Fecha: 17 de octubre de 2026. Repositorio: `Hansolo2077/barberia-cale`. Rama de trabajo: `dev`; destino del nuevo PR: `main`.
 
 ## Relación entre las entregas
