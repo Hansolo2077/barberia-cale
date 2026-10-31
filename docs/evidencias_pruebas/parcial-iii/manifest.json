@@ -331,7 +331,7 @@
     },
     {
       "path": "docs/evidencias_pruebas/parcial-iii/README.md",
-      "sha256": "2a4372a2c12b4b8ec47814346ac7732026e7486c5f4ac02f504cf804791c5611"
+      "sha256": "d1b0ea4cedda8740150bfb530e968eacf350d3f922575e4b00a8c83a26ef936d"
     },
     {
       "path": "docs/evidencias_pruebas/parcial-iii/android-build.txt",
@@ -675,7 +675,7 @@
     },
     {
       "path": "scripts/quality-package.cjs",
-      "sha256": "9e9044bd0f2bed791dd25b4962b4c1ca77b1b3c783c831947bbf4d976ec2c1fb"
+      "sha256": "910ca788e5452dff0d2ffaace8b93351b67d1fe0579c5138ccade004835e7256"
     },
     {
       "path": "scripts/quality-preflight.cjs",
