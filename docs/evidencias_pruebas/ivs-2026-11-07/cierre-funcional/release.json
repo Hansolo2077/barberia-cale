@@ -1,0 +1,17 @@
+{
+  "tag": "v1.0.1-ivs.20261107-r2",
+  "url": "https://github.com/Hansolo2077/barberia-cale/releases/tag/v1.0.1-ivs.20261107-r2",
+  "sourceCommit": "c508b277cd7d09bb82782ee6f64870e123e7928d",
+  "backendCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "backendTree": "a3bd52fab1f12dfcfa6c810fd56730eb741d1700",
+  "apk": {
+    "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107-r2/BarberiaCale-1.0.1-IVS-release.apk",
+    "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+    "bytes": 106354564
+  },
+  "zip": {
+    "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107-r2/Evidencias-IVS-Cierre-2026-11-07.zip",
+    "sha256": "32dcad18d3369062f412475a139fc549e1898f4d44f74c3afe2c177596cdb356",
+    "bytes": 14739236
+  }
+}
