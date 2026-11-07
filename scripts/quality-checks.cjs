@@ -9,6 +9,7 @@ const checks = [
   ['typescript', ['node_modules/typescript/bin/tsc', '--noEmit']],
   ['eslint', [npm, 'run', 'lint']],
   ['frontend-tests', ['--test', '--test-reporter=tap', 'tests/notification-registration.test.js']],
+  ['routing-tests', ['--test', '--test-reporter=tap', 'tests/routing-security.test.cjs']],
   ['backend-tests', ['--test', '--test-reporter=tap', ...fs.readdirSync(path.join(root,'backend/src'),{recursive:true}).filter(f=>f.endsWith('.test.js')).map(f=>'backend/src/'+f.replaceAll('\\','/'))]],
   ['audit-frontend', [npm, 'audit', '--json']],
   ['audit-backend', [npm, 'audit', '--prefix', 'backend', '--json']],

@@ -1,6 +1,6 @@
 # Preparación del expediente final de IVS
 
-Este expediente técnico prepara el PDF de Implementación y Validación de Software, conforme a Guia_Entrega_Final_Proyecto_Integrador_IVS_2026. Corte de trabajo: 7 de noviembre de 2026, Guatemala. El PDF y el video se preparan aparte.
+Este expediente técnico prepara el PDF de Implementación y Validación de Software, conforme a Guia_Entrega_Final_Proyecto_Integrador_IVS_2026. Corte de trabajo: 7 de noviembre de 2026, Guatemala. El PDF consolidado se entrega en la carpeta Parcial III; el video se prepara aparte.
 
 | Registro | Uso |
 | --- | --- |
@@ -17,8 +17,13 @@ Este expediente técnico prepara el PDF de Implementación y Validación de Soft
 
 Las fuentes de arquitectura y el modelo ER están en [arquitectura actual](../arquitectura-actual/Arquitectura_y_Diseno_Actual_Barberia_Cale.md). El [diccionario verificado](../../../docs/evidencias_pruebas/ivs-2026-11-07/diccionario.md) se genera desde el esquema real reconstruido con sus cuatro migraciones.
 
-Responsable de esta preparación: Hanssel, con asistencia de Codex. Las revisiones históricas de Ruddy y Steven conservan su atribución y alcance; no se les atribuye aprobación de cambios nuevos. La composición formal de la entrega está por confirmar. Los tres figuran en la evaluación de I; el documento de Calidad identifica a Hanssel.
+Responsable de esta preparación: Hanssel, con asistencia de Codex. Las revisiones históricas de Ruddy y Steven conservan su atribución y alcance; no se les atribuye aprobación de cambios nuevos. La portada proporcionada identifica a Steven Rosales, Ruddy Galo y Hanssel Nuñez como integrantes de la entrega IVS.
 
 Los resultados nuevos son del checkout local y sus huellas. La app instalada y los servicios publicados no se consideran actualizados por haber modificado el repositorio. No se incorporan contraseñas al expediente público.
 
 Actualización de cierre: el APK release fue compilado, instalado y probado por ADB tras autorización del usuario. [interfaz-apk.json](../../../docs/evidencias_pruebas/ivs-2026-11-07/interfaz-apk.json) conserva once comprobaciones conformes y doce capturas públicas seleccionadas. Se comprobó una cita dummy de extremo a extremo, con aceptación por API ADMIN, asistencia y cancelación por UI, historial y horario liberado. Los bloqueos iniciales de Computer Use se resolvieron mediante ADB; permanecen sin probar WhatsApp, cron/push final, iOS y recorrido web.
+
+
+## Actualización de seguridad 1.0.1
+
+El cierre posterior del 07/11/2026 elimina las tres alertas altas de la cadena Expo Router/query-string/decoder: auditoría frontend actual 0 altas, 11 moderadas y 0 críticas; backend 0. Se mantienen los resultados del release 1.0.0 como antecedentes fechados, no como pruebas del nuevo binario. Véase [corrección, reproducción y límites](seguridad-frontend.md) y los [controles posteriores](../../../docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json). El nuevo candidato se identifica como v1.0.1-ivs.20261107; no se sustituye el release previo.

@@ -1,0 +1,104 @@
+{
+  "startedAt": "2026-11-07T15:08:49.350Z",
+  "sourceCommit": "7d028002ef9640d861c866be86de0d0c535876e8",
+  "workingTreeChanges": true,
+  "node": "v24.16.0",
+  "checks": [
+    {
+      "id": "typescript",
+      "command": "node_modules/typescript/bin/tsc --noEmit",
+      "startedAt": "2026-11-07T15:08:49.394Z",
+      "finishedAt": "2026-11-07T15:08:56.385Z",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "eslint",
+      "command": "npm run lint",
+      "startedAt": "2026-11-07T15:08:56.386Z",
+      "finishedAt": "2026-11-07T15:09:04.278Z",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "frontend-tests",
+      "command": "--test --test-reporter=tap tests/notification-registration.test.js",
+      "startedAt": "2026-11-07T15:09:04.279Z",
+      "finishedAt": "2026-11-07T15:09:04.523Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "routing-tests",
+      "command": "--test --test-reporter=tap tests/routing-security.test.cjs",
+      "startedAt": "2026-11-07T15:09:04.523Z",
+      "finishedAt": "2026-11-07T15:09:05.146Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "backend-tests",
+      "command": "--test --test-reporter=tap backend/src/controllers/admin-reminder.controller.test.js backend/src/controllers/appointment.controller.test.js backend/src/controllers/auth.controller.test.js backend/src/controllers/notification.controller.test.js backend/src/middleware/auth.middleware.test.js backend/src/middleware/client.middleware.test.js backend/src/middleware/json-parser.integration.test.js backend/src/middleware/rate-limit.middleware.test.js backend/src/services/admin-reminder.service.test.js backend/src/services/appointment.service.test.js backend/src/services/notification.service.test.js backend/src/utils/date.test.js backend/src/utils/expo-push-token.test.js backend/src/utils/http-error.test.js backend/src/utils/pagination.test.js backend/src/utils/phone.test.js",
+      "startedAt": "2026-11-07T15:09:05.146Z",
+      "finishedAt": "2026-11-07T15:09:07.675Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "tests": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "audit-frontend",
+      "command": "npm audit --json",
+      "startedAt": "2026-11-07T15:09:07.675Z",
+      "finishedAt": "2026-11-07T15:09:10.820Z",
+      "exitCode": 1,
+      "status": "FINDINGS",
+      "audit": {
+        "info": 0,
+        "low": 0,
+        "moderate": 11,
+        "high": 0,
+        "critical": 0,
+        "total": 11
+      }
+    },
+    {
+      "id": "audit-backend",
+      "command": "npm audit --prefix backend --json",
+      "startedAt": "2026-11-07T15:09:10.820Z",
+      "finishedAt": "2026-11-07T15:09:12.456Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "audit": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    {
+      "id": "expo-compatibility",
+      "command": "node_modules/expo/bin/cli install --check",
+      "startedAt": "2026-11-07T15:09:12.456Z",
+      "finishedAt": "2026-11-07T15:09:13.345Z",
+      "exitCode": 0,
+      "status": "PASS"
+    }
+  ],
+  "finishedAt": "2026-11-07T15:09:13.345Z"
+}

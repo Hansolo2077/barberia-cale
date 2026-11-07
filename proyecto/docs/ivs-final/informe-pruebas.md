@@ -32,3 +32,8 @@ La regresión local con PostgreSQL remoto obtuvo p95 de 165,491 ms en login, 413
 No se ejecutaron de forma integral: iOS, recorrido web, nueva recepción cron/push vinculada a este build, WhatsApp, COMPLETED desde UI, recordar=false tras reinicio y orden/filtros exhaustivos con múltiples registros. Tampoco hay respuestas SUS ni aprobación de usuarios del negocio. Estos escenarios están no ejecutados, no se incluyen en el denominador de las once comprobaciones manuales, y no se declaran fallos funcionales sin haberlos probado.
 
 La decisión continúa siendo piloto controlado. Los defectos y riesgos residuales se mantienen en estado-preparacion.md, con responsables y evidencia; el PDF debe conservarlos.
+
+
+## Actualización de seguridad 1.0.1
+
+El cierre posterior del 07/11/2026 elimina las tres alertas altas de la cadena Expo Router/query-string/decoder: auditoría frontend actual 0 altas, 11 moderadas y 0 críticas; backend 0. Se mantienen los resultados del release 1.0.0 como antecedentes fechados, no como pruebas del nuevo binario. Véase [corrección, reproducción y límites](seguridad-frontend.md) y los [controles posteriores](../../../docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json). El nuevo candidato se identifica como v1.0.1-ivs.20261107; no se sustituye el release previo.

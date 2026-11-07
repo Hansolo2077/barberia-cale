@@ -1,7 +1,7 @@
 {
   "name": "barberia-cale",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
     "@expo/ui": "~57.0.26",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -40,6 +40,8 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "postinstall": "node scripts/patch-query-string.cjs",
+    "test:routing-security": "node --test tests/routing-security.test.cjs",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
@@ -50,6 +52,11 @@
     "quality:checks": "node scripts/quality-checks.cjs",
     "quality:integration": "node scripts/quality-integration.cjs",
     "quality:package": "node scripts/quality-package.cjs"
+  },
+  "overrides": {
+    "query-string@7.1.3": {
+      "decode-uri-component": "0.5.1"
+    }
   },
   "private": true
 }

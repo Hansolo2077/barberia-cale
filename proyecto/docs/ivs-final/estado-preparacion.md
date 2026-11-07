@@ -14,7 +14,7 @@ La API publicada aceptó ambas cuentas dummy con sus roles correctos y pasó die
 | --- | --- | --- | --- | --- |
 | IVS-D01 | Reproducibilidad | make-admin.js contenía celular fijo, media | Exige argumento válido; instalación explica uso en sandbox; huella en manifiesto | Corregido local; no se ejecutó promoción en producción |
 | IVS-D02 | Compatibilidad RC-08/09 | Dieciocho parches recomendados, media | Expo install --fix dentro de SDK 57; install --check PASS; controles y builds nuevos | Corregido en candidato local; app instalada no se presume actualizada |
-| IVS-D03 | Seguridad dependencias | Seis altas npm iniciales, alta | Parches y audit fix compatible; seis→tres altas; backend cero | Parcial; tres altas frontend abiertas |
+| IVS-D03 | Seguridad dependencias | Seis altas npm iniciales, alta | Parches y audit fix compatible; seis→tres altas; backend cero | Altas cerradas en 1.0.1; once moderadas abiertas (ver actualización) |
 | IVS-D04 | Recuperación | Sin ensayo de restauración verificable, alta | ivs-recovery.cjs; archivo real sintético restaurado, igualdad, FK y secuencias | Cerrado en alcance de laboratorio; operativo pendiente |
 | IVS-D05 | RF-03/04/07/17 y UI | Falta reejecución final de interfaz, media | ADB autorizado: 11 comprobaciones del APK, sesión, reserva, asistencia, cancelación e historial | Parcialmente cerrado; WhatsApp, móvil exhaustivo/web y push final pendientes |
 | IVS-D06 | RC-05 rendimiento | Primer login publicado 22,553 s, media | Tiempo original conservado; sucesivas lecturas registradas | Abierto para diagnóstico; no se afirma causa |
@@ -44,3 +44,8 @@ El PDF puede generarse con resultados y límites reales. Para declararlo complet
 | Documentación/reproducibilidad, 7,5 | Guías, manual, capacitación, recuperación y manifiesto | Confirmaciones humanas y PDF consolidado |
 
 Los 5 puntos de defensa se trabajan aparte por instrucción del usuario. No se genera el PDF en esta fase.
+
+
+## Actualización de seguridad 1.0.1
+
+El cierre posterior del 07/11/2026 elimina las tres alertas altas de la cadena Expo Router/query-string/decoder: auditoría frontend actual 0 altas, 11 moderadas y 0 críticas; backend 0. Se mantienen los resultados del release 1.0.0 como antecedentes fechados, no como pruebas del nuevo binario. Véase [corrección, reproducción y límites](seguridad-frontend.md) y los [controles posteriores](../../../docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json). El nuevo candidato se identifica como v1.0.1-ivs.20261107; no se sustituye el release previo.

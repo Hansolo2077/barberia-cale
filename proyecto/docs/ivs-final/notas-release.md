@@ -32,3 +32,8 @@ Las pruebas HTTP/BD se ejecutaron localmente con PostgreSQL real y datos efímer
 Siguen pendientes la validación visual integral, registros reales del piloto, capacitación impartida, aceptación de negocio, aislamiento operativo de cuentas y cierre de los hallazgos frontend. La restauración ensayada es de datos sintéticos y cuatro tablas, no un backup completo de Supabase ni un ensayo de producción. El PDF final y el video no forman parte de esta publicación.
 
 Evidencias y guías: carpeta proyecto/docs/ivs-final y docs/evidencias_pruebas/ivs-2026-11-07 del código de esta etiqueta. El ZIP adjunto reúne los materiales técnicos seleccionados y sus huellas, sin credenciales.
+
+
+## Actualización de seguridad 1.0.1
+
+El cierre posterior del 07/11/2026 elimina las tres alertas altas de la cadena Expo Router/query-string/decoder: auditoría frontend actual 0 altas, 11 moderadas y 0 críticas; backend 0. Se mantienen los resultados del release 1.0.0 como antecedentes fechados, no como pruebas del nuevo binario. Véase [corrección, reproducción y límites](seguridad-frontend.md) y los [controles posteriores](../../../docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json). El nuevo candidato se identifica como v1.0.1-ivs.20261107; no se sustituye el release previo.
