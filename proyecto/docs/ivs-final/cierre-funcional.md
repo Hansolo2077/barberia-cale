@@ -1,3 +1,5 @@
+> **Aclaración de rendimiento posterior al cierre:** RNF-01 exige <500 ms en condiciones normales y contempla latencia inicial por cold start. Se separa la primera solicitud y se conservan 45 muestras del servicio activo: login p95 905,670 ms; disponibilidad 651,064 ms; mis citas 308,141 ms. IVS-D06 sigue abierto por desviaciones observadas, sin deducir incumplimiento general del arranque inicial. Ver [medición y alcance](rendimiento-publicado.md).
+
 # Cierre funcional y correspondencia de versiones — IVS
 
 Fecha: 7/11/2026, Guatemala. Se ejecutó la ampliación necesaria para cerrar las observaciones de funcionamiento, regresión de la versión final y correspondencia del backend. No se asigna una calificación ni se garantiza la decisión del docente.

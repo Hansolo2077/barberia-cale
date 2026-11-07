@@ -1,3 +1,5 @@
+> **Aclaración de rendimiento posterior al cierre:** RNF-01 exige <500 ms en condiciones normales y contempla latencia inicial por cold start. Se separa la primera solicitud y se conservan 45 muestras del servicio activo: login p95 905,670 ms; disponibilidad 651,064 ms; mis citas 308,141 ms. IVS-D06 sigue abierto por desviaciones observadas, sin deducir incumplimiento general del arranque inicial. Ver [medición y alcance](rendimiento-publicado.md).
+
 # Estado del proyecto previo al PDF
 
 > Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
@@ -11,7 +13,7 @@ Se prepararon criterios por RF, trazabilidad, correcciones específicas de IVS, 
 
 Expo se mantuvo en SDK 57, con parches compatibles recomendados por su CLI. Se aplicó npm audit fix sin --force. Antes: 6 entradas altas/16 moderadas/1 baja frontend. Después: 3 altas/11 moderadas, sin críticas; backend cero. Expo install --check, TypeScript, ESLint, 48 pruebas backend y 4 de notificaciones pasan. La auditoría frontend conserva hallazgos, por lo que el control global devuelve exit 1 de forma esperada. Consultar los reportes originales; no denominarlo seguridad aprobada.
 
-La API publicada aceptó ambas cuentas dummy con sus roles correctos y pasó diez checks de login/identidad/permisos/consulta. Health respondió 6/6 durante una observación de aproximadamente 52 segundos. El primer login tardó 22,553 segundos; causa no instrumentada. No se atribuye automáticamente a cold start ni se excluye del resultado. La muestra no demuestra un SLA; /health tampoco comprueba BD.
+La API publicada aceptó ambas cuentas dummy con sus roles correctos y pasó diez checks de login/identidad/permisos/consulta. Health respondió 6/6 durante una observación de aproximadamente 52 segundos. El primer login tardó 22,553 segundos; causa no instrumentada. No se atribuye automáticamente a cold start; la observación se conserva por separado y no demuestra por sí sola incumplimiento en condiciones normales. La muestra no demuestra un SLA; /health tampoco comprueba BD.
 
 ## Bitácora de cambios y defectos de esta preparación
 
