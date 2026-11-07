@@ -1,5 +1,7 @@
 # Plan de verificación y validación final
 
+> Estado actual 1.0.1: 0 alertas altas y 11 moderadas frontend; backend 0. Las cifras 3 altas y el APK 1.0.0 de las secciones originales son antecedentes del primer corte. Véase [cierre de seguridad](seguridad-frontend.md) y [nuevo release](notas-release-1.0.1.md).
+
 Objetivo: demostrar correspondencia entre RF-01 a RF-22, implementación, datos y resultados, manteniendo las limitaciones del producto candidato. Alcance: CLIENT/ADMIN, reservas y restricciones, persistencia, seguridad por rol, recordatorios, recuperación y documentación. No se pretende certificar seguridad, SLA, carga masiva, iOS o accesibilidad integral.
 
 Responsable de organización: Hanssel. Ejecución técnica automatizada de esta preparación: Codex con autorización de Hanssel. Revisores humanos nuevos y usuarios de validación: no confirmados; no se atribuyen aprobaciones. Referencias históricas a Ruddy/Steven solo cubren sus PR.

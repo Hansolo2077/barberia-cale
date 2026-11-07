@@ -1,5 +1,7 @@
 # Instalación y operación desde cero
 
+> Estado actual 1.0.1: 0 alertas altas y 11 moderadas frontend; backend 0. Las cifras 3 altas y el APK 1.0.0 de las secciones originales son antecedentes del primer corte. Véase [cierre de seguridad](seguridad-frontend.md) y [nuevo release](notas-release-1.0.1.md).
+
 ## Entornos y requisitos
 
 Desarrollo: checkout local, API Express y Expo. Pruebas: API local con PostgreSQL en esquemas efímeros y datos sintéticos. Publicado/piloto: Netlify, Render y Supabase. Un esquema separado limita escrituras de pruebas, pero comparte proveedor/recursos; no equivale a una instancia física staging independiente. Para capacitación usar una instancia de pruebas propia cuando sea posible.

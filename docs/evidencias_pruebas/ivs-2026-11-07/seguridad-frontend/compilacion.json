@@ -1,0 +1,77 @@
+{
+  "recordedAt": "2026-11-07T15:30:44.012860+00:00",
+  "sourceCommit": "c1ac4612de9e5a887628b614ef35a6ba106472cb",
+  "tag": "v1.0.1-ivs.20261107",
+  "status": "PASS",
+  "command": "gradlew.bat :app:assembleRelease --console=plain",
+  "versionName": "1.0.1",
+  "versionCode": 2,
+  "apk": {
+    "bytes": 106354564,
+    "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f"
+  },
+  "embeddedBundleBytes": 2541604,
+  "nativeArchitectures": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "zipIntegrity": true,
+  "signing": "Android Debug local evaluation; same certificate as baseline",
+  "web": {
+    "status": "PASS",
+    "routes": 12
+  },
+  "ui": {
+    "startedAt": "2026-11-07T15:28:57.121Z",
+    "executor": "Codex con ADB autorizado por Hanssel",
+    "scope": "Actualización, arranque y enlace profundo con parámetros codificados; sin login ni escrituras de negocio",
+    "cases": [
+      {
+        "id": "APK-S01",
+        "requirement": "RNF-03",
+        "expected": "Actualización sin desinstalar; versión 1.0.1/código 2",
+        "observed": "adb install -r Success; metadata 1.0.1/2",
+        "status": "PASS",
+        "at": "2026-11-07T15:29:16.268Z"
+      },
+      {
+        "id": "APK-S02",
+        "requirement": "RNF-03/RF-02",
+        "expected": "Arranque nativo sin Metro, acceso público",
+        "observed": "Inicio con Iniciar sesión visible",
+        "status": "PASS",
+        "capturedAt": "2026-11-07T15:29:24.305Z",
+        "evidence": "apk-1.0.1-home.png",
+        "sha256": "93b6167fb6cfdef625f7ee14d75e1d7c473628d830f06a736030e8e7e5fcd064"
+      },
+      {
+        "id": "APK-S03",
+        "requirement": "RNF-02/RF-02",
+        "inputs": "barberiacale://auth/login?nota=Nu%C3%B1ez&bad=%zz&estado=PENDING&estado=ACCEPTED",
+        "expected": "Navegación al formulario de acceso con query Unicode/arreglo y secuencia malformada; sin fallo de importación",
+        "observed": "Formulario Contraseña visible tras enlace profundo",
+        "status": "PASS",
+        "capturedAt": "2026-11-07T15:29:29.913Z",
+        "evidence": "apk-1.0.1-deeplink.png",
+        "sha256": "ae53c393e266820a0f90f72841ad0f70bf62be279dbec648b2b4064858bc95bc"
+      }
+    ],
+    "finishedAt": "2026-11-07T15:29:29.914Z",
+    "status": "PASS",
+    "limits": [
+      "No nueva reserva, no login, no envío push/WhatsApp; no reejecución completa de campaña UI 1.0.0"
+    ]
+  },
+  "limits": [
+    "Previous PF/UI end-to-end cases remain baseline 1.0.0, not a full rerun on 1.0.1",
+    "Backend/web deployment not asserted"
+  ],
+  "decoder": {
+    "version": "0.5.1",
+    "officialSourceUnmodified": true,
+    "sha256": "6a86ac891edf15c5efa0841ebb31935e3669d58b98318b57d7b08a4530317cb0",
+    "androidSourceMapConfirmsInclusion": true
+  }
+}

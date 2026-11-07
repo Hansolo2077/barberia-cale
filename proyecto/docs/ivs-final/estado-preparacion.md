@@ -1,5 +1,7 @@
 # Estado del proyecto previo al PDF
 
+> Estado actual 1.0.1: 0 alertas altas y 11 moderadas frontend; backend 0. Las cifras 3 altas y el APK 1.0.0 de las secciones originales son antecedentes del primer corte. Véase [cierre de seguridad](seguridad-frontend.md) y [nuevo release](notas-release-1.0.1.md).
+
 ## Resultado de la preparación
 
 Se prepararon criterios por RF, trazabilidad, correcciones específicas de IVS, cinco hallazgos de usabilidad, manual CLIENT/ADMIN y plan de capacitación, instalación/operación, migración de datos, recuperación y plan V&V. El diccionario fue obtenido desde PostgreSQL reconstruido. La campaña se amplió con sesión API, límites temporales y rollback; la restauración de datos sintéticos se ejecutó en otro esquema.
@@ -24,7 +26,7 @@ Responsable de seguimiento: Hanssel. Ejecutor técnico nuevo: Codex autorizado. 
 ## Pendientes que requieren evidencia humana o acceso
 
 - El bloqueo inicial de Computer Use se superó con ADB autorizado. El APK se instaló y se verificó: login por rol, logout ADMIN/CLIENT, recordar sesión tras reinicio, creación de #57, aceptación por API, asistencia UI, volver del diálogo sin mutar y cancelación/historial/horario libre. No se declara validación exhaustiva por plataforma.
-- Integrantes y responsabilidades formales: I identifica Hanssel/Ruddy/Steven; cierre de Calidad identifica Hanssel. No modificar esa atribución por inferencia.
+- Integrantes de IVS conservados según la portada proporcionada: Steven Rosales, Ruddy Galo y Hanssel Nuñez. Las contribuciones se atribuyen según Git y las ejecuciones registradas.
 - Registros reales de uso, incidencias, retroalimentación y aceptación de la barbería. Instrumento preparado; no medido todavía.
 - Capacitación y evaluación práctica reales. El plan está listo, la ejecución no ocurrió aquí.
 - Imágenes auténticas anteriores a mejoras UX: no localizadas. Hay capturas nuevas del APK para reserva/cancelación e inspección de código; quedan revisiones de tarjetas ADMIN y otros estados visuales.
@@ -43,7 +45,7 @@ El PDF puede generarse con resultados y límites reales. Para declararlo complet
 | V&V/trazabilidad, 12,5 | Plan, casos, regresión, recuperación, criterios por RF | UI y vínculos finales al release |
 | Documentación/reproducibilidad, 7,5 | Guías, manual, capacitación, recuperación y manifiesto | Confirmaciones humanas y PDF consolidado |
 
-Los 5 puntos de defensa se trabajan aparte por instrucción del usuario. No se genera el PDF en esta fase.
+Los 5 puntos de defensa se trabajan aparte por instrucción del usuario. El PDF consolidado se actualiza con el cierre de seguridad 1.0.1.
 
 
 ## Actualización de seguridad 1.0.1

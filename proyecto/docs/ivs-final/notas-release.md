@@ -1,5 +1,7 @@
 # Barbería Cale 1.0.0 para evaluación IVS
 
+> Estado actual 1.0.1: 0 alertas altas y 11 moderadas frontend; backend 0. Las cifras 3 altas y el APK 1.0.0 de las secciones originales son antecedentes del primer corte. Véase [cierre de seguridad](seguridad-frontend.md) y [nuevo release](notas-release-1.0.1.md).
+
 APK de variante Android release y expediente técnico previo al PDF. Corte: 7 de noviembre de 2026. Esta publicación está identificada como prerelease para evaluación y piloto controlado.
 
 ## Cambios

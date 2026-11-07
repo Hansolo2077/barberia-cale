@@ -1,6 +1,6 @@
 # Cierre de las tres alertas altas del frontend
 
-Fecha: 7 de noviembre de 2026. Responsable: Hanssel, con ejecución técnica asistida autorizada. Versión corregida: 1.0.1; etiqueta prevista `v1.0.1-ivs.20261107`. Se conserva el release 1.0.0 como antecedente, sin reemplazar sus binarios ni atribuirle este parche.
+Fecha: 7 de noviembre de 2026. Responsable: Hanssel, con ejecución técnica asistida autorizada. Versión corregida: 1.0.1; etiqueta `v1.0.1-ivs.20261107`. Se conserva el release 1.0.0 como antecedente, sin reemplazar sus binarios ni atribuirle este parche.
 
 ## Causa y corrección
 

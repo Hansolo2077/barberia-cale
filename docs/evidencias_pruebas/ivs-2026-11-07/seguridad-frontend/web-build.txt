@@ -1,0 +1,44 @@
+Using src/app as the root directory for Expo Router.
+React Compiler enabled
+Starting Metro Bundler
+
+Static rendering is enabled. Learn more: https://docs.expo.dev/router/web/static-rendering/
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:1768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+λ Bundled 30970ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (953 modules)
+Web Bundled 32194ms node_modules\expo-router\entry.js (923 modules)
+
+› web bundles (3):
+_expo/static/css/global-569c46022ea2d8f90dcb3385011c9fec.css (893B)
+_expo/static/js/web/entry-61a509ab7ee9c629cd18ad36d4fa3ef1.js (1.5MB)
+_expo/static/js/web/index-84cc07038739a405db8b665ce664a11d.js (62KB)
+
+› Static routes (12):
+/ (index) (22KB)
+/explore (20KB)
+/_sitemap (21KB)
+/+not-found (21KB)
+/auth/login (22KB)
+/admin (22KB)
+/client (22KB)
+/auth/register (22KB)
+/admin/schedule (22KB)
+/admin/appointments (22KB)
+/client/appointment (22KB)
+/client/my-appointments (22KB)
+
+Exported: output/security-web

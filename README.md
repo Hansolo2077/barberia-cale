@@ -21,6 +21,8 @@ La [preparación final de Implementación y Validación](proyecto/docs/ivs-final
 
 ## Ejecutar la aplicación
 
+Requiere Node ≥22.13. El candidato de seguridad 1.0.1 y su [registro de corrección](proyecto/docs/ivs-final/seguridad-frontend.md) eliminan las tres alertas altas; once moderadas siguen abiertas. El lockfile fija el decoder oficial 0.5.1 y postinstall adapta su importación para Expo Router 57. Si se usa `--ignore-scripts`, ejecutar `node scripts/patch-query-string.cjs` antes de iniciar o compilar.
+
 Instala las dependencias y levanta Expo:
 
 ```bash
@@ -51,6 +53,7 @@ La estructura inicial de la base está en `backend/src/database/schema.sql`.
 
 ```bash
 npm run lint
+npm run test:routing-security
 npx tsc --noEmit
 cd backend
 npm test

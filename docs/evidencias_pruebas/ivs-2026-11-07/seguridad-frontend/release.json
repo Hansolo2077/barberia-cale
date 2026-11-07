@@ -1,0 +1,16 @@
+{
+  "tag": "v1.0.1-ivs.20261107",
+  "url": "https://github.com/Hansolo2077/barberia-cale/releases/tag/v1.0.1-ivs.20261107",
+  "sourceCommit": "c1ac4612de9e5a887628b614ef35a6ba106472cb",
+  "validation": "Web estática 12 rutas y APK release 1.0.1: PASS. Protocolo de humo ADB conforme; ver E16.",
+  "apk": {
+    "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107/BarberiaCale-1.0.1-IVS-release.apk",
+    "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+    "bytes": 106354564
+  },
+  "zip": {
+    "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107/Evidencias-IVS-1.0.1-2026-11-07.zip",
+    "sha256": "405b4a063f67b91154e806d4578e0b8e7c4a73cc5ee86780bb64c7f2e1c67562",
+    "bytes": 7877825
+  }
+}

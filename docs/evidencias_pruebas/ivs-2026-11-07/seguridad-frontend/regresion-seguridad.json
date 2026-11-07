@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-11-07T15:09:04.523Z",
+  "finishedAt": "2026-11-07T15:09:05.146Z",
+  "executor": "Codex, ejecución técnica autorizada por Hanssel",
+  "codeCommit": "c1ac4612de9e5a887628b614ef35a6ba106472cb",
+  "requirement": "RNF-02; preservación de navegación RF-05/RF-07",
+  "preconditions": "Node 24.16, npm ci completado, override 0.5.1 y adaptador postinstall aplicado, sin servicios externos",
+  "testSourceSha256": "d08a8a06e9b68a5e389da99d667b11091c3c4d1ca6c51df85ce2d19c55c339f5",
+  "evidence": "routing-tests.txt",
+  "cases": [
+    {
+      "id": "SEC-01",
+      "inputs": "Unicode Nuñez, plus, dos estados, vacío, flag; hora/fecha",
+      "steps": "parse; comparar valores exactos; stringify y parse; comparar round trip",
+      "expected": "Valores y tipos preservados",
+      "observed": "Assertions conformes",
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-02",
+      "inputs": "bad=%zz&utf8=%E0%A4%A&ok=admin",
+      "steps": "Parsear entrada malformada y leer parámetro posterior",
+      "expected": "Sin excepción; bad preservado; ok=admin; utf8 string",
+      "observed": "Assertions conformes",
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-03",
+      "inputs": "32000 secuencias %HH%HH distintas con x; sufijo %zz; ok=1",
+      "steps": "Crear proceso aislado; parsear payload; timeout 5000 ms; comprobar salida y código",
+      "expected": "Proceso sin timeout, exit 0, ok=1 y payload string",
+      "observed": "Proceso terminó normalmente y assertions conformes",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Resultados de verificación y validación
 
+> Estado actual 1.0.1: 0 alertas altas y 11 moderadas frontend; backend 0. Las cifras 3 altas y el APK 1.0.0 de las secciones originales son antecedentes del primer corte. Véase [cierre de seguridad](seguridad-frontend.md) y [nuevo release](notas-release-1.0.1.md).
+
 Corte: 7/11/2026. Ejecutor técnico: Codex con autorización de Hanssel. Cada grupo mantiene su ambiente y método; no se suman como cobertura total ni como escenarios independientes cuando se repiten.
 
 | Grupo | Ejecutadas | Aprobadas | Fallidas | Alcance |
