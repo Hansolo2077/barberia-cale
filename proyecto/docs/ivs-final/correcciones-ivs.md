@@ -22,6 +22,6 @@ Fuentes: Retroalimentacion.docx del Parcial I y New Microsoft Word Document.docx
 | IVS-II04 | Rendimiento y disponibilidad | Muestras p95 de integración; despliegue.json con 6 observaciones de health y checks autenticados | Medición puntual ejecutada; no equivale a disponibilidad sostenida/SLA; primer login lento registrado |
 | IVS-II05 | Indicadores y retroalimentación del piloto | manual-capacitacion.md incorpora instrumento de uso/incidencias/evaluación | Pendiente de registros reales; no se inventan encuestas ni uso |
 | IVS-II06 | Restauración de respaldo y recuperación | REC-01 a REC-04, archivo de respaldo sintético, comparación exacta/FK/secuencias; PF-26 rollback | Ensayo controlado conforme; no es restauración de producción ni backup completo de Supabase |
-| IVS-II07 | PR y contribuciones individuales | Evidencia histórica conservada; cambios nuevos atribuidos a Hanssel/Codex | Atendido para historial; sin aprobación humana nueva |
+| IVS-II07 | PR y contribuciones individuales | Evidencia histórica conservada; cambios nuevos bajo responsabilidad de Hanssel, con asistencia automatizada | Atendido para historial; sin aprobación humana nueva |
 
 Cada estado se refiere a su evidencia, no a una puntuación anticipada. Integrar esta matriz con sus enlaces y resultados en el PDF; no marcar todas las filas como cerradas por el simple hecho de tener documentos nuevos.

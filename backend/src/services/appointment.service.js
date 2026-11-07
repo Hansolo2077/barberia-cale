@@ -183,10 +183,6 @@ async function getBookingEligibility(
   };
 }
 
-/*
- * Devuelve los horarios disponibles
- * para una fecha.
- */
 async function getAvailability(
   date,
   userId
@@ -348,26 +344,13 @@ async function getNextAvailableDate(
   };
 }
 
-/*
- * Crea una nueva cita.
- *
- * Reglas:
- * - Máximo 1 cita activa por día.
- * - Máximo 2 citas activas dentro
- *   de un período móvil de 7 días.
- * - Solo PENDING y ACCEPTED
- *   cuentan como citas activas.
- */
+// PENDING y ACCEPTED cuentan para los límites: una cita al día y dos en siete días.
 async function createAppointment({
   userId,
   service,
   date,
   time,
 }) {
-  /*
-   * Validar que la hora esté dentro
-   * de los horarios permitidos.
-   */
   if (
     !AVAILABLE_TIMES.includes(time)
   ) {
@@ -433,10 +416,6 @@ async function createAppointment({
     throw error;
   }
 
-  /*
-   * Verificar que el horario
-   * siga disponible.
-   */
   const existingResult =
     await client.query(
       `
@@ -528,11 +507,7 @@ async function createAppointment({
 
     return result.rows[0];
   } catch (error) {
-    /*
-     * El índice único parcial
-     * protege contra dos solicitudes
-     * simultáneas para el mismo horario.
-     */
+    // El índice parcial resuelve la carrera entre reservas del mismo horario.
     if (error.code === "23505") {
       const conflictError =
         new Error(
@@ -562,10 +537,6 @@ async function createAppointment({
   }
 }
 
-/*
- * Devuelve todas las citas
- * de un cliente.
- */
 async function getUserAppointments(
   userId,
   {
@@ -955,10 +926,6 @@ function getAdminSearchCriteria(search) {
   };
 }
 
-/*
- * Devuelve todas las citas
- * para administración.
- */
 async function getAllAppointments({
   page,
   pageSize,
@@ -1184,9 +1151,6 @@ async function getAllAppointments({
   };
 }
 
-/*
- * Acepta una cita pendiente.
- */
 async function acceptAppointment(
   appointmentId
 ) {
@@ -1307,9 +1271,6 @@ async function acceptAppointment(
   return updateResult.rows[0];
 }
 
-/*
- * Rechaza una cita pendiente.
- */
 async function rejectAppointment(
   appointmentId
 ) {
@@ -1411,10 +1372,6 @@ async function rejectAppointment(
   return updateResult.rows[0];
 }
 
-/*
- * Consulta la agenda
- * por rango de fechas.
- */
 async function getAppointmentsByDateRange(
   startDate,
   endDate,
@@ -1651,13 +1608,7 @@ async function getAppointmentsByDateRange(
   };
 }
 
-/*
- * Cancelación administrativa.
- *
- * Solo se permite cancelar una cita
- * ACCEPTED cuya hora todavía
- * no haya llegado.
- */
+// ADMIN solo cancela citas ACCEPTED futuras.
 async function cancelAppointmentByAdmin(
   appointmentId
 ) {
@@ -1792,13 +1743,7 @@ async function cancelAppointmentByAdmin(
   return updateResult.rows[0];
 }
 
-/*
- * Marca una cita como completada.
- *
- * Solo puede completarse si:
- * - está ACCEPTED;
- * - su fecha/hora ya llegó o pasó.
- */
+// Completar requiere ACCEPTED y una fecha/hora de inicio ya alcanzada.
 async function completeAppointment(
   appointmentId
 ) {

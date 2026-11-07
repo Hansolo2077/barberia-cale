@@ -86,8 +86,6 @@ async function getAppointments(
       upcomingOnly: upcomingOnly === "true",
     };
 
-    // Sin filtros:
-    // Gestión de citas obtiene todas las citas.
     if (!startDate && !endDate) {
       const result =
         await appointmentService
@@ -110,8 +108,6 @@ async function getAppointments(
       });
     }
 
-    // Si viene solo una fecha,
-    // la solicitud es incompleta.
     if (!startDate || !endDate) {
       return res.status(400).json({
         success: false,

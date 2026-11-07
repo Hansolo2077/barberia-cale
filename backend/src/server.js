@@ -63,13 +63,11 @@ const corsOptions = {
   ],
 };
 
-// Middleware global
-// Debe ejecutarse ANTES de las rutas.
+// CORS debe aplicarse antes de registrar las rutas.
 app.use(cors(corsOptions));
 
 app.use(express.json());
 
-// Rutas
 app.use(
   "/api/health",
   healthRoutes
@@ -103,7 +101,6 @@ app.use((req, res) => {
   });
 });
 
-// Servidor
 app.listen(PORT, () => {
   console.log(
     `Servidor Barbería Cale ejecutándose en puerto ${PORT}`

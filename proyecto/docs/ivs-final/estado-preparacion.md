@@ -26,7 +26,7 @@ La API publicada aceptó ambas cuentas dummy con sus roles correctos y pasó die
 | IVS-D05 | RF-03/04/07/17 y UI | Falta reejecución final de interfaz, media | ADB autorizado: 11 comprobaciones del APK, sesión, reserva, asistencia, cancelación e historial | Parcialmente cerrado; WhatsApp, móvil exhaustivo/web y push final pendientes |
 | IVS-D06 | RC-05 rendimiento | Primer login publicado 22,553 s, media | Tiempo original conservado; sucesivas lecturas registradas | Abierto para diagnóstico; no se afirma causa |
 
-Responsable de seguimiento: Hanssel. Ejecutor técnico nuevo: Codex autorizado. Fecha: 7/11/2026. Los commits/hashes finales se registran en el manifiesto y el release; la base sourceCommit de una ejecución no implica que incluya cambios locales posteriores. No se atribuye revisión de estos cambios a colaboradores que no la realizaron.
+Responsable de seguimiento: Hanssel. Ejecución técnica asistida por herramientas automatizadas. Fecha: 7/11/2026. Los commits/hashes finales se registran en el manifiesto y el release; la base sourceCommit de una ejecución no implica que incluya cambios locales posteriores. No se atribuye revisión de estos cambios a colaboradores que no la realizaron.
 
 ## Pendientes que requieren evidencia humana o acceso
 

@@ -710,11 +710,7 @@ export default function AdminScheduleScreen() {
       formattedDate
     );
 
-    /*
-     * Si la nueva fecha inicial queda
-     * después de la fecha final,
-     * ajustamos también la fecha final.
-     */
+    // Mantiene el rango válido cuando cambia su inicio.
     if (
       formattedDate >
       endDateText

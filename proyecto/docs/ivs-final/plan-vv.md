@@ -9,7 +9,7 @@
 
 Objetivo: demostrar correspondencia entre RF-01 a RF-22, implementación, datos y resultados, manteniendo las limitaciones del producto de entrega. Alcance: CLIENT/ADMIN, reservas y restricciones, persistencia, seguridad por rol, recordatorios, recuperación y documentación. No se pretende certificar seguridad, SLA, carga masiva, iOS o accesibilidad integral.
 
-Responsable de organización: Hanssel. Ejecución técnica automatizada de esta preparación: Codex con autorización de Hanssel. Revisores humanos nuevos y usuarios de validación: no confirmados; no se atribuyen aprobaciones. Referencias históricas a Ruddy/Steven solo cubren sus PR.
+Responsable de organización: Hanssel. Ejecución técnica asistida por herramientas automatizadas, bajo autorización de Hanssel. Revisores humanos nuevos y usuarios de validación: no confirmados; no se atribuyen aprobaciones. Referencias históricas a Ruddy/Steven solo cubren sus PR.
 
 ## Riesgos y técnicas
 

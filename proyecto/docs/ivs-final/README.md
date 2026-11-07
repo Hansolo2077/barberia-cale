@@ -24,7 +24,7 @@ Este expediente técnico prepara el PDF de Implementación y Validación de Soft
 
 Las fuentes de arquitectura y el modelo ER están en [arquitectura actual](../arquitectura-actual/Arquitectura_y_Diseno_Actual_Barberia_Cale.md). El [diccionario verificado](../../../docs/evidencias_pruebas/ivs-2026-11-07/diccionario.md) se genera desde el esquema real reconstruido con sus cuatro migraciones.
 
-Responsable de esta preparación: Hanssel, con asistencia de Codex. Las revisiones históricas de Ruddy y Steven conservan su atribución y alcance; no se les atribuye aprobación de cambios nuevos. La portada proporcionada identifica a Steven Rosales, Ruddy Galo y Hanssel Nuñez como integrantes de la entrega IVS.
+Responsable de esta preparación: Hanssel, con asistencia de herramientas automatizadas. Las revisiones históricas de Ruddy y Steven conservan su atribución y alcance; no se les atribuye aprobación de cambios nuevos. La portada proporcionada identifica a Steven Rosales, Ruddy Galo y Hanssel Nuñez como integrantes de la entrega IVS.
 
 Los resultados nuevos son del checkout local y sus huellas. La app instalada y los servicios publicados no se consideran actualizados por haber modificado el repositorio. No se incorporan contraseñas al expediente público.
 

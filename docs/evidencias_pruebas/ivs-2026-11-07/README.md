@@ -1,6 +1,6 @@
 # Evidencias de preparación IVS del 7 de noviembre de 2026
 
-Este corte es independiente de las evidencias de Calidad del 31/10. Ejecutado por Codex con autorización de Hanssel. Los reportes usan UTC; contexto académico Guatemala. No contiene el PDF final ni credenciales utilizables.
+Este corte es independiente de las evidencias de Calidad del 31/10. Ejecución asistida por herramientas automatizadas, bajo autorización de Hanssel. Los reportes usan UTC; contexto académico Guatemala. No contiene el PDF final ni credenciales utilizables.
 
 | Archivo | Contenido y límites |
 | --- | --- |

@@ -89,12 +89,7 @@ async function registerUser({
         user.role,
     };
   } catch (error) {
-    /*
-     * PostgreSQL unique_violation.
-     * This protects us against a race condition
-     * where two requests try to register the
-     * same phone number at nearly the same time.
-     */
+    // unique_violation cubre registros simultáneos del mismo celular.
     if (error.code === "23505") {
       const conflictError =
         new Error(
