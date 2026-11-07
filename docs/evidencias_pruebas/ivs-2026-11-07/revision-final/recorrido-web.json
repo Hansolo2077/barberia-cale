@@ -1,0 +1,312 @@
+{
+  "date": "2026-11-07",
+  "url": "https://barberiacale.netlify.app/",
+  "browser": {
+    "browser": "Microsoft Edge",
+    "version": "157.0.4341.42",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "at": "2026-11-07T17:18:39.378Z",
+    "url": "https://barberiacale.netlify.app/client/my-appointments"
+  },
+  "backendCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "frontendCommit": "No expuesto; se prueba la publicación existente, sin afirmar redespliegue o equivalencia del bundle con el checkout",
+  "method": "Interfaz web real en Edge headless de escritorio, Playwright asistido; cuentas dummy; captura PNG, texto DOM y lecturas API; sin mocks",
+  "testData": {
+    "appointmentId": 63,
+    "date": "2026-11-12",
+    "time": "15:00",
+    "owner": "CLIENT dummy autorizado"
+  },
+  "cases": [
+    {
+      "id": "WEB-01",
+      "title": "Acceso CLIENT",
+      "requirements": [
+        "RF-02",
+        "RF-16"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Iniciar sesión con CLIENT dummy",
+      "expected": "Inicio CLIENT correcto",
+      "observed": "Inicio CLIENT correcto",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T16:59:55.720558+00:00",
+      "evidence": [
+        "capturas/web-client-ready.png",
+        "capturas/web-client-ready.txt"
+      ]
+    },
+    {
+      "id": "WEB-02",
+      "title": "Reserva por interfaz",
+      "requirements": [
+        "RF-05",
+        "RF-06"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Elegir 12/11, bloque 15:00 y confirmar reserva",
+      "expected": "#63 creada desde web, 12/11/2026 15:00 PENDING",
+      "observed": "#63 creada desde web, 12/11/2026 15:00 PENDING",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:04:16.800090+00:00",
+      "evidence": [
+        "capturas/web-created-ready.png",
+        "capturas/web-created-ready.txt"
+      ]
+    },
+    {
+      "id": "WEB-03",
+      "title": "Consulta de próxima cita",
+      "requirements": [
+        "RF-07"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Abrir Ver mis citas después de reservar",
+      "expected": "Mis citas recupera la reserva pendiente",
+      "observed": "Mis citas recupera la reserva pendiente",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:05:08.872081+00:00",
+      "evidence": [
+        "capturas/web-pending.png",
+        "capturas/web-pending.txt"
+      ]
+    },
+    {
+      "id": "WEB-04",
+      "title": "Aceptación ADMIN",
+      "requirements": [
+        "RF-10",
+        "RF-11",
+        "RF-17"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Login ADMIN, buscar 63, aceptar confirmación del navegador",
+      "expected": "ADMIN acepta #63 por UI; API ACCEPTED/AWAITING; borrador WhatsApp sin envío",
+      "observed": "ADMIN acepta #63 por UI; API ACCEPTED/AWAITING; borrador WhatsApp sin envío",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:08:43.857551+00:00",
+      "evidence": [
+        "capturas/web-accepted-ready.png",
+        "capturas/web-accepted-ready.txt"
+      ]
+    },
+    {
+      "id": "WEB-05",
+      "title": "Agenda por rango, estado y búsqueda",
+      "requirements": [
+        "RF-13"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "7 días; filtro Confirmadas; buscar Mario",
+      "expected": "07/11–13/11, Confirmadas y Mario: una cita #63",
+      "observed": "07/11–13/11, Confirmadas y Mario: una cita #63",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:11:20.124324+00:00",
+      "evidence": [
+        "capturas/web-agenda-confirmed-ready.png",
+        "capturas/web-agenda-confirmed-ready.txt"
+      ]
+    },
+    {
+      "id": "WEB-06",
+      "title": "Cerrar sesión ADMIN",
+      "requirements": [
+        "RF-04"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Menú de Han, Cerrar sesión",
+      "expected": "Regresa al formulario público",
+      "observed": "Regresa al formulario público",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:12:00.392108+00:00",
+      "evidence": [
+        "capturas/web-admin-logout.png",
+        "capturas/web-admin-logout.txt"
+      ]
+    },
+    {
+      "id": "WEB-07",
+      "title": "Confirmación de asistencia CLIENT",
+      "requirements": [
+        "RF-20",
+        "RF-21"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Login CLIENT; recuperar cita aceptada; confirmar desde Mis citas",
+      "expected": "API #63 conserva ACCEPTED y asistencia CONFIRMED",
+      "observed": "API #63 conserva ACCEPTED y asistencia CONFIRMED",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:14:53.159245+00:00",
+      "evidence": [
+        "capturas/web-attendance-final.png",
+        "capturas/web-attendance-final.txt"
+      ]
+    },
+    {
+      "id": "WEB-08",
+      "title": "Descartar cancelación",
+      "requirements": [
+        "RF-09"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Cancelar cita; elegir cancelar en diálogo nativo del navegador",
+      "expected": "API conserva ACCEPTED/CONFIRMED tras descartar el confirm del navegador",
+      "observed": "API conserva ACCEPTED/CONFIRMED tras descartar el confirm del navegador",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:15:57.585182+00:00",
+      "evidence": [
+        "capturas/web-cancel-aborted-final.png",
+        "capturas/web-cancel-aborted-final.txt"
+      ]
+    },
+    {
+      "id": "WEB-09",
+      "title": "Cancelación, historial y horario libre",
+      "requirements": [
+        "RF-08",
+        "RF-09"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Cancelar cita; aceptar confirm; abrir Historial; comprobar API",
+      "expected": "#63 CANCELLED; historial 12/11 15:00; API disponibilidad 15:00 true",
+      "observed": "#63 CANCELLED; historial 12/11 15:00; API disponibilidad 15:00 true",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:18:39.373388+00:00",
+      "evidence": [
+        "capturas/web-history-target.png",
+        "capturas/web-history-target.txt"
+      ]
+    },
+    {
+      "id": "WEB-10",
+      "title": "Cerrar sesión CLIENT",
+      "requirements": [
+        "RF-04"
+      ],
+      "preconditions": "Web Netlify publicada, backend Render verificado, cuentas dummy autorizadas; cita #63 según fase",
+      "steps": "Volver al inicio; menú de Mario; cerrar sesión",
+      "expected": "Regresa al formulario público; contexto de prueba cerrado",
+      "observed": "Regresa al formulario público; contexto de prueba cerrado",
+      "status": "PASS",
+      "capturedAt": "2026-11-07T17:17:49.956273+00:00",
+      "evidence": [
+        "capturas/web-client-logout.png",
+        "capturas/web-client-logout.txt"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "path": "capturas/web-client-ready.png",
+      "sha256": "37898727afe8f3ca4b1eef3cc1e5355bdd367129763ed121cb8c675dbf4194d9"
+    },
+    {
+      "path": "capturas/web-client-ready.txt",
+      "sha256": "d21cc6e5fa97799a8fef39f734e37e93993897b8943056b9205798272839ee63"
+    },
+    {
+      "path": "capturas/web-created-ready.png",
+      "sha256": "631343091bc200bbfde44888674636f90bcab121b29d0fe62ad48e0e8b894853"
+    },
+    {
+      "path": "capturas/web-created-ready.txt",
+      "sha256": "edfb8a9742c280ea2e9a5297a5c7b200f777a37e165df3be10abe4604ae26e69"
+    },
+    {
+      "path": "capturas/web-pending.png",
+      "sha256": "510af45ffdc014efbf0a29a92e9f2974b34081c9d0052f2a41a5a021c3e15ae5"
+    },
+    {
+      "path": "capturas/web-pending.txt",
+      "sha256": "27f88cef40d69e2482a9db2b5e4c63881e0fbfbab92c281b17aeaa588999dffa"
+    },
+    {
+      "path": "capturas/web-accepted-ready.png",
+      "sha256": "37eb7d79b974d10d11db54e8e343b770bd86ed03f866752a6f7e69a3854283a7"
+    },
+    {
+      "path": "capturas/web-accepted-ready.txt",
+      "sha256": "491a00c0a7aa05f890edfaa9c321b74783760b671e9a141494476fc3f9b33c34"
+    },
+    {
+      "path": "capturas/web-agenda-confirmed-ready.png",
+      "sha256": "92f3fd7bec0b44c1dcbcd5f30d0f9fd1d66626818fb3216aca1ed0212317e26c"
+    },
+    {
+      "path": "capturas/web-agenda-confirmed-ready.txt",
+      "sha256": "8d01c311a8483ae6a704e8252febf005c722185c03316d487296a74ec62abbf3"
+    },
+    {
+      "path": "capturas/web-admin-logout.png",
+      "sha256": "25a703ac0fbcf04791af472ddff5085eadecfe3d7463e8a3a850dd5c58b50948"
+    },
+    {
+      "path": "capturas/web-admin-logout.txt",
+      "sha256": "22e740681b769219539ad29f4a7d9e80b0288c2fb777b83ba29151557e52db23"
+    },
+    {
+      "path": "capturas/web-attendance-final.png",
+      "sha256": "042b2deb9b2aa1c118fd2b3545b49de5bc5bb0739875c7bf45b852f3407d159b"
+    },
+    {
+      "path": "capturas/web-attendance-final.txt",
+      "sha256": "96b333539a0ca506d32ab2e08afd61c1187998baa7c7629daed2fd731ee77231"
+    },
+    {
+      "path": "capturas/web-cancel-aborted-final.png",
+      "sha256": "81c5ca3792b7b5aa7e3ea7ae2d0f66704fde431ba75571a68323d97b46062158"
+    },
+    {
+      "path": "capturas/web-cancel-aborted-final.txt",
+      "sha256": "331f9a02921b972c12ed9ce3281833c0935ef5ed8a16bd602b38300b37e54fc7"
+    },
+    {
+      "path": "capturas/web-history-target.png",
+      "sha256": "3cc679901ef00d0011194437476a337f73e4b5328d4d9ca4209838acf56f0a3a"
+    },
+    {
+      "path": "capturas/web-history-target.txt",
+      "sha256": "76f9b880d4251cd214aa76bde884f383cde7b61f4e0d422dfdf35a1faf9bc86f"
+    },
+    {
+      "path": "capturas/web-client-logout.png",
+      "sha256": "25a703ac0fbcf04791af472ddff5085eadecfe3d7463e8a3a850dd5c58b50948"
+    },
+    {
+      "path": "capturas/web-client-logout.txt",
+      "sha256": "22e740681b769219539ad29f4a7d9e80b0288c2fb777b83ba29151557e52db23"
+    },
+    {
+      "path": "capturas/web-date.png",
+      "sha256": "7c13e25c5c187ad4b26497994ae3fb2013c63b72436a8eedb68bfac62363f5cf"
+    },
+    {
+      "path": "capturas/web-slot.png",
+      "sha256": "ac32b16bb5b77d823ece3b9916c41c5cbb1078aa0090ff743ffa52e2ff0a3293"
+    },
+    {
+      "path": "capturas/web-client-confirmed-ready.png",
+      "sha256": "373829eea74d677de2619a934ae45a599e4eb0e6552db2afb827bb83a819ffc7"
+    },
+    {
+      "path": "capturas/web-cancelled-ready.png",
+      "sha256": "1c0c7a2d8b9999db3d874a4aea71583ca48d50dd7c260ec7dd30b8a632e69154"
+    }
+  ],
+  "limits": [
+    "Recorrido representativo; no es cobertura total de todos los RF, navegadores, tamaños o iOS.",
+    "El texto DOM puede incluir vistas conservadas fuera de pantalla; se distingue de las capturas visibles.",
+    "Confirmaciones del navegador elegidas por el controlador; no se simula un endpoint en lugar del botón.",
+    "No se enviaron mensajes WhatsApp ni se probaron push web, excluidas del alcance.",
+    "Pruebas de roles usan cuentas dummy autorizadas; solo la cita #63 fue creada y cancelada en esta campaña."
+  ],
+  "summary": {
+    "executed": 10,
+    "passed": 10,
+    "failed": 0
+  },
+  "cleanup": "#63 termina CANCELLED, bloque 15:00 libre, sesiones cerradas; no se borró historial ni se alteraron citas ajenas."
+}

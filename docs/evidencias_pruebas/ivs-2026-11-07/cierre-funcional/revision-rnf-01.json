@@ -1,0 +1,51 @@
+{
+  "id": "CR-RNF-01-20261107",
+  "date": "2026-11-07",
+  "authorizedBy": "Hanssel Núñez, responsable de esta revisión del proyecto",
+  "original": {
+    "id": "RNF-01",
+    "thresholdMs": 500,
+    "source": "Hito I, pagina 7",
+    "preserved": true
+  },
+  "revised": {
+    "id": "RNF-01 revisión 1",
+    "thresholdMs": 1000,
+    "text": "Objetivo de respuesta HTTP inferior a 1 segundo en condiciones normales de operación interactiva, con el servicio activo. La latencia inicial asociada a la activación de infraestructura gratuita se registra por separado.",
+    "scope": "Objetivo del backend; no es tiempo de renderizado UI, garantía bajo cualquier carga ni SLA de disponibilidad."
+  },
+  "reason": "Recalibración explícita del objetivo de diseño a partir de mediciones del despliegue y del costo-beneficio operativo para una barbería pequeña; no se afirma que hubiera optimización ni se altera evidencia histórica.",
+  "measurement": "rendimiento-publicado.json",
+  "assessment": [
+    {
+      "flow": "login",
+      "n": 15,
+      "below1000": 15,
+      "p95Ms": 905.67,
+      "maxMs": 905.67,
+      "status": "PASS_IN_SAMPLE"
+    },
+    {
+      "flow": "disponibilidad",
+      "n": 15,
+      "below1000": 15,
+      "p95Ms": 651.064,
+      "maxMs": 651.064,
+      "status": "PASS_IN_SAMPLE"
+    },
+    {
+      "flow": "mis_citas",
+      "n": 15,
+      "below1000": 15,
+      "p95Ms": 308.141,
+      "maxMs": 308.141,
+      "status": "PASS_IN_SAMPLE"
+    }
+  ],
+  "limits": [
+    "Se conserva el hallazgo frente al objetivo original de 500 ms.",
+    "No se afirma suficiencia de capacidad sin pruebas concurrentes.",
+    "La primera solicitud de 23677.132 ms se registra; no se demostró que su causa fuera cold start.",
+    "La decisión de proyecto no se atribuye como aceptación del docente o del negocio."
+  ]
+}

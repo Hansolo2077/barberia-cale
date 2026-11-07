@@ -1,3 +1,5 @@
+> **RNF-01 vigente, revisión 1 (CR-RNF-01-20261107):** objetivo HTTP <1 segundo en condiciones normales, servicio activo; latencia inicial registrada aparte. Autorizado por Hanssel el 07/11/2026. Las 45 muestras activas cumplen el objetivo revisado; se preservan el antecedente de 500 ms y sus desviaciones. Ver [justificación, evaluación y seguimiento](revision-rnf-01.md).
+
 # Aclaración y nueva medición de RNF-01
 
 El requisito original del Hito I, página 7, establece respuesta HTTP inferior a **500 ms en condiciones normales**, considerando que el cold start de la infraestructura gratuita puede añadir latencia inicial. No establece un segundo. El umbral de 1000 ms del runner de apoyo no sustituye este requisito.
@@ -12,7 +14,7 @@ Después se verificó el backend `51a6a28314452045d912d8f0940190a24c344bfb`, se 
 | disponibilidad | 15/15 | 14/15 | 393.214 | 651.064 |
 | mis_citas | 15/15 | 15/15 | 272.782 | 308.141 |
 
-**Resultado:** las 45 solicitudes respondieron correctamente, pero el objetivo temporal solo se observó en todas las muestras de mis citas. Login superó 500 ms en las quince muestras; disponibilidad lo superó en una. Existe una desviación de rendimiento observada con el servicio ya respondiendo; se mantiene IVS-D06 abierto. No se declara el objetivo cumplido ni un incumplimiento general a partir de una sola solicitud inicial.
+**Resultado:** las 45 solicitudes respondieron correctamente, pero el objetivo temporal solo se observó en todas las muestras de mis citas. Login superó 500 ms en las quince muestras; disponibilidad lo superó en una. Existe una desviación de rendimiento observada con el servicio ya respondiendo; esta es la comparación contra el objetivo anterior. La evaluación vigente se registra en CR-RNF-01-20261107; no se presenta como una optimización. No se declara el objetivo cumplido ni un incumplimiento general a partir de una sola solicitud inicial.
 
 No se modificaron contraseñas, citas, código de aplicación ni infraestructura. La evidencia no identifica el componente causal, no mide carga concurrente o SLA y no acredita el rendimiento de todas las plataformas. No se debilitó bcrypt ni se introdujo caché para obtener resultados favorables.
 

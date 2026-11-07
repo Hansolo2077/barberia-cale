@@ -1,4 +1,4 @@
-> **Aclaración de rendimiento posterior al cierre:** RNF-01 exige <500 ms en condiciones normales y contempla latencia inicial por cold start. Se separa la primera solicitud y se conservan 45 muestras del servicio activo: login p95 905,670 ms; disponibilidad 651,064 ms; mis citas 308,141 ms. IVS-D06 sigue abierto por desviaciones observadas, sin deducir incumplimiento general del arranque inicial. Ver [medición y alcance](rendimiento-publicado.md).
+> **RNF-01 vigente, revisión 1 (CR-RNF-01-20261107):** objetivo HTTP <1 segundo en condiciones normales, servicio activo; latencia inicial registrada aparte. Autorizado por Hanssel el 07/11/2026. Las 45 muestras activas cumplen el objetivo revisado; se preservan el antecedente de 500 ms y sus desviaciones. Ver [justificación, evaluación y seguimiento](revision-rnf-01.md).
 
 # Estado del proyecto previo al PDF
 
@@ -20,7 +20,7 @@ La API publicada aceptó ambas cuentas dummy con sus roles correctos y pasó die
 | ID | Requisito/área | Hallazgo y severidad | Cambio y verificación | Estado |
 | --- | --- | --- | --- | --- |
 | IVS-D01 | Reproducibilidad | make-admin.js contenía celular fijo, media | Exige argumento válido; instalación explica uso en sandbox; huella en manifiesto | Corregido local; no se ejecutó promoción en producción |
-| IVS-D02 | Compatibilidad RC-08/09 | Dieciocho parches recomendados, media | Expo install --fix dentro de SDK 57; install --check PASS; controles y builds nuevos | Corregido en candidato local; app instalada no se presume actualizada |
+| IVS-D02 | Compatibilidad RC-08/09 | Dieciocho parches recomendados, media | Expo install --fix dentro de SDK 57; install --check PASS; controles y builds nuevos | Corregido en versión local; app instalada no se presume actualizada |
 | IVS-D03 | Seguridad dependencias | Seis altas npm iniciales, alta | Parches y audit fix compatible; seis→tres altas; backend cero | Altas cerradas en 1.0.1; once moderadas abiertas (ver actualización) |
 | IVS-D04 | Recuperación | Sin ensayo de restauración verificable, alta | ivs-recovery.cjs; archivo real sintético restaurado, igualdad, FK y secuencias | Cerrado en alcance de laboratorio; operativo pendiente |
 | IVS-D05 | RF-03/04/07/17 y UI | Falta reejecución final de interfaz, media | ADB autorizado: 11 comprobaciones del APK, sesión, reserva, asistencia, cancelación e historial | Parcialmente cerrado; WhatsApp, móvil exhaustivo/web y push final pendientes |
@@ -39,7 +39,7 @@ Responsable de seguimiento: Hanssel. Ejecutor técnico nuevo: Codex autorizado. 
 
 ## Decisión y preparación del documento
 
-El candidato se mantiene para evaluación académica/piloto controlado, con riesgos residuales. No se recomienda liberación general por hallazgos frontend y validación integral aún pendiente. La compilación Android y el recorrido reducido del APK sí fueron comprobados; no convierten los escenarios restantes en aprobados.
+La versión de entrega se mantiene para evaluación académica/piloto controlado, con riesgos residuales. No se recomienda liberación general por hallazgos frontend y validación integral aún pendiente. La compilación Android y el recorrido reducido del APK sí fueron comprobados; no convierten los escenarios restantes en aprobados.
 
 El PDF puede generarse con resultados y límites reales. Para declararlo completamente cerrado deben incorporarse las confirmaciones/evidencias pendientes o mantenerlas visibles con su impacto. Orden: portada/integrantes → resumen/alcance → correcciones I/II → requisitos/aceptación → usabilidad/interfaz → arquitectura/datos → instalación/migración/recuperación → manual/capacitación → plan/resultados V&V → defectos/regresión → trazabilidad → versión/repositorio → autoverificación → conclusiones/anexos.
 
@@ -55,4 +55,4 @@ Los 5 puntos de defensa se trabajan aparte por instrucción del usuario. El PDF 
 
 ## Actualización de seguridad 1.0.1
 
-El cierre posterior del 07/11/2026 elimina las tres alertas altas de la cadena Expo Router/query-string/decoder: auditoría frontend actual 0 altas, 11 moderadas y 0 críticas; backend 0. Se mantienen los resultados del release 1.0.0 como antecedentes fechados, no como pruebas del nuevo binario. Véase [corrección, reproducción y límites](seguridad-frontend.md) y los [controles posteriores](../../../docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json). El nuevo candidato se identifica como v1.0.1-ivs.20261107; no se sustituye el release previo.
+El cierre posterior del 07/11/2026 elimina las tres alertas altas de la cadena Expo Router/query-string/decoder: auditoría frontend actual 0 altas, 11 moderadas y 0 críticas; backend 0. Se mantienen los resultados del release 1.0.0 como antecedentes fechados, no como pruebas del nuevo binario. Véase [corrección, reproducción y límites](seguridad-frontend.md) y los [controles posteriores](../../../docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json). El nueva versión de entrega se identifica como v1.0.1-ivs.20261107; no se sustituye el release previo.

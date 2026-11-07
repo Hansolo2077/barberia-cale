@@ -1,0 +1,190 @@
+[
+  {
+    "at": "2026-11-07T16:59:19.856Z",
+    "route": "/api/auth/login",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T16:59:20.797Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:00:30.705Z",
+    "route": "/api/appointments/next-availability",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:01:13.713Z",
+    "route": "/api/appointments/availability",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:03:41.366Z",
+    "route": "/api/appointments",
+    "http": 201,
+    "id": 63,
+    "state": "PENDING"
+  },
+  {
+    "at": "2026-11-07T17:03:42.169Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:05:08.718Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:06:35.759Z",
+    "route": "/api/auth/login",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:06:36.532Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:06:36.855Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:06:36.914Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:07:16.914Z",
+    "route": "/api/admin/attendance-reminders/summary",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:07:17.248Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:07:50.309Z",
+    "route": "/api/admin/attendance-reminders/summary",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:07:50.407Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:08:42.148Z",
+    "route": "/api/admin/appointments/63/accept",
+    "http": 200,
+    "id": 63,
+    "state": "ACCEPTED"
+  },
+  {
+    "at": "2026-11-07T17:08:42.905Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:08:42.934Z",
+    "route": "/api/admin/attendance-reminders/summary",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:09:31.785Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:09:31.882Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:09:32.028Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:09:32.510Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:10:35.314Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:11:17.387Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:11:18.508Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:11:57.641Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:11:57.767Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:11:57.767Z",
+    "route": "/api/admin/appointments",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:13:32.422Z",
+    "route": "/api/auth/login",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:13:33.220Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:13:58.391Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:14:51.554Z",
+    "route": "/api/appointments/63/confirm-attendance",
+    "http": 200,
+    "id": 63,
+    "state": "ACCEPTED"
+  },
+  {
+    "at": "2026-11-07T17:14:52.298Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:16:26.758Z",
+    "route": "/api/appointments/63/cancel",
+    "http": 200,
+    "id": 63,
+    "state": "CANCELLED"
+  },
+  {
+    "at": "2026-11-07T17:16:27.495Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  },
+  {
+    "at": "2026-11-07T17:17:47.158Z",
+    "route": "/api/appointments/my",
+    "http": 200
+  }
+]

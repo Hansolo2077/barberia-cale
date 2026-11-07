@@ -31,6 +31,12 @@ Revisión: 3 de octubre de 2026. Línea base RF-01 a RF-22 contrastada con el c�
 
 La [matriz de trazabilidad](arquitectura-actual/Arquitectura_y_Diseno_Actual_Barberia_Cale.md#14-matriz-de-trazabilidad-completa) relaciona cada requisito con interfaz, módulos, endpoint y datos. Las reglas se implementan principalmente en backend/src/services/appointment.service.js; los filtros de próximas e historial están en src/app/client/my-appointments.tsx.
 
-El [banco de evidencias](../../docs/arquitectura-actual/Capturas_App_Segundo_Parcial.md) documenta qué flujos fueron ejecutados. Un requisito descrito como implementado no implica que tenga una prueba integral aprobada: permanecen pendientes en ese banco el cierre exitoso a COMPLETED, la restauración de sesión tras reinicio, rechazos de endpoints por rol y la entrega efectiva de push.
+El [banco de evidencias](../../docs/arquitectura-actual/Capturas_App_Segundo_Parcial.md) documenta qué flujos fueron ejecutados. Un requisito implementado no implica cobertura integral. El cierre IVS del 07/11/2026 añade 23 casos APK actuales, completar por interfaz, sesiones, controles por rol y push manual/automático recibidos; las seis regresiones de calendarios y el recorrido web se registran en [revisión final](ivs-final/revision-observaciones.md). El banco anterior se conserva como antecedente fechado.
 
 [Alcance actual](alcance-actual.md) · [Índice documental](README.md) · [Versiones anteriores](../../docs/documentacion-archivada/README.md)
+
+## Requisitos no funcionales: revisión vigente de rendimiento
+
+**RNF-01, revisión 1 — 07/11/2026:** objetivo de respuesta HTTP inferior a **1 segundo** en condiciones normales de operación interactiva, con el servicio activo. La latencia inicial asociada a la activación de infraestructura gratuita se registra por separado. No es una garantía de tiempo de renderizado, capacidad concurrente o disponibilidad.
+
+El objetivo original de 500 ms del Hito I se conserva como antecedente. [CR-RNF-01-20261107](ivs-final/revision-rnf-01.md) registra autorización, justificación de costo-beneficio, comparación sobre las mismas 45 muestras y condiciones de seguimiento. El cambio no se presenta como una optimización de código ni altera las evidencias originales.

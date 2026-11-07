@@ -1,3 +1,5 @@
+> **RNF-01 vigente, revisión 1 (CR-RNF-01-20261107):** objetivo HTTP <1 segundo en condiciones normales, servicio activo; latencia inicial registrada aparte. Autorizado por Hanssel el 07/11/2026. Las 45 muestras activas cumplen el objetivo revisado; se preservan el antecedente de 500 ms y sus desviaciones. Ver [justificación, evaluación y seguimiento](revision-rnf-01.md).
+
 # Aceptación y trazabilidad final de IVS
 
 > Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
@@ -49,6 +51,6 @@ La tabla anterior conserva el alcance base de campaña API y antecedentes. El bl
 | RF-11 | UI-07: aceptación por API ADMIN se recupera como Confirmada en CLIENT | Integración conforme; no se atribuye a botón ADMIN |
 | RF-20 | UI-08 y API: asistencia CONFIRMED tras pulsar en Mis citas | Conforme en Mis citas; vía notificación final pendiente |
 
-RF-17 y la campaña final de notificaciones conservan sus pendientes. La matriz completa debe enlazar estos resultados y el tag del candidato en el PDF; UI-P detalla las variantes no ejecutadas.
+RF-17 y la campaña final de notificaciones conservan sus pendientes. La matriz completa debe enlazar estos resultados y el tag de la versión de entrega en el PDF; UI-P detalla las variantes no ejecutadas.
 
-Para cerrar una fila: requisito → criterio anterior → caso → resultado original → ruta/huella → versión candidata. Conservar FAIL/BLOCKED y riesgos residuales; no convertir 27/27 escenarios en cobertura completa de RF o de código.
+Para cerrar una fila: requisito → criterio anterior → caso → resultado original → ruta/huella → versión de entrega. Conservar FAIL/BLOCKED y riesgos residuales; no convertir 27/27 escenarios en cobertura completa de RF o de código.

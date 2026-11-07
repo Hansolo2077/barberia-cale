@@ -1,0 +1,16 @@
+BARBERÍA
+CALE
+Tu silla te espera
+Entra para reservar tu próximo corte y revisar tus citas.
+Número de celular
+8 dígitos, sin espacios; debe comenzar con 8, 7 o 5.
+Contraseña
+
+¿Problemas para entrar?
+Mantener mi sesión iniciada
+Actívalo solo si este dispositivo es tuyo.
+Iniciar sesión
+¿No tienes una cuenta?
+Crear cuenta
+
+Volver

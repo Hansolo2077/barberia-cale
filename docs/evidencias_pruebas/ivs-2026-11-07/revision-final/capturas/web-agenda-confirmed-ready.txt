@@ -1,0 +1,56 @@
+CALENDARIO
+Agenda
+Consulta las citas dentro de un rango de fechas y filtra los resultados por estado.
+
+
+Elige el período
+Consulta rápidamente hoy, mañana o los próximos siete días.
+Hoy
+Mañana
+7 días
+
+Elegir un rango personalizado
+Actualizado a las 11:11 a. m.
+
+
+PERÍODO CONSULTADO
+sábado, 7 de noviembre — viernes, 13 de noviembre
+Hay 4 registros; 1 cita activa.
+0
+Pendientes
+1
+Confirmadas
+Filtrar por estado
+Pendientes
+0
+Confirmadas
+1
+Completadas
+0
+Canceladas
+3
+Rechazadas
+0
+Buscar en este período
+
+
+Citas
+1 resultado
+jueves, 12 de noviembre
+1 cita mostrada
+3:00 p. m.
+M
+CLIENTE
+Mario Herrera
+Solicitada hace menos de una hora · #63
+Confirmada
+
+Corte de cabello
+
+Por confirmar
+
+Ver detalles
+
+Gestionar cita
+
+Volver

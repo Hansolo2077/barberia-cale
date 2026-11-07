@@ -1,3 +1,5 @@
+> **RNF-01 vigente, revisión 1 (CR-RNF-01-20261107):** objetivo HTTP <1 segundo en condiciones normales, servicio activo; latencia inicial registrada aparte. Autorizado por Hanssel el 07/11/2026. Las 45 muestras activas cumplen el objetivo revisado; se preservan el antecedente de 500 ms y sus desviaciones. Ver [justificación, evaluación y seguimiento](revision-rnf-01.md).
+
 # Barbería Cale 1.0.1 — cierre funcional IVS, revisión 2
 
 Mismo APK 1.0.1 / versionCode 2 del cierre de seguridad, ahora comprobado con un recorrido funcional completo y controles administrativos adicionales. SHA-256 del binario: 4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f.

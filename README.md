@@ -6,7 +6,7 @@ La [preparación final de Implementación y Validación](proyecto/docs/ivs-final
 
 ## Funcionalidades
 
-El [cierre funcional de IVS](proyecto/docs/ivs-final/cierre-funcional.md) incorpora 23 casos UI del APK 1.0.1, recepción push manual y automática, controles ADMIN, 27 pruebas de integración reejecutadas y SHA verificable del backend publicado. El [release de revisión 2](https://github.com/Hansolo2077/barberia-cale/releases/tag/v1.0.1-ivs.20261107-r2) conserva el mismo APK comprobado y las nuevas evidencias.
+El [cierre funcional de IVS](proyecto/docs/ivs-final/cierre-funcional.md) incorpora 23 casos UI del APK 1.0.1, recepción push manual y automática, controles ADMIN, 27 pruebas de integración reejecutadas y SHA verificable del backend publicado. El [release de revisión 3](https://github.com/Hansolo2077/barberia-cale/releases/tag/v1.0.1-ivs.20261107-r3) conserva el mismo APK comprobado e integra las regresiones de calendario, recorrido web y revisión justificada de RNF-01 a <1 segundo. Ver [resolución y reproducción](proyecto/docs/ivs-final/revision-observaciones.md).
 
 - Registro, inicio de sesión y persistencia opcional de la sesión.
 - Consulta de disponibilidad y reserva con reglas de anticipación y frecuencia.

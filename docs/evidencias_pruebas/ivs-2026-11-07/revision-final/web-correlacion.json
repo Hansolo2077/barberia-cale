@@ -1,0 +1,310 @@
+[
+  {
+    "at": "2026-11-07T17:11:02.334Z",
+    "phase": "accepted",
+    "appointment": {
+      "id": 63,
+      "service": "Corte de cabello",
+      "date": "2026-11-12",
+      "time": "15:00",
+      "status": "ACCEPTED",
+      "clientAttendanceConfirmedAt": null,
+      "attendanceStatus": "AWAITING",
+      "canConfirmAttendance": true,
+      "createdAt": "2026-11-07T17:03:40.888Z",
+      "cancelUntil": "2026-11-12T20:00:00.000Z",
+      "canCancel": true,
+      "isPast": false
+    },
+    "availability": {
+      "success": true,
+      "date": "2026-11-12",
+      "times": [
+        {
+          "time": "08:00",
+          "available": true
+        },
+        {
+          "time": "09:00",
+          "available": true
+        },
+        {
+          "time": "10:00",
+          "available": true
+        },
+        {
+          "time": "11:00",
+          "available": true
+        },
+        {
+          "time": "12:00",
+          "available": true
+        },
+        {
+          "time": "13:00",
+          "available": true
+        },
+        {
+          "time": "14:00",
+          "available": true
+        },
+        {
+          "time": "15:00",
+          "available": false
+        },
+        {
+          "time": "16:00",
+          "available": true
+        },
+        {
+          "time": "17:00",
+          "available": true
+        }
+      ],
+      "eligibility": {
+        "allowed": false,
+        "reason": "Ya tienes una cita activa para este día.",
+        "activeOnDate": 1,
+        "activeInSevenDays": 1
+      },
+      "policy": {
+        "minLeadHours": 24,
+        "maxActivePerDay": 1,
+        "maxActiveInSevenDays": 2,
+        "cancellationWindowMinutes": 60,
+        "businessTimeZone": "America/Managua"
+      }
+    }
+  },
+  {
+    "at": "2026-11-07T17:15:29.842Z",
+    "phase": "attendance",
+    "appointment": {
+      "id": 63,
+      "service": "Corte de cabello",
+      "date": "2026-11-12",
+      "time": "15:00",
+      "status": "ACCEPTED",
+      "clientAttendanceConfirmedAt": "2026-11-07T17:14:51.507Z",
+      "attendanceStatus": "CONFIRMED",
+      "canConfirmAttendance": false,
+      "createdAt": "2026-11-07T17:03:40.888Z",
+      "cancelUntil": "2026-11-12T20:00:00.000Z",
+      "canCancel": true,
+      "isPast": false
+    },
+    "availability": {
+      "success": true,
+      "date": "2026-11-12",
+      "times": [
+        {
+          "time": "08:00",
+          "available": true
+        },
+        {
+          "time": "09:00",
+          "available": true
+        },
+        {
+          "time": "10:00",
+          "available": true
+        },
+        {
+          "time": "11:00",
+          "available": true
+        },
+        {
+          "time": "12:00",
+          "available": true
+        },
+        {
+          "time": "13:00",
+          "available": true
+        },
+        {
+          "time": "14:00",
+          "available": true
+        },
+        {
+          "time": "15:00",
+          "available": false
+        },
+        {
+          "time": "16:00",
+          "available": true
+        },
+        {
+          "time": "17:00",
+          "available": true
+        }
+      ],
+      "eligibility": {
+        "allowed": false,
+        "reason": "Ya tienes una cita activa para este día.",
+        "activeOnDate": 1,
+        "activeInSevenDays": 1
+      },
+      "policy": {
+        "minLeadHours": 24,
+        "maxActivePerDay": 1,
+        "maxActiveInSevenDays": 2,
+        "cancellationWindowMinutes": 60,
+        "businessTimeZone": "America/Managua"
+      }
+    }
+  },
+  {
+    "at": "2026-11-07T17:16:11.719Z",
+    "phase": "aborted",
+    "appointment": {
+      "id": 63,
+      "service": "Corte de cabello",
+      "date": "2026-11-12",
+      "time": "15:00",
+      "status": "ACCEPTED",
+      "clientAttendanceConfirmedAt": "2026-11-07T17:14:51.507Z",
+      "attendanceStatus": "CONFIRMED",
+      "canConfirmAttendance": false,
+      "createdAt": "2026-11-07T17:03:40.888Z",
+      "cancelUntil": "2026-11-12T20:00:00.000Z",
+      "canCancel": true,
+      "isPast": false
+    },
+    "availability": {
+      "success": true,
+      "date": "2026-11-12",
+      "times": [
+        {
+          "time": "08:00",
+          "available": true
+        },
+        {
+          "time": "09:00",
+          "available": true
+        },
+        {
+          "time": "10:00",
+          "available": true
+        },
+        {
+          "time": "11:00",
+          "available": true
+        },
+        {
+          "time": "12:00",
+          "available": true
+        },
+        {
+          "time": "13:00",
+          "available": true
+        },
+        {
+          "time": "14:00",
+          "available": true
+        },
+        {
+          "time": "15:00",
+          "available": false
+        },
+        {
+          "time": "16:00",
+          "available": true
+        },
+        {
+          "time": "17:00",
+          "available": true
+        }
+      ],
+      "eligibility": {
+        "allowed": false,
+        "reason": "Ya tienes una cita activa para este día.",
+        "activeOnDate": 1,
+        "activeInSevenDays": 1
+      },
+      "policy": {
+        "minLeadHours": 24,
+        "maxActivePerDay": 1,
+        "maxActiveInSevenDays": 2,
+        "cancellationWindowMinutes": 60,
+        "businessTimeZone": "America/Managua"
+      }
+    }
+  },
+  {
+    "at": "2026-11-07T17:17:20.241Z",
+    "phase": "cancelled",
+    "appointment": {
+      "id": 63,
+      "service": "Corte de cabello",
+      "date": "2026-11-12",
+      "time": "15:00",
+      "status": "CANCELLED",
+      "clientAttendanceConfirmedAt": "2026-11-07T17:14:51.507Z",
+      "attendanceStatus": "NOT_APPLICABLE",
+      "canConfirmAttendance": false,
+      "createdAt": "2026-11-07T17:03:40.888Z",
+      "cancelUntil": "2026-11-12T20:00:00.000Z",
+      "canCancel": false,
+      "isPast": false
+    },
+    "availability": {
+      "success": true,
+      "date": "2026-11-12",
+      "times": [
+        {
+          "time": "08:00",
+          "available": true
+        },
+        {
+          "time": "09:00",
+          "available": true
+        },
+        {
+          "time": "10:00",
+          "available": true
+        },
+        {
+          "time": "11:00",
+          "available": true
+        },
+        {
+          "time": "12:00",
+          "available": true
+        },
+        {
+          "time": "13:00",
+          "available": true
+        },
+        {
+          "time": "14:00",
+          "available": true
+        },
+        {
+          "time": "15:00",
+          "available": true
+        },
+        {
+          "time": "16:00",
+          "available": true
+        },
+        {
+          "time": "17:00",
+          "available": true
+        }
+      ],
+      "eligibility": {
+        "allowed": true,
+        "reason": null,
+        "activeOnDate": 0,
+        "activeInSevenDays": 0
+      },
+      "policy": {
+        "minLeadHours": 24,
+        "maxActivePerDay": 1,
+        "maxActiveInSevenDays": 2,
+        "cancellationWindowMinutes": 60,
+        "businessTimeZone": "America/Managua"
+      }
+    }
+  }
+]

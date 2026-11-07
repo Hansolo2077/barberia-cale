@@ -1,0 +1,193 @@
+{
+  "date": "2026-11-07",
+  "apk": {
+    "versionName": "1.0.1",
+    "versionCode": 2,
+    "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f"
+  },
+  "method": "ADB sobre interfaz real; seleccionar dia provisional y descartar por CANCEL o tecla Android Back; sin crear reservas",
+  "cases": [
+    {
+      "id": "CAL-01",
+      "defect": "DEF-01",
+      "requirements": [
+        "RF-05"
+      ],
+      "title": "CLIENT Cancelar",
+      "preconditions": "APK release 1.0.1, cuenta dummy del rol; fecha inicial CLIENT 08/11; rango ADMIN 07/11–13/11",
+      "steps": "Abrir selector; elegir 12 November 2026 sin pulsar OK; descartar mediante CANCEL",
+      "expected": "Conservar fecha 08/11 y sus horarios",
+      "observed": "Fecha de reserva conserva 08/11",
+      "status": "PASS",
+      "captures": [
+        "calendar-top.png",
+        "calendar-client-draft.png",
+        "calendar-client-cancel.png"
+      ],
+      "capturedAt": "2026-11-07T16:58:18.346552+00:00"
+    },
+    {
+      "id": "CAL-02",
+      "defect": "DEF-01",
+      "requirements": [
+        "RF-05"
+      ],
+      "title": "CLIENT Atrás",
+      "preconditions": "APK release 1.0.1, cuenta dummy del rol; fecha inicial CLIENT 08/11; rango ADMIN 07/11–13/11",
+      "steps": "Abrir selector; elegir 13 November 2026 sin pulsar OK; descartar mediante Android Back",
+      "expected": "Conservar fecha 08/11 y sus horarios",
+      "observed": "Fecha de reserva conserva 08/11",
+      "status": "PASS",
+      "captures": [
+        "calendar-client-cancel.png",
+        "calendar-client-draft-back.png",
+        "calendar-client-back.png"
+      ],
+      "capturedAt": "2026-11-07T16:59:43.447550+00:00"
+    },
+    {
+      "id": "CAL-03",
+      "defect": "DEF-02",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "ADMIN inicio Cancelar",
+      "preconditions": "APK release 1.0.1, cuenta dummy del rol; fecha inicial CLIENT 08/11; rango ADMIN 07/11–13/11",
+      "steps": "Abrir selector; elegir 09 November 2026 sin pulsar OK; descartar mediante CANCEL",
+      "expected": "Conservar ambos extremos 07/11 y 13/11, sin borrador aplicado",
+      "observed": "Campos conservan 07/11–13/11; consulta final conserva ese rango",
+      "status": "PASS",
+      "captures": [
+        "calendar-admin-custom-top.png",
+        "calendar-admin-start-draft.png",
+        "calendar-admin-start-cancel.png"
+      ],
+      "capturedAt": "2026-11-07T17:04:09.533972+00:00"
+    },
+    {
+      "id": "CAL-04",
+      "defect": "DEF-02",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "ADMIN inicio Atrás",
+      "preconditions": "APK release 1.0.1, cuenta dummy del rol; fecha inicial CLIENT 08/11; rango ADMIN 07/11–13/11",
+      "steps": "Abrir selector; elegir 09 November 2026 sin pulsar OK; descartar mediante Android Back",
+      "expected": "Conservar ambos extremos 07/11 y 13/11, sin borrador aplicado",
+      "observed": "Campos conservan 07/11–13/11; consulta final conserva ese rango",
+      "status": "PASS",
+      "captures": [
+        "calendar-admin-start-cancel.png",
+        "calendar-admin-start-retry-draft.png",
+        "calendar-admin-start-retry-back.png"
+      ],
+      "capturedAt": "2026-11-07T17:06:50.128407+00:00"
+    },
+    {
+      "id": "CAL-05",
+      "defect": "DEF-02",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "ADMIN fin Cancelar",
+      "preconditions": "APK release 1.0.1, cuenta dummy del rol; fecha inicial CLIENT 08/11; rango ADMIN 07/11–13/11",
+      "steps": "Abrir selector; elegir 20 November 2026 sin pulsar OK; descartar mediante CANCEL",
+      "expected": "Conservar ambos extremos 07/11 y 13/11, sin borrador aplicado",
+      "observed": "Campos conservan 07/11–13/11; consulta final conserva ese rango",
+      "status": "PASS",
+      "captures": [
+        "calendar-admin-start-retry-back.png",
+        "calendar-admin-end-draft-verified.png",
+        "calendar-admin-end-cancel-verified.png"
+      ],
+      "capturedAt": "2026-11-07T17:06:02.269380+00:00"
+    },
+    {
+      "id": "CAL-06",
+      "defect": "DEF-02",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "ADMIN fin Atrás",
+      "preconditions": "APK release 1.0.1, cuenta dummy del rol; fecha inicial CLIENT 08/11; rango ADMIN 07/11–13/11",
+      "steps": "Abrir selector; elegir 20 November 2026 sin pulsar OK; descartar mediante Android Back",
+      "expected": "Conservar ambos extremos 07/11 y 13/11, sin borrador aplicado",
+      "observed": "Campos conservan 07/11–13/11; consulta final conserva ese rango",
+      "status": "PASS",
+      "captures": [
+        "calendar-admin-end-cancel-verified.png",
+        "calendar-admin-end-back-draft.png",
+        "calendar-admin-end-back.png"
+      ],
+      "capturedAt": "2026-11-07T17:06:17.914875+00:00"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "capturas/calendar-admin-applied-final.png",
+      "sha256": "aa20cdb5a2019ed9fe8fda3dd4ee1a02952d577b73f75f7bba0a5aa7dfd61e3d"
+    },
+    {
+      "path": "capturas/calendar-admin-custom-top.png",
+      "sha256": "ed1e4f3326e22e494b715e3e58e7e1e351758983ddd6691b810a233bcc984cf3"
+    },
+    {
+      "path": "capturas/calendar-admin-end-back.png",
+      "sha256": "6b9260b4ff7c907d5452419f4eaf0dedc9e2f4c850182aaac2ba0cad4d3c2a1d"
+    },
+    {
+      "path": "capturas/calendar-admin-end-back-draft.png",
+      "sha256": "46b7821df7935685820b3a25869f28d6d83a8215c277bc58f746c889e3f82a04"
+    },
+    {
+      "path": "capturas/calendar-admin-end-cancel-verified.png",
+      "sha256": "6b9260b4ff7c907d5452419f4eaf0dedc9e2f4c850182aaac2ba0cad4d3c2a1d"
+    },
+    {
+      "path": "capturas/calendar-admin-end-draft-verified.png",
+      "sha256": "e076542d7df23ce443966da0c2dacf119da067ecce3fd6dd4a26aeb25aeda44d"
+    },
+    {
+      "path": "capturas/calendar-admin-start-cancel.png",
+      "sha256": "50a98f0a2b6eae2757ba0cc04d5910b2389dd7372bfd71a13d09d76bdefb947b"
+    },
+    {
+      "path": "capturas/calendar-admin-start-draft.png",
+      "sha256": "019ed629ab4b5254ca90f1743713efaee646cd02c66709379bdbf711e59cdf14"
+    },
+    {
+      "path": "capturas/calendar-admin-start-retry-back.png",
+      "sha256": "6b9260b4ff7c907d5452419f4eaf0dedc9e2f4c850182aaac2ba0cad4d3c2a1d"
+    },
+    {
+      "path": "capturas/calendar-admin-start-retry-draft.png",
+      "sha256": "e8c2ba64b6588c8154d5c9e664ebab9e810d6ce99580dfde4275c2639de08253"
+    },
+    {
+      "path": "capturas/calendar-client-back.png",
+      "sha256": "a0d54eb62a34bbe4158bd0f744538dfcfe9f8170666d3a05417aa4228cc01173"
+    },
+    {
+      "path": "capturas/calendar-client-cancel.png",
+      "sha256": "fa5a17f1588ee81cfed2955f41490ca44bc9a05b2347285a2d5fb4c62b8b76a4"
+    },
+    {
+      "path": "capturas/calendar-client-draft.png",
+      "sha256": "c76888bc397913d6f39c4fda20a081f746f2af62af28fd75e98727e4b9cd01f9"
+    },
+    {
+      "path": "capturas/calendar-client-draft-back.png",
+      "sha256": "b8020ccbbc5f90e4cd0c8df7c9c775c8be0ad3d59f80d6297ec599a79152ca9e"
+    },
+    {
+      "path": "capturas/calendar-top.png",
+      "sha256": "ed000b0210a273eed6858f3a8fa9c82a3ff9e53bececfc78c2b109491f7ef7ce"
+    }
+  ],
+  "summary": {
+    "executed": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "limits": "ANDROID seleccionado: no equivale a pruebas iOS o todos los estilos de calendario. La cantidad de citas cambió durante el recorrido web paralelo; la aserción compara fechas y rango, no congela datos de negocio."
+}

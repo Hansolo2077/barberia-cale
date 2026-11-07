@@ -1,0 +1,35 @@
+SOLICITUDES
+Gestión de citas
+Gestiona las solicitudes pendientes y consulta citas por estado.
+
+TRABAJO PENDIENTE
+Todo está al día
+No hay nuevas solicitudes esperando respuesta.
+
+Actualizado a las 11:08 a. m.
+
+Cita confirmada
+El horario quedó confirmado. WhatsApp no se abrirá hasta que tú lo elijas.
+
+
+Mensaje preparado para Mario
+Revísalo antes de abrir WhatsApp. Enviar sigue siendo manual.
+Hola, Mario. Tu cita de Corte de cabello para el jueves, 12 de noviembre a las 3:00 p. m. ha sido confirmada. ¡Te esperamos en Barbería Cale!
+Abrir WhatsApp
+Copiar mensaje
+Ahora no
+Buscar una cita
+
+
+Filtrar por estado
+Pendientes
+0
+Confirmadas
+1
+Pendientes de gestión
+0 resultados
+
+Sin coincidencias
+No encontramos registros que coincidan con tu búsqueda y el estado seleccionado.
+
+Volver
