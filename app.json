@@ -43,7 +43,9 @@
           "defaultChannel": "appointment-reminders-v1",
           "color": "#743B2F"
         }
-      ]
+      ],
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

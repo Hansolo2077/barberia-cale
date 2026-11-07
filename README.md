@@ -2,6 +2,8 @@
 
 Aplicación móvil y web para reservar cortes de cabello y administrar el ciclo completo de las citas de Barbería Cale.
 
+La [preparación final de Implementación y Validación](proyecto/docs/ivs-final/README.md) reúne instalación desde cero, manuales, capacitación, recuperación, criterios de aceptación y resultados verificables del corte del 7/11/2026. La versión para evaluación conserva las limitaciones declaradas del piloto.
+
 ## Funcionalidades
 
 - Registro, inicio de sesión y persistencia opcional de la sesión.

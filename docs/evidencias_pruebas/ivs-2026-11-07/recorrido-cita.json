@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-11-07T14:19:25.499Z",
+  "scope": "Una cita creada desde UI con la cuenta dummy autorizada; sin otros usuarios ni envio de mensajes",
+  "appointmentId": 57,
+  "date": "2026-11-08",
+  "time": "10:00",
+  "steps": [
+    {
+      "observedAt": "2026-11-07T14:19:25.500Z",
+      "action": "Consultar cita propia por API tras interaccion UI",
+      "state": "PENDING",
+      "attendance": "NOT_APPLICABLE"
+    },
+    {
+      "observedAt": "2026-11-07T14:19:40.571Z",
+      "action": "Consultar cita propia por API tras interaccion UI",
+      "state": "PENDING",
+      "attendance": "NOT_APPLICABLE"
+    },
+    {
+      "observedAt": "2026-11-07T14:19:41.803Z",
+      "action": "Aceptar la cita dummy mediante API ADMIN, sin abrir WhatsApp",
+      "http": 200,
+      "state": "ACCEPTED"
+    },
+    {
+      "observedAt": "2026-11-07T14:20:08.215Z",
+      "action": "Consultar cita propia por API tras interaccion UI",
+      "state": "ACCEPTED",
+      "attendance": "CONFIRMED"
+    },
+    {
+      "observedAt": "2026-11-07T14:20:22.039Z",
+      "action": "Consultar cita propia por API tras interaccion UI",
+      "state": "ACCEPTED",
+      "attendance": "CONFIRMED"
+    },
+    {
+      "observedAt": "2026-11-07T14:20:39.236Z",
+      "action": "Consultar cita propia por API tras interaccion UI",
+      "state": "CANCELLED",
+      "attendance": "NOT_APPLICABLE"
+    },
+    {
+      "observedAt": "2026-11-07T14:21:11.405Z",
+      "action": "Consultar cita propia por API tras interaccion UI",
+      "state": "CANCELLED",
+      "attendance": "NOT_APPLICABLE"
+    }
+  ],
+  "cleanup": true,
+  "slotReleased": true
+}

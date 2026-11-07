@@ -111,6 +111,50 @@ async function main() {
   await check('PF-21', ['RF-19','RC-11'], 'Recordatorio automatico elegible y claim exclusivo', ['Insertar fixture a +40 minutos', 'Dos workers SQL reclaman simultaneamente', 'Marcar con UUID correcto'], 'Solo un worker reclama la cita; marca interna una vez',async()=>{const id=(await db.query("INSERT INTO appointments(user_id,service,appointment_date,appointment_time,status) SELECT $1,'Corte de cabello', target::date,target::time,'ACCEPTED' FROM (SELECT (clock_timestamp() AT TIME ZONE 'America/Managua')+interval '40 minutes' AS target) q RETURNING id",[clientId])).rows[0].id;const tokens=[crypto.randomUUID(),crypto.randomUUID()];const lists=await Promise.all(tokens.map(t=>db.query(`SELECT * FROM ${schema}.claim_due_appointment_reminders($1,100)`,[t])));const hits=lists.flatMap((r,i)=>r.rows.filter(x=>x.appointment_id===id).map(x=>({i,...x})));assert.equal(hits.length,1);const wrong=(await db.query(`SELECT ${schema}.mark_appointment_reminder_sent($1,$2) AS ok`,[id,crypto.randomUUID()])).rows[0].ok;assert.equal(wrong,false);const right=(await db.query(`SELECT ${schema}.mark_appointment_reminder_sent($1,$2) AS ok`,[id,tokens[hits[0].i]])).rows[0].ok;assert.equal(right,true);return {workers:2,claims:1,wrongClaimRejected:true,internalMarkedSent:true,externalDeliveryTested:false};});
   await check('PF-22', ['RC-02','RC-01'], 'Tablas sensibles no accesibles a anon', ['Consultar privilegios efectivos de anon y authenticated'], 'Sin SELECT users ni ejecucion de RPC privilegiada',async()=>{const result=(await db.query(`SELECT has_table_privilege('anon','${schema}.users','SELECT') AS anon_users, has_table_privilege('authenticated','${schema}.users','SELECT') AS authenticated_users, has_function_privilege('anon','${schema}.claim_due_appointment_reminders(uuid,integer)','EXECUTE') AS anon_claim`)).rows[0];assert.deepEqual(result,{anon_users:false,authenticated_users:false,anon_claim:false});return result;});
   await check('PF-23', ['RC-10'], 'Persistencia tras nueva conexion PostgreSQL', ['Guardar conteo e IDs sinteticos', 'Abrir conexion independiente', 'Releer registros'], 'Mismos registros visibles en nueva conexion; no equivale a redeploy',async()=>{const conn=new Client({connectionString:isolatedUrl.toString(),ssl:{rejectUnauthorized:false},connectionTimeoutMillis:15000});try{await conn.connect();const a=(await db.query('SELECT count(*)::int AS n FROM appointments')).rows[0].n;const b=(await conn.query('SELECT count(*)::int AS n FROM appointments')).rows[0].n;assert.equal(a,b);return {count:a,newConnection:true,redeployTested:false};}finally{await conn.end();}});
+  await check('PF-24', ['RF-02', 'RF-16'], 'Revalidacion de identidad y rechazo de token expirado', ['GET /auth/me con CLIENT valido', 'GET con JWT expirado y JWT adulterado'], '200 con identidad publica; 401 para tokens no validos', async () => {
+    const jwt = require('../backend/node_modules/jsonwebtoken');
+    const valid = await request('/auth/me', { token: clientToken });
+    const expired = jwt.sign({ userId: clientId, role: 'CLIENT' }, process.env.JWT_SECRET, { expiresIn: -1 });
+    const statuses = [(await request('/auth/me', { token: expired })).status, (await request('/auth/me', { token: clientToken + 'invalid' })).status];
+    assert.equal(valid.status, 200); assert.equal(valid.payload.user.id, clientId);
+    assert.equal(valid.payload.user.password_hash, undefined); assert.deepEqual(statuses, [401, 401]);
+    return { valid: 200, rejected: statuses, publicIdentity: true, deviceRestartTested: false };
+  });
+  await check('PF-25', ['RF-09'], 'Cancelacion en ambos lados del limite de 60 minutos', ['Preparar fixtures SQL a 60 min 30 s y 59 min 30 s', 'Cancelar mediante API como propietario'], 'La primera se cancela; la segunda se rechaza sin modificar', async () => {
+    const ids = [];
+    for (const seconds of [3630, 3570]) {
+      ids.push((await db.query("INSERT INTO appointments(user_id,service,appointment_date,appointment_time,status) SELECT $1,'Corte de cabello',target::date,target::time,'PENDING' FROM (SELECT (clock_timestamp() AT TIME ZONE 'America/Managua') + $2 * interval '1 second' AS target) q RETURNING id", [otherId, seconds])).rows[0].id);
+    }
+    const statuses = [];
+    for (const id of ids) statuses.push((await request(`/appointments/${id}/cancel`, { token: otherToken, method: 'PATCH' })).status);
+    assert.deepEqual(statuses, [200, 400]);
+    const states = (await db.query('SELECT status FROM appointments WHERE id=ANY($1::bigint[]) ORDER BY id', [ids])).rows.map(r => r.status);
+    assert.deepEqual(states, ['CANCELLED', 'PENDING']);
+    return { offsetsSeconds: [3630, 3570], statuses, states, exactBoundaryTested: false, fixturesBypassCreationRules: true };
+  });
+  await check('PF-26', ['RF-06'], 'Rollback real ante fallo de una operacion compuesta', ['BEGIN en conexion dedicada', 'Insertar cita sintetica', 'Provocar FK inexistente', 'ROLLBACK y comprobar ausencia'], 'SQLSTATE 23503 y ninguna escritura parcial', async () => {
+    const conn = await db.connect(); let insertedId, failure;
+    try {
+      await conn.query('BEGIN');
+      insertedId = (await conn.query("INSERT INTO appointments(user_id,service,appointment_date,appointment_time,status) VALUES ($1,'Corte de cabello',CURRENT_DATE+45,'17:00','PENDING') RETURNING id", [clientId])).rows[0].id;
+      try { await conn.query("INSERT INTO appointments(user_id,service,appointment_date,appointment_time) VALUES (-999999,'Corte de cabello',CURRENT_DATE+46,'17:00')"); } catch (error) { failure = error.code; }
+      await conn.query('ROLLBACK'); assert.equal(failure, '23503');
+      assert.equal((await conn.query('SELECT count(*)::int AS n FROM appointments WHERE id=$1', [insertedId])).rows[0].n, 0);
+      return { sqlState: failure, partialWrites: 0, rollback: true, scope: 'Transaccion PostgreSQL controlada; no restauracion de produccion' };
+    } finally { await conn.query('ROLLBACK'); conn.release(); }
+  });
+  await check('PF-27', ['RF-09'], 'Limite exacto de 60 minutos con reloj transaccional', ['BEGIN en conexion dedicada', 'Preparar fixture exactamente NOW + 60 minutos', 'Ejecutar servicio real en esa conexion', 'ROLLBACK para retirar fixture'], 'Cancelacion permitida en el limite inclusivo exacto', async () => {
+    const conn = await db.connect(); const originalQuery = db.query;
+    try {
+      await conn.query('BEGIN');
+      const id = (await conn.query("INSERT INTO appointments(user_id,service,appointment_date,appointment_time,status) SELECT $1,'Corte de cabello',target::date,target::time,'PENDING' FROM (SELECT (NOW() AT TIME ZONE 'America/Managua')+interval '60 minutes' AS target) q RETURNING id", [otherId])).rows[0].id;
+      // NOW is fixed by this transaction: no tolerance window or mocked clock.
+      db.query = conn.query.bind(conn);
+      const r = await appointmentService.cancelAppointment(otherId, id);
+      assert.equal(r.status, 'CANCELLED');
+      return { exactOffsetMinutes: 60, status: r.status, realPostgresql: true, transactionClock: true, httpBoundaryTested: false };
+    } finally { db.query = originalQuery; await conn.query('ROLLBACK'); conn.release(); }
+  });
   // Nearest-rank p95; serial requests, 15 samples per flow, warmed backend.
   for (const [name, route, options] of [
     ['login','/auth/login',{method:'POST',body:{phone:'55501981',password}}],

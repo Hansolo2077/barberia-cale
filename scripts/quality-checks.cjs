@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync, execFileSync } = require('node:child_process');
 const root = path.join(__dirname, '..');
-const out = path.join(root, 'docs/evidencias_pruebas/parcial-iii');
+const out = path.resolve(process.argv[2] || path.join(root, 'docs/evidencias_pruebas/parcial-iii'));
 fs.mkdirSync(out, { recursive: true });
 const npm = path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
 const checks = [
@@ -20,7 +20,9 @@ for(const [id,args] of checks){
   const result=spawnSync(process.execPath,args,{cwd:root,encoding:'utf8',timeout:180000,windowsHide:true,maxBuffer:16*1024*1024});
   const stdout=result.stdout||''; const stderr=result.stderr||'';
   fs.writeFileSync(path.join(out,id+(id.startsWith('audit')?'.json':'.txt')),stdout);
-  if(stderr.trim())fs.writeFileSync(path.join(out,id+'-stderr.txt'),stderr);
+  const stderrFile = path.join(out,id+'-stderr.txt');
+  if(stderr.trim())fs.writeFileSync(stderrFile,stderr);
+  else if(fs.existsSync(stderrFile))fs.unlinkSync(stderrFile);
   let audit;try{if(id.startsWith('audit'))audit=JSON.parse(stdout).metadata?.vulnerabilities;}catch{}
   const tests = id.endsWith('tests') ? { passed:Number(stdout.match(/# pass (\d+)/)?.[1]||0),failed:Number(stdout.match(/# fail (\d+)/)?.[1]||0),skipped:Number(stdout.match(/# skipped (\d+)/)?.[1]||0) } : undefined;
   const item={id,command:args.map(a=>a===npm?'npm':a).join(' '),startedAt,finishedAt:new Date().toISOString(),exitCode:result.status,status:result.status===0?'PASS':audit?'FINDINGS':'FAIL',audit,tests,error:result.error?.code};

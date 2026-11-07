@@ -1,0 +1,135 @@
+{
+  "startedAt": "2026-11-07T13:44:32.701Z",
+  "executor": "Codex con autorizacion de Hanssel",
+  "base": "https://barberia-cale.onrender.com/api",
+  "deployedCommit": "No identificado por endpoint; no se presume que sea el checkout local",
+  "mutations": false,
+  "checks": [
+    {
+      "id": "IVS-LOGIN-CLIENT",
+      "expected": "200 y rol CLIENT",
+      "http": 200,
+      "returnedRole": "CLIENT",
+      "status": "PASS",
+      "ms": 22553
+    },
+    {
+      "id": "IVS-LOGIN-ADMIN",
+      "expected": "200 y rol ADMIN",
+      "http": 200,
+      "returnedRole": "ADMIN",
+      "status": "PASS",
+      "ms": 672
+    },
+    {
+      "id": "IVS-ROLE-01",
+      "route": "/admin/appointments",
+      "expected": 401,
+      "http": 401,
+      "status": "PASS",
+      "ms": 173
+    },
+    {
+      "id": "IVS-ROLE-02",
+      "route": "/admin/appointments",
+      "expected": 401,
+      "http": 401,
+      "status": "PASS",
+      "ms": 174
+    },
+    {
+      "id": "IVS-ROLE-03",
+      "route": "/admin/appointments",
+      "expected": 403,
+      "http": 403,
+      "status": "PASS",
+      "ms": 222
+    },
+    {
+      "id": "IVS-ME-CLIENT",
+      "route": "/auth/me",
+      "expected": 200,
+      "http": 200,
+      "status": "PASS",
+      "ms": 209
+    },
+    {
+      "id": "IVS-MY",
+      "route": "/appointments/my",
+      "expected": 200,
+      "http": 200,
+      "status": "PASS",
+      "ms": 828
+    },
+    {
+      "id": "IVS-ROLE-04",
+      "route": "/appointments/my",
+      "expected": 403,
+      "http": 403,
+      "status": "PASS",
+      "ms": 243
+    },
+    {
+      "id": "IVS-ME-ADMIN",
+      "route": "/auth/me",
+      "expected": 200,
+      "http": 200,
+      "status": "PASS",
+      "ms": 226
+    },
+    {
+      "id": "IVS-ADMIN",
+      "route": "/admin/appointments",
+      "expected": 200,
+      "http": 200,
+      "status": "PASS",
+      "ms": 674
+    }
+  ],
+  "availability": [
+    {
+      "observedAt": "2026-11-07T13:44:58.677Z",
+      "http": 200,
+      "ms": 161,
+      "ok": true
+    },
+    {
+      "observedAt": "2026-11-07T13:45:08.849Z",
+      "http": 200,
+      "ms": 290,
+      "ok": true
+    },
+    {
+      "observedAt": "2026-11-07T13:45:19.146Z",
+      "http": 200,
+      "ms": 281,
+      "ok": true
+    },
+    {
+      "observedAt": "2026-11-07T13:45:29.433Z",
+      "http": 200,
+      "ms": 261,
+      "ok": true
+    },
+    {
+      "observedAt": "2026-11-07T13:45:39.701Z",
+      "http": 200,
+      "ms": 307,
+      "ok": true
+    },
+    {
+      "observedAt": "2026-11-07T13:45:50.009Z",
+      "http": 200,
+      "ms": 260,
+      "ok": true
+    }
+  ],
+  "availabilitySummary": {
+    "samples": 6,
+    "successful": 6,
+    "observationOnly": true,
+    "limitations": "Muestra puntual de unos 50 segundos mas latencia; /health no verifica DB. No mide SLA, disponibilidad mensual ni carga. Los checks autenticados se registran por separado."
+  },
+  "finishedAt": "2026-11-07T13:45:50.269Z",
+  "status": "PASS"
+}

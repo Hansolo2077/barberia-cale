@@ -1,0 +1,595 @@
+{
+  "columns": [
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": "nextval('appointment_notification_jobs_id_seq'::regclass)",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "appointment_id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "kind",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": "'ATTENDANCE_REMINDER'::character varying",
+      "character_maximum_length": 40
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "source",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": "'ADMIN_MANUAL'::character varying",
+      "character_maximum_length": 40
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "requested_by_user_id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": "'QUEUED'::character varying",
+      "character_maximum_length": 20
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "requested_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "clock_timestamp()",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "available_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "clock_timestamp()",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "claimed_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "claim_token",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "sent_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "completed_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "accepted_devices",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "attempts",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "failure_code",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 80
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "column_name": "last_error",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": "nextval('appointments_id_seq'::regclass)",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "user_id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "service",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 150
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "appointment_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "appointment_time",
+      "data_type": "time without time zone",
+      "udt_name": "time",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": "'PENDING'::character varying",
+      "character_maximum_length": 20
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "client_attendance_confirmed_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "reminder_sent_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "reminder_claimed_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "reminder_claim_token",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "reminder_attempts",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "appointments",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": "nextval('push_device_tokens_id_seq'::regclass)",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "user_id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "expo_push_token",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "platform",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 20
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "active",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "NO",
+      "column_default": "true",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "last_seen_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "push_device_tokens",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "id",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": "nextval('users_id_seq'::regclass)",
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "first_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 100
+    },
+    {
+      "table_name": "users",
+      "column_name": "last_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 100
+    },
+    {
+      "table_name": "users",
+      "column_name": "phone",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 20
+    },
+    {
+      "table_name": "users",
+      "column_name": "password_hash",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null
+    },
+    {
+      "table_name": "users",
+      "column_name": "role",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": "'CLIENT'::character varying",
+      "character_maximum_length": 20
+    },
+    {
+      "table_name": "users",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "character_maximum_length": null
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_accepted_devices_check",
+      "definition": "CHECK ((accepted_devices >= 0))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_attempts_check",
+      "definition": "CHECK ((attempts >= 0))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_claim_consistent",
+      "definition": "CHECK (((((status)::text = 'CLAIMED'::text) AND (claimed_at IS NOT NULL) AND (claim_token IS NOT NULL)) OR (((status)::text <> 'CLAIMED'::text) AND (claimed_at IS NULL) AND (claim_token IS NULL))))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_completion_consistent",
+      "definition": "CHECK ((((status)::text = ANY ((ARRAY['SENT'::character varying, 'SKIPPED'::character varying, 'FAILED'::character varying])::text[])) = (completed_at IS NOT NULL)))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_kind_check",
+      "definition": "CHECK (((kind)::text = 'ATTENDANCE_REMINDER'::text))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_sent_consistent",
+      "definition": "CHECK ((((status)::text = 'SENT'::text) = (sent_at IS NOT NULL)))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_source_check",
+      "definition": "CHECK (((source)::text = 'ADMIN_MANUAL'::text))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_status_check",
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'CLAIMED'::character varying, 'SENT'::character varying, 'SKIPPED'::character varying, 'FAILED'::character varying])::text[])))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "fk_appointment_notification_jobs_appointment",
+      "definition": "FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "fk_appointment_notification_jobs_requester",
+      "definition": "FOREIGN KEY (requested_by_user_id) REFERENCES users(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "appointments",
+      "name": "appointments_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "appointments_reminder_claim_consistent",
+      "definition": "CHECK (((reminder_claimed_at IS NULL) = (reminder_claim_token IS NULL)))"
+    },
+    {
+      "table_name": "appointments",
+      "name": "appointments_reminder_claim_eligible_state",
+      "definition": "CHECK (((reminder_claim_token IS NULL) OR (((status)::text = 'ACCEPTED'::text) AND (client_attendance_confirmed_at IS NULL) AND (reminder_sent_at IS NULL))))"
+    },
+    {
+      "table_name": "appointments",
+      "name": "appointments_status_check",
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'COMPLETED'::character varying, 'REJECTED'::character varying, 'CANCELLED'::character varying])::text[])))"
+    },
+    {
+      "table_name": "appointments",
+      "name": "fk_appointments_user",
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "fk_push_device_tokens_user",
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "push_device_tokens_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "push_device_tokens_platform_check",
+      "definition": "CHECK (((platform)::text = ANY ((ARRAY['android'::character varying, 'ios'::character varying])::text[])))"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "push_device_tokens_token_not_blank",
+      "definition": "CHECK ((length(btrim(expo_push_token)) > 0))"
+    },
+    {
+      "table_name": "users",
+      "name": "users_phone_key",
+      "definition": "UNIQUE (phone)"
+    },
+    {
+      "table_name": "users",
+      "name": "users_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "users",
+      "name": "users_role_check",
+      "definition": "CHECK (((role)::text = ANY ((ARRAY['CLIENT'::character varying, 'ADMIN'::character varying])::text[])))"
+    }
+  ],
+  "indexes": [
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "appointment_notification_jobs_pkey",
+      "definition": "CREATE UNIQUE INDEX appointment_notification_jobs_pkey ON <esquema_prueba>.appointment_notification_jobs USING btree (id)"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "idx_appointment_notification_jobs_active",
+      "definition": "CREATE UNIQUE INDEX idx_appointment_notification_jobs_active ON <esquema_prueba>.appointment_notification_jobs USING btree (appointment_id, kind) WHERE ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'CLAIMED'::character varying])::text[]))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "idx_appointment_notification_jobs_queue",
+      "definition": "CREATE INDEX idx_appointment_notification_jobs_queue ON <esquema_prueba>.appointment_notification_jobs USING btree (available_at, requested_at, id) WHERE ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'CLAIMED'::character varying])::text[]))"
+    },
+    {
+      "table_name": "appointment_notification_jobs",
+      "name": "idx_appointment_notification_jobs_sent",
+      "definition": "CREATE INDEX idx_appointment_notification_jobs_sent ON <esquema_prueba>.appointment_notification_jobs USING btree (appointment_id, sent_at DESC) WHERE ((status)::text = 'SENT'::text)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "appointments_pkey",
+      "definition": "CREATE UNIQUE INDEX appointments_pkey ON <esquema_prueba>.appointments USING btree (id)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_appointments_admin_schedule",
+      "definition": "CREATE INDEX idx_appointments_admin_schedule ON <esquema_prueba>.appointments USING btree (appointment_date, appointment_time, status)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_appointments_date",
+      "definition": "CREATE INDEX idx_appointments_date ON <esquema_prueba>.appointments USING btree (appointment_date)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_appointments_due_reminders",
+      "definition": "CREATE INDEX idx_appointments_due_reminders ON <esquema_prueba>.appointments USING btree (appointment_date, appointment_time) WHERE (((status)::text = 'ACCEPTED'::text) AND (client_attendance_confirmed_at IS NULL) AND (reminder_sent_at IS NULL))"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_appointments_status",
+      "definition": "CREATE INDEX idx_appointments_status ON <esquema_prueba>.appointments USING btree (status)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_appointments_user_id",
+      "definition": "CREATE INDEX idx_appointments_user_id ON <esquema_prueba>.appointments USING btree (user_id)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_appointments_user_schedule",
+      "definition": "CREATE INDEX idx_appointments_user_schedule ON <esquema_prueba>.appointments USING btree (user_id, appointment_date, appointment_time)"
+    },
+    {
+      "table_name": "appointments",
+      "name": "idx_unique_active_appointment",
+      "definition": "CREATE UNIQUE INDEX idx_unique_active_appointment ON <esquema_prueba>.appointments USING btree (appointment_date, appointment_time) WHERE ((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying])::text[]))"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "idx_push_device_tokens_active_user",
+      "definition": "CREATE INDEX idx_push_device_tokens_active_user ON <esquema_prueba>.push_device_tokens USING btree (user_id) WHERE (active = true)"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "idx_push_device_tokens_token",
+      "definition": "CREATE UNIQUE INDEX idx_push_device_tokens_token ON <esquema_prueba>.push_device_tokens USING btree (expo_push_token)"
+    },
+    {
+      "table_name": "push_device_tokens",
+      "name": "push_device_tokens_pkey",
+      "definition": "CREATE UNIQUE INDEX push_device_tokens_pkey ON <esquema_prueba>.push_device_tokens USING btree (id)"
+    },
+    {
+      "table_name": "users",
+      "name": "users_phone_key",
+      "definition": "CREATE UNIQUE INDEX users_phone_key ON <esquema_prueba>.users USING btree (phone)"
+    },
+    {
+      "table_name": "users",
+      "name": "users_pkey",
+      "definition": "CREATE UNIQUE INDEX users_pkey ON <esquema_prueba>.users USING btree (id)"
+    }
+  ]
+}

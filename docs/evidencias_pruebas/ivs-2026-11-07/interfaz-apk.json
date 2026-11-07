@@ -1,0 +1,272 @@
+{
+  "recordedAt": "2026-11-07T14:23:26.116480+00:00",
+  "executor": "Codex con autorizacion de Hanssel",
+  "environment": {
+    "device": "emulator-5554",
+    "resolution": "1080x2280",
+    "package": "com.hanssel957.barberiacale",
+    "apkSha256": "1f5a47c47b7f02507228fc681c74e8a36e11f4105b6b4739df27d0f10b2c9faf",
+    "api": "Servicio publicado; SHA backend no identificado"
+  },
+  "preconditions": "APK release instalado con adb install -r; cuentas dummy autorizadas; una sola cita nueva identificada como #57",
+  "cases": [
+    {
+      "id": "UI-01",
+      "requirements": [
+        "RF-02",
+        "RF-16"
+      ],
+      "title": "APK instalado abre sin Metro y permite acceso ADMIN",
+      "expected": "APK instalado abre sin Metro y permite acceso ADMIN",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-admin-home",
+      "capturedAt": "2026-11-07T14:16:11.748746+00:00",
+      "privateOriginalSha256": "810de747ed10707e42adf8f05587f46a81ab38de7d40ef8160a575c81bf06a1b"
+    },
+    {
+      "id": "UI-02",
+      "requirements": [
+        "RF-04"
+      ],
+      "title": "Cerrar sesion ADMIN vuelve a acceso",
+      "expected": "Cerrar sesion ADMIN vuelve a acceso",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-admin-logout",
+      "capturedAt": "2026-11-07T14:16:28.040033+00:00",
+      "privateOriginalSha256": "3c7352bbd4c9bf272994a48fbdd291e14cfc3ef8c9a6411f95db0625ac3dac67"
+    },
+    {
+      "id": "UI-03",
+      "requirements": [
+        "RF-02"
+      ],
+      "title": "Login CLIENT llega al panel correcto",
+      "expected": "Login CLIENT llega al panel correcto",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-client-submit",
+      "capturedAt": "2026-11-07T14:17:11.546405+00:00",
+      "privateOriginalSha256": "9576a239008afa08c152a1efa02d85f51b496313213a55864ca122f9728e8374"
+    },
+    {
+      "id": "UI-04",
+      "requirements": [
+        "RF-03"
+      ],
+      "title": "Recordar sesion y reiniciar proceso recupera CLIENT",
+      "expected": "Recordar sesion y reiniciar proceso recupera CLIENT",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-restart",
+      "capturedAt": "2026-11-07T14:17:23.350331+00:00",
+      "privateOriginalSha256": "9576a239008afa08c152a1efa02d85f51b496313213a55864ca122f9728e8374"
+    },
+    {
+      "id": "UI-05",
+      "requirements": [
+        "RF-05"
+      ],
+      "title": "Bloque no disponible no permite avanzar a confirmacion",
+      "expected": "Bloque no disponible no permite avanzar a confirmacion",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-blocked-slot",
+      "capturedAt": "2026-11-07T14:17:56.525888+00:00",
+      "privateOriginalSha256": "4549db6a4d59844518fbd78d057e7e5843b3a352a94d8286905fd08ecf87d199"
+    },
+    {
+      "id": "UI-06",
+      "requirements": [
+        "RF-06",
+        "RF-07"
+      ],
+      "title": "Crear cita por interfaz y recuperar PENDING en Proximas",
+      "expected": "Crear cita por interfaz y recuperar PENDING en Proximas",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-upcoming",
+      "capturedAt": "2026-11-07T14:18:23.393844+00:00",
+      "privateOriginalSha256": "d800d97fe2aa52684f3ee922c2fd048b4881d318844f6e55e7be826020482989"
+    },
+    {
+      "id": "UI-07",
+      "requirements": [
+        "RF-11"
+      ],
+      "title": "Aceptacion mediante API ADMIN recuperada por UI CLIENT",
+      "expected": "Aceptacion mediante API ADMIN recuperada por UI CLIENT",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-upcoming-refresh",
+      "capturedAt": "2026-11-07T14:19:44.744811+00:00",
+      "privateOriginalSha256": "da498cb98fc193e2c36146c1ed2581f32f777de59b09bada1dea2ece2bae4d01"
+    },
+    {
+      "id": "UI-08",
+      "requirements": [
+        "RF-20"
+      ],
+      "title": "Confirmacion de asistencia por interfaz",
+      "expected": "Confirmacion de asistencia por interfaz",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-attendance-confirmed",
+      "capturedAt": "2026-11-07T14:20:01.039501+00:00",
+      "privateOriginalSha256": "d535d35028d5acd36c998f8c4c3fcc8f91bd7c3fe391d347bce48e8bcc50c9d3"
+    },
+    {
+      "id": "UI-09",
+      "requirements": [
+        "RF-09"
+      ],
+      "title": "Dialogo de cancelacion permite Volver sin mutacion",
+      "expected": "Dialogo de cancelacion permite Volver sin mutacion",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-cancel-aborted",
+      "capturedAt": "2026-11-07T14:20:19.904315+00:00",
+      "privateOriginalSha256": "9b5eb03f717b20fb10407532587d487aa6aeb3f4b0f59e604cb00422c980f182"
+    },
+    {
+      "id": "UI-10",
+      "requirements": [
+        "RF-08",
+        "RF-09"
+      ],
+      "title": "Cancelacion por interfaz deja cero proximas y conserva historial",
+      "expected": "Cancelacion por interfaz deja cero proximas y conserva historial",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-history",
+      "capturedAt": "2026-11-07T14:20:56.751916+00:00",
+      "privateOriginalSha256": "3c18371533b0d74aea32136e1a6f1b24549a0b8a717dc55a751e2df12c609eae"
+    },
+    {
+      "id": "UI-11",
+      "requirements": [
+        "RF-04"
+      ],
+      "title": "Logout CLIENT y reinicio no restaura identidad",
+      "expected": "Logout CLIENT y reinicio no restaura identidad",
+      "observed": "Resultado visible confirmado por captura y jerarquia UI; recorrido-cita.json para estado persistido",
+      "status": "PASS",
+      "snapshot": "apk-after-logout-restart",
+      "capturedAt": "2026-11-07T14:22:20.608749+00:00",
+      "privateOriginalSha256": "f725b9e746b62e85418250b334a4bde53db9da9bbf0bf5596fff47787ef95dcf"
+    }
+  ],
+  "summary": {
+    "executed": 11,
+    "passed": 11,
+    "failed": 0
+  },
+  "evidence": [
+    {
+      "name": "apk-home",
+      "path": "capturas/apk-home.png",
+      "sha256": "32719ab712b0e9ddb8f2256e68d3b9f751f91b0dc3acdc4163681359a228e6f7",
+      "capturedAt": "2026-11-07T14:15:01.531162+00:00",
+      "xmlSha256": "8496ed51a00ba0a435e71a7d2abe567e912b34fb61c42cbe3458aba4b647f293",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-login",
+      "path": "capturas/apk-login.png",
+      "sha256": "4751a133d8b6ec586469a2833e1251b4f40227c7fc680716f6aaceab690822b1",
+      "capturedAt": "2026-11-07T14:15:08.792832+00:00",
+      "xmlSha256": "2afbe5de554c36ee9fd64ed52f483c80df2317198a4d088d18e1bbc7e06d4b3c",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-upcoming",
+      "path": "capturas/apk-upcoming.png",
+      "sha256": "d800d97fe2aa52684f3ee922c2fd048b4881d318844f6e55e7be826020482989",
+      "capturedAt": "2026-11-07T14:18:23.393844+00:00",
+      "xmlSha256": "d7d65331e09d876ce0898c2bc013c3f2908cf1ab31b66d67b3a6d9c8699640f4",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-upcoming-refresh",
+      "path": "capturas/apk-upcoming-refresh.png",
+      "sha256": "da498cb98fc193e2c36146c1ed2581f32f777de59b09bada1dea2ece2bae4d01",
+      "capturedAt": "2026-11-07T14:19:44.744811+00:00",
+      "xmlSha256": "92b63e00abb10ba49ce30fe7c4b07aca9916bec3258696c1fc40b21362663a69",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-booking",
+      "path": "capturas/apk-booking.png",
+      "sha256": "4549db6a4d59844518fbd78d057e7e5843b3a352a94d8286905fd08ecf87d199",
+      "capturedAt": "2026-11-07T14:17:31.426828+00:00",
+      "xmlSha256": "ef49ef681c935f2b54dcb276c856f97105d69582cfee8f2106e14624bfb9192d",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-slot-selected",
+      "path": "capturas/apk-slot-selected.png",
+      "sha256": "d08cf1f7a55a51505ba9a3ea1daf7211ea37dd2c7dc2f56d8e9f1efe9144b4c2",
+      "capturedAt": "2026-11-07T14:18:04.763686+00:00",
+      "xmlSha256": "b1a4e79734092434d306668e7ff9bdf113ea410d463da8ea78a53ff7b72670fe",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-attendance-confirmed",
+      "path": "capturas/apk-attendance-confirmed.png",
+      "sha256": "d535d35028d5acd36c998f8c4c3fcc8f91bd7c3fe391d347bce48e8bcc50c9d3",
+      "capturedAt": "2026-11-07T14:20:01.039501+00:00",
+      "xmlSha256": "3d450d4403d29af2de039a660d46d71afa3db14180e0ec04ef360404f56762d0",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-cancel-dialog",
+      "path": "capturas/apk-cancel-dialog.png",
+      "sha256": "fb14f5e65411d6b61ce140a717b2d3418844f853048a56a2250478c64830433c",
+      "capturedAt": "2026-11-07T14:20:11.513609+00:00",
+      "xmlSha256": "664b5aedded898eed4058bcedef7916e4b2d55a7de09ca6bce66d0e7ff1950cb",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-cancel-aborted",
+      "path": "capturas/apk-cancel-aborted.png",
+      "sha256": "9b5eb03f717b20fb10407532587d487aa6aeb3f4b0f59e604cb00422c980f182",
+      "capturedAt": "2026-11-07T14:20:19.904315+00:00",
+      "xmlSha256": "24c65eaa10a350fccabb78a1dc778f517dda033c994cb807858f0546ccc86ddc",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-cancelled",
+      "path": "capturas/apk-cancelled.png",
+      "sha256": "de016c55a80fc4e75436a5cbf251b1bc28e87aaf94c511333fde1b9f913e95ac",
+      "capturedAt": "2026-11-07T14:20:37.844795+00:00",
+      "xmlSha256": "49227f606b1fa3fdf33a8546a91e81c4fe95e5b3aafd925ff851895cc7b882eb",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-history",
+      "path": "capturas/apk-history.png",
+      "sha256": "3c18371533b0d74aea32136e1a6f1b24549a0b8a717dc55a751e2df12c609eae",
+      "capturedAt": "2026-11-07T14:20:56.751916+00:00",
+      "xmlSha256": "7a1854309b79efb1e40111beb32753e804a5fbcb6b8b00e3255442e87d03a0c2",
+      "packageVerified": true
+    },
+    {
+      "name": "apk-after-logout-restart",
+      "path": "capturas/apk-after-logout-restart.png",
+      "sha256": "f725b9e746b62e85418250b334a4bde53db9da9bbf0bf5596fff47787ef95dcf",
+      "capturedAt": "2026-11-07T14:22:20.608749+00:00",
+      "xmlSha256": "8496ed51a00ba0a435e71a7d2abe567e912b34fb61c42cbe3458aba4b647f293",
+      "packageVerified": true
+    }
+  ],
+  "cleanup": "Cita #57 CANCELLED, horario liberado; sesion CLIENT cerrada y no restaurada al reiniciar",
+  "limitations": [
+    "No incluye automatizacion UI universal, iOS ni recorrido web",
+    "Aceptacion administrativa se hizo por API; no se atribuye a boton ADMIN",
+    "No se envio WhatsApp ni recordatorio manual ni se espero cron",
+    "Proximas e Historial se comprobaron con esta cita; no prueba orden de multiples registros",
+    "Prueba de recordar=true; no se ensayo separadamente login remember=false tras reinicio",
+    "Capturas previas a la correccion historica UX no disponibles"
+  ]
+}

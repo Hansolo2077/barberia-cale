@@ -2,10 +2,13 @@ require("dotenv").config();
 
 const db = require("./db");
 
-const phone = "88888888";
+const phone = process.argv[2];
 
 async function makeAdmin() {
   try {
+    if (!/^[875]\d{7}$/.test(phone || "")) {
+      throw new Error("Indica el celular de prueba de ocho digitos: node src/database/make-admin.js CELULAR");
+    }
     const result = await db.query(
       `
         UPDATE users

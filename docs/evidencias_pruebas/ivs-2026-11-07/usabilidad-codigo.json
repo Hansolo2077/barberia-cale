@@ -1,0 +1,206 @@
+{
+  "generatedAt": "2026-11-07T14:26:38.298Z",
+  "method": "Inspeccion estatica de codigo versionado y contraste de pares de colores",
+  "contrast": [
+    {
+      "foreground": "textSecondary",
+      "background": "surface",
+      "colors": [
+        "#75665E",
+        "#FFFCF7"
+      ],
+      "ratio": 5.374,
+      "thresholdForNormalText": 4.5,
+      "meetsSelectedThreshold": true,
+      "scope": "Colores opacos declarados; no render, opacidad heredada ni certificacion integral"
+    },
+    {
+      "foreground": "textSecondary",
+      "background": "background",
+      "colors": [
+        "#75665E",
+        "#F4EFE6"
+      ],
+      "ratio": 4.802,
+      "thresholdForNormalText": 4.5,
+      "meetsSelectedThreshold": true,
+      "scope": "Colores opacos declarados; no render, opacidad heredada ni certificacion integral"
+    },
+    {
+      "foreground": "textMuted",
+      "background": "surface",
+      "colors": [
+        "#7A6961",
+        "#FFFCF7"
+      ],
+      "ratio": 5.103,
+      "thresholdForNormalText": 4.5,
+      "meetsSelectedThreshold": true,
+      "scope": "Colores opacos declarados; no render, opacidad heredada ni certificacion integral"
+    },
+    {
+      "foreground": "textMuted",
+      "background": "background",
+      "colors": [
+        "#7A6961",
+        "#F4EFE6"
+      ],
+      "ratio": 4.56,
+      "thresholdForNormalText": 4.5,
+      "meetsSelectedThreshold": true,
+      "scope": "Colores opacos declarados; no render, opacidad heredada ni certificacion integral"
+    }
+  ],
+  "inspections": [
+    {
+      "id": "UX-01",
+      "file": "src/app/client/appointment.tsx",
+      "historicalCommit": "b37cce8",
+      "evidence": "Contenido Git autentico y checkout actual; conteos lexicos orientan inspeccion, no son prueba funcional.",
+      "before": {
+        "ref": "b37cce8^",
+        "occurrences": {
+          "stepBadge": 0,
+          "stepHeader": 0
+        }
+      },
+      "afterHistorical": {
+        "ref": "b37cce8",
+        "occurrences": {
+          "stepBadge": 6,
+          "stepHeader": 3
+        }
+      },
+      "current": {
+        "sha256": "d1702e848a918a65642ed3109a1b570d5b283e7f7521d4aa28c28adbbacb07f6",
+        "occurrences": {
+          "stepBadge": 6,
+          "stepHeader": 3
+        }
+      },
+      "visualFinalStatus": "Consultar interfaz-apk.json; esta inspeccion es solo estatica"
+    },
+    {
+      "id": "UX-02",
+      "file": "src/app/client/my-appointments.tsx",
+      "historicalCommit": "8c5b0a1",
+      "evidence": "Contenido Git autentico y checkout actual; conteos lexicos orientan inspeccion, no son prueba funcional.",
+      "before": {
+        "ref": "8c5b0a1^",
+        "occurrences": {
+          "Alert.alert": 3,
+          "window.confirm": 1,
+          "handleCancel": 3
+        }
+      },
+      "afterHistorical": {
+        "ref": "8c5b0a1",
+        "occurrences": {
+          "Alert.alert": 1,
+          "window.confirm": 1,
+          "handleCancel": 3
+        }
+      },
+      "current": {
+        "sha256": "7610dfa49557ecdec511b3074b1a689e6fb8ca7de190503c00b796af3fa3b794",
+        "occurrences": {
+          "Alert.alert": 1,
+          "window.confirm": 2,
+          "handleCancel": 3
+        }
+      },
+      "visualFinalStatus": "Consultar interfaz-apk.json; esta inspeccion es solo estatica"
+    },
+    {
+      "id": "UX-03",
+      "file": "src/app/client/appointment.tsx",
+      "historicalCommit": "b37cce8",
+      "evidence": "Contenido Git autentico y checkout actual; conteos lexicos orientan inspeccion, no son prueba funcional.",
+      "before": {
+        "ref": "b37cce8^",
+        "occurrences": {
+          "unavailableTime": 2,
+          "accessibilityState": 0,
+          "selectable": 0
+        }
+      },
+      "afterHistorical": {
+        "ref": "b37cce8",
+        "occurrences": {
+          "unavailableTime": 2,
+          "accessibilityState": 1,
+          "selectable": 0
+        }
+      },
+      "current": {
+        "sha256": "d1702e848a918a65642ed3109a1b570d5b283e7f7521d4aa28c28adbbacb07f6",
+        "occurrences": {
+          "unavailableTime": 2,
+          "accessibilityState": 4,
+          "selectable": 5
+        }
+      },
+      "visualFinalStatus": "Consultar interfaz-apk.json; esta inspeccion es solo estatica"
+    },
+    {
+      "id": "UX-04",
+      "file": "src/app/auth/login.tsx",
+      "historicalCommit": "622a497",
+      "evidence": "Contenido Git autentico y checkout actual; conteos lexicos orientan inspeccion, no son prueba funcional.",
+      "before": {
+        "ref": "622a497^",
+        "occurrences": {
+          "textMuted": 2,
+          "textSecondary": 3,
+          "accessibilityLabel": 0
+        }
+      },
+      "afterHistorical": {
+        "ref": "622a497",
+        "occurrences": {
+          "textMuted": 2,
+          "textSecondary": 3,
+          "accessibilityLabel": 0
+        }
+      },
+      "current": {
+        "sha256": "e4a954d2cd21031a9e4b407e20998d46539713c8a9a7e73850b8fd37bd7cf5bc",
+        "occurrences": {
+          "textMuted": 2,
+          "textSecondary": 4,
+          "accessibilityLabel": 8
+        }
+      },
+      "visualFinalStatus": "Consultar interfaz-apk.json; esta inspeccion es solo estatica"
+    },
+    {
+      "id": "UX-05",
+      "file": "src/app/admin/appointments.tsx",
+      "historicalCommit": "0e7f3f5",
+      "evidence": "Contenido Git autentico y checkout actual; conteos lexicos orientan inspeccion, no son prueba funcional.",
+      "before": {
+        "ref": "0e7f3f5^",
+        "occurrences": {
+          "expandedAppointmentId": 0,
+          "expandedDetails": 0
+        }
+      },
+      "afterHistorical": {
+        "ref": "0e7f3f5",
+        "occurrences": {
+          "expandedAppointmentId": 2,
+          "expandedDetails": 2
+        }
+      },
+      "current": {
+        "sha256": "78d7bfa6900818bb69d443fd9fa4e098e682899278b2c0a5eb06fce2a097debf",
+        "occurrences": {
+          "expandedAppointmentId": 2,
+          "expandedDetails": 2
+        }
+      },
+      "visualFinalStatus": "Consultar interfaz-apk.json; esta inspeccion es solo estatica"
+    }
+  ],
+  "limitations": "No genera imagenes historicas, no demuestra comportamiento UI ni una evaluacion SUS o WCAG integral."
+}

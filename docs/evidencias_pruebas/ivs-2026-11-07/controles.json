@@ -1,0 +1,91 @@
+{
+  "startedAt": "2026-11-07T13:49:03.460Z",
+  "sourceCommit": "0410611462c650a4cd049a8037cdf6c23555b978",
+  "workingTreeChanges": true,
+  "node": "v24.16.0",
+  "checks": [
+    {
+      "id": "typescript",
+      "command": "node_modules/typescript/bin/tsc --noEmit",
+      "startedAt": "2026-11-07T13:49:03.500Z",
+      "finishedAt": "2026-11-07T13:49:08.565Z",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "eslint",
+      "command": "npm run lint",
+      "startedAt": "2026-11-07T13:49:08.567Z",
+      "finishedAt": "2026-11-07T13:49:20.836Z",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "frontend-tests",
+      "command": "--test --test-reporter=tap tests/notification-registration.test.js",
+      "startedAt": "2026-11-07T13:49:20.836Z",
+      "finishedAt": "2026-11-07T13:49:21.118Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "tests": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "backend-tests",
+      "command": "--test --test-reporter=tap backend/src/controllers/admin-reminder.controller.test.js backend/src/controllers/appointment.controller.test.js backend/src/controllers/auth.controller.test.js backend/src/controllers/notification.controller.test.js backend/src/middleware/auth.middleware.test.js backend/src/middleware/client.middleware.test.js backend/src/middleware/json-parser.integration.test.js backend/src/middleware/rate-limit.middleware.test.js backend/src/services/admin-reminder.service.test.js backend/src/services/appointment.service.test.js backend/src/services/notification.service.test.js backend/src/utils/date.test.js backend/src/utils/expo-push-token.test.js backend/src/utils/http-error.test.js backend/src/utils/pagination.test.js backend/src/utils/phone.test.js",
+      "startedAt": "2026-11-07T13:49:21.118Z",
+      "finishedAt": "2026-11-07T13:49:21.962Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "tests": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "audit-frontend",
+      "command": "npm audit --json",
+      "startedAt": "2026-11-07T13:49:21.962Z",
+      "finishedAt": "2026-11-07T13:49:25.921Z",
+      "exitCode": 1,
+      "status": "FINDINGS",
+      "audit": {
+        "info": 0,
+        "low": 0,
+        "moderate": 11,
+        "high": 3,
+        "critical": 0,
+        "total": 14
+      }
+    },
+    {
+      "id": "audit-backend",
+      "command": "npm audit --prefix backend --json",
+      "startedAt": "2026-11-07T13:49:25.921Z",
+      "finishedAt": "2026-11-07T13:49:27.274Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "audit": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    {
+      "id": "expo-compatibility",
+      "command": "node_modules/expo/bin/cli install --check",
+      "startedAt": "2026-11-07T13:49:27.274Z",
+      "finishedAt": "2026-11-07T13:49:28.087Z",
+      "exitCode": 0,
+      "status": "PASS"
+    }
+  ],
+  "finishedAt": "2026-11-07T13:49:28.087Z"
+}

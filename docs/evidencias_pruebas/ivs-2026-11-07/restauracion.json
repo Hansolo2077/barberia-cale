@@ -1,0 +1,77 @@
+{
+  "startedAt": "2026-11-07T13:43:27.478Z",
+  "executor": "Codex con autorizacion de Hanssel",
+  "sourceCommit": "0410611462c650a4cd049a8037cdf6c23555b978",
+  "scope": "Respaldo logico de cuatro tablas con datos sinteticos, restaurado en esquema independiente reconstruido desde SQL versionado. No es pg_dump ni backup completo de Supabase.",
+  "steps": [
+    {
+      "id": "REC-01",
+      "action": "Exportar datos sinteticos de cuatro tablas a archivo y releerlo",
+      "status": "PASS"
+    },
+    {
+      "id": "REC-02",
+      "action": "Simular alteracion posterior al respaldo en origen sintetico",
+      "status": "PASS"
+    },
+    {
+      "id": "REC-03",
+      "action": "Reconstruir SQL, importar archivo, comparar todas las columnas y restablecer secuencias",
+      "status": "PASS",
+      "exactDataMatch": true
+    },
+    {
+      "id": "REC-04",
+      "action": "Verificar FK restaurada y siguiente ID sin colision",
+      "status": "PASS",
+      "fkCode": "23503",
+      "nextUserId": 3
+    }
+  ],
+  "cleanup": true,
+  "postgresql": "17.6",
+  "schemaSources": [
+    {
+      "file": "backend/src/database/schema.sql",
+      "sha256": "9618efa45ef4f591fdc09151c6b065cc74874f85a7ddff15a5848c911737094a"
+    },
+    {
+      "file": "backend/src/database/migrations/20260823_attendance_reminders.sql",
+      "sha256": "349abf633247e014c1d78cc15ca04691b27fa7a4c816387ee31befd9af3de368"
+    },
+    {
+      "file": "backend/src/database/migrations/20260823_reminder_api_boundary.sql",
+      "sha256": "876bd923182baddbaafdcc0bb97797f568f91ab8fe94352fee5d88cb89ded2f4"
+    },
+    {
+      "file": "backend/src/database/migrations/20260824_reminder_reliability.sql",
+      "sha256": "29a52fe08856a83025f8fa74e85f9f4166552748fc88e64adebafa8a62d0d0c6"
+    },
+    {
+      "file": "backend/src/database/migrations/20260825_manual_attendance_reminders.sql",
+      "sha256": "a09225ccbc155d30b420752d612457022506817fac7820d8097aeb9524431f54"
+    }
+  ],
+  "backup": {
+    "path": "docs/evidencias_pruebas/ivs-2026-11-07/respaldo-sintetico.json",
+    "sha256": "e355cf2537c645b23d044291df27eefeb9eb66a38aecb6b0ab503d54c4a285c8",
+    "rows": {
+      "users": 2,
+      "appointments": 1,
+      "push_device_tokens": 1,
+      "appointment_notification_jobs": 1
+    }
+  },
+  "restoreMs": 2034,
+  "contentHashes": {
+    "backup": "5e770e9fb5bedf1d92747a6b0d8a8a79375efe2e1d8997ee93830e6b42bf9d80",
+    "restored": "5e770e9fb5bedf1d92747a6b0d8a8a79375efe2e1d8997ee93830e6b42bf9d80"
+  },
+  "status": "PASS",
+  "limitations": [
+    "Sin ensayo de caida de proveedor, point-in-time recovery, roles globales, storage, cron, Vault o secretos.",
+    "Tiempo observado de laboratorio; no constituye compromiso RTO/RPO productivo.",
+    "El archivo contiene exclusivamente fixtures desechables."
+  ],
+  "finishedAt": "2026-11-07T13:43:33.559Z"
+}

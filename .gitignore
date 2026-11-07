@@ -37,6 +37,7 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+!**/.env.example
 backend/.env
 .quality-private/
 
