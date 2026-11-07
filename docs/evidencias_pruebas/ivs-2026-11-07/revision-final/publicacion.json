@@ -1,0 +1,27 @@
+{
+  "publishedAt": "2026-11-07T17:21:18Z",
+  "url": "https://github.com/Hansolo2077/barberia-cale/releases/tag/v1.0.1-ivs.20261107-r3",
+  "tag": "v1.0.1-ivs.20261107-r3",
+  "sourceCommit": "c546fe80c9b8ee17acdd38e28844415fcd6678f1",
+  "prerelease": true,
+  "assets": [
+    {
+      "name": "BarberiaCale-1.0.1-IVS-release.apk",
+      "size": 106354564,
+      "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107-r3/BarberiaCale-1.0.1-IVS-release.apk"
+    },
+    {
+      "name": "Evidencias-IVS-Revision-Final-2026-11-07.zip",
+      "size": 17767323,
+      "sha256": "4f555946275916df49380ecf9a43129dd3ded1df583800bea145231898ff4b61",
+      "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107-r3/Evidencias-IVS-Revision-Final-2026-11-07.zip"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 214,
+      "sha256": "22452e4c81610660c56bcd20b03c26d3fedd2eee916afcd473ebb13603b7db25",
+      "url": "https://github.com/Hansolo2077/barberia-cale/releases/download/v1.0.1-ivs.20261107-r3/SHA256SUMS.txt"
+    }
+  ]
+}
