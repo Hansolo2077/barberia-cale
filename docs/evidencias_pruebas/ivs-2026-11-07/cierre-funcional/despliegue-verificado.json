@@ -1,0 +1,11 @@
+{
+  "verifiedAt": "2026-11-07T16:16:45.659Z",
+  "url": "https://barberia-cale.onrender.com/api/health",
+  "http": 200,
+  "expectedCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "observedCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "provider": "render",
+  "cacheControl": "no-store",
+  "status": "PASS",
+  "limits": "Verifies HTTP process deployment identity, not database availability or an SLA"
+}

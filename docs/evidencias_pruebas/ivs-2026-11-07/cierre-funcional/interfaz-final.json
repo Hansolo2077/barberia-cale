@@ -1,0 +1,889 @@
+{
+  "recordedAt": "2026-11-07T16:18:40.500770+00:00",
+  "codeCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "apk": {
+    "version": "1.0.1",
+    "versionCode": 2,
+    "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+    "unchangedFromSecurityRelease": true
+  },
+  "devices": [
+    "emulator-5554 ADMIN y recorrido inicial CLIENT",
+    "emulator-5556 CLIENT para push; Android 30 Google Play; mismo APK"
+  ],
+  "summary": {
+    "executed": 23,
+    "passed": 23,
+    "failed": 0,
+    "blocked": 0
+  },
+  "cases": [
+    {
+      "id": "UIF-01",
+      "title": "Acceso CLIENT",
+      "requirements": [
+        "RF-02",
+        "RF-16"
+      ],
+      "preconditions": "Credenciales dummy CLIENT en formulario",
+      "inputsAndSteps": "Iniciar sesión",
+      "expected": "Área CLIENT propia",
+      "observed": "Inicio Hola Mario visible",
+      "status": "PASS",
+      "date": "2026-11-07T15:47:45.197953+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-login.png",
+          "sha256": "92fdef9cbb1642664343c5f6aef3eebc95099f02b4abebc5cd3ce71b71783e88",
+          "capturedAt": "2026-11-07T15:47:45.197953+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-02",
+      "title": "Recordar sesión activado",
+      "requirements": [
+        "RF-03"
+      ],
+      "preconditions": "CLIENT autenticado con Recordar activado",
+      "inputsAndSteps": "Forzar cierre y abrir el APK; esperar la recuperación",
+      "expected": "Restaurar CLIENT y su cita",
+      "observed": "Inicio CLIENT y cita PENDING recuperados",
+      "status": "PASS",
+      "date": "2026-11-07T15:49:27.394166+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/remember-enabled.png",
+          "sha256": "3ad222a9f84bd7b6ee807265f4fa743a6ec15b67ab17f8ca544effad8885494c",
+          "capturedAt": "2026-11-07T15:47:38.740022+00:00"
+        },
+        {
+          "path": "capturas/client-restored-ready.png",
+          "sha256": "9e8d4c4b6138092bcbea36adbcf9399551d6c7c2570b96f42af1ae4dc0900a7d",
+          "capturedAt": "2026-11-07T15:49:27.394166+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-03",
+      "title": "Reserva real desde interfaz",
+      "requirements": [
+        "RF-05",
+        "RF-06"
+      ],
+      "preconditions": "Horario elegible del 08/11/2026 a las 11:00",
+      "inputsAndSteps": "Elegir bloque; revisar resumen; confirmar",
+      "expected": "Crear solicitud PENDING propia",
+      "observed": "Cita #58 PENDING y confirmación Cita solicitada",
+      "status": "PASS",
+      "date": "2026-11-07T15:48:59.450146+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/main-slot.png",
+          "sha256": "08669f0d0753a970937d577aba8838eb4658ad02c4821b747205eeebfd64719e",
+          "capturedAt": "2026-11-07T15:48:53.009713+00:00"
+        },
+        {
+          "path": "capturas/main-created.png",
+          "sha256": "db61c4aed410edc190d43eba2fff1b55527b25fd803b6b95e5c04866a6820cd9",
+          "capturedAt": "2026-11-07T15:48:59.450146+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-04",
+      "title": "Logout CLIENT",
+      "requirements": [
+        "RF-04"
+      ],
+      "preconditions": "CLIENT autenticado",
+      "inputsAndSteps": "Abrir menú; Cerrar sesión",
+      "expected": "Retornar al acceso público",
+      "observed": "Formulario de acceso sin sesión CLIENT",
+      "status": "PASS",
+      "date": "2026-11-07T15:49:39.915795+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-logout.png",
+          "sha256": "898ae1537dc7842c5b6ae5977d506cec80da792446bd8ee73dd3c2edb900b199",
+          "capturedAt": "2026-11-07T15:49:39.915795+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-05",
+      "title": "Acceso ADMIN",
+      "requirements": [
+        "RF-02",
+        "RF-16"
+      ],
+      "preconditions": "Credenciales dummy ADMIN",
+      "inputsAndSteps": "Iniciar sesión",
+      "expected": "Panel administrativo propio",
+      "observed": "Panel ADMIN visible con una solicitud",
+      "status": "PASS",
+      "date": "2026-11-07T15:51:10.646108+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/admin-login.png",
+          "sha256": "0ad5d82a0565208ff9144025c0557b2c10913a0f252e6aa1438f4e06a2b4fcc2",
+          "capturedAt": "2026-11-07T15:51:10.646108+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-06",
+      "title": "Búsqueda y filtro por ID",
+      "requirements": [
+        "RF-10"
+      ],
+      "preconditions": "Cita #58 creada y accesible a ADMIN",
+      "inputsAndSteps": "Abrir gestión; buscar 58; seleccionar Confirmadas después de aceptar",
+      "expected": "Mostrar únicamente la cita coincidente",
+      "observed": "Un resultado #58, estado Confirmada",
+      "status": "PASS",
+      "date": "2026-11-07T15:57:47.544214+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/search-id.png",
+          "sha256": "6d7f3cd6c9bfab9c1892062f6bfb143bb65e4e0fabe6c3d49b0a05218de1b069",
+          "capturedAt": "2026-11-07T15:57:43.538165+00:00"
+        },
+        {
+          "path": "capturas/accepted-card.png",
+          "sha256": "d2115b77996f4d9dd6a79f0055031569b890bdb67a6e9a72b65d5fbd0bf2ecdd",
+          "capturedAt": "2026-11-07T15:57:47.544214+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-07",
+      "title": "Aceptación desde ADMIN",
+      "requirements": [
+        "RF-11"
+      ],
+      "preconditions": "Cita #58 PENDING futura",
+      "inputsAndSteps": "Aceptar; revisar diálogo; Sí aceptar",
+      "expected": "Transición ACCEPTED persistida y confirmación comprensible",
+      "observed": "UI Cita confirmada y API ACCEPTED/AWAITING",
+      "status": "PASS",
+      "date": "2026-11-07T15:53:32.057141+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/admin-list.png",
+          "sha256": "f8a882c32fea06c1209ef15193ccea1f0c54160ec904996fcca4fd9ef92dd2c1",
+          "capturedAt": "2026-11-07T15:52:49.880177+00:00"
+        },
+        {
+          "path": "capturas/accept-dialog.png",
+          "sha256": "c35d5ceed38213090303664d0953af81de174bc714a756e119ea1313cdf91824",
+          "capturedAt": "2026-11-07T15:53:25.896203+00:00"
+        },
+        {
+          "path": "capturas/accepted.png",
+          "sha256": "80e755aff21c7742a1ae69cdbe50bcf601ff02131f9de9f5fea2f95cdeae3fa5",
+          "capturedAt": "2026-11-07T15:53:32.057141+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-08",
+      "title": "WhatsApp destinatario y borrador",
+      "requirements": [
+        "RF-17"
+      ],
+      "preconditions": "Cita #58 aceptada por interfaz",
+      "inputsAndSteps": "Revisar mensaje; Abrir WhatsApp; comprobar URI externo; volver sin enviar",
+      "expected": "Abrir wa.me/50588888888 con nombre, fecha, hora y confirmación",
+      "observed": "Chrome abrió api.whatsapp.com con teléfono y texto correctos; no se envió mensaje",
+      "status": "PASS",
+      "date": "2026-11-07T15:56:03.338413+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/accepted.png",
+          "sha256": "80e755aff21c7742a1ae69cdbe50bcf601ff02131f9de9f5fea2f95cdeae3fa5",
+          "capturedAt": "2026-11-07T15:53:32.057141+00:00"
+        },
+        {
+          "path": "capturas/whatsapp-browser.png",
+          "sha256": "658c40d37982596ba9564482d6b64e3d7a89c1207151302cfb98a1c5f12fa168",
+          "capturedAt": "2026-11-07T15:56:03.338413+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-09",
+      "title": "Detalles y asistencia antes de confirmar",
+      "requirements": [
+        "RF-10",
+        "RF-21"
+      ],
+      "preconditions": "ADMIN consulta #58 ACCEPTED sin asistencia",
+      "inputsAndSteps": "Abrir detalles de la cita",
+      "expected": "Mostrar teléfono dummy y Por confirmar como dato separado",
+      "observed": "Detalles y badge Por confirmar visibles",
+      "status": "PASS",
+      "date": "2026-11-07T15:57:54.011139+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/accepted-details.png",
+          "sha256": "52d0f7b409bc6d8b8d0d7c171e1882f4daad7ada57e8f1212e8086bf54619cdd",
+          "capturedAt": "2026-11-07T15:57:54.011139+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-10",
+      "title": "Rechazo por interfaz",
+      "requirements": [
+        "RF-12"
+      ],
+      "preconditions": "Fixture SQL #59 PENDING futuro del CLIENT dummy",
+      "inputsAndSteps": "Buscar 59; Pendientes; Rechazar; Sí rechazar",
+      "expected": "REJECTED y horario liberado",
+      "observed": "Mensaje Cita rechazada y API REJECTED",
+      "status": "PASS",
+      "date": "2026-11-07T15:59:36.142437+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/reject-card.png",
+          "sha256": "4f7baee6be0484e3c07d8d873449736978441d68cae36edfd6b56bdac3385426",
+          "capturedAt": "2026-11-07T15:59:08.397360+00:00"
+        },
+        {
+          "path": "capturas/reject-dialog.png",
+          "sha256": "fcc68f964eb09c99d9ec804d953c128fbf27af3006f1efab5d546b12e7db19f8",
+          "capturedAt": "2026-11-07T15:59:29.105297+00:00"
+        },
+        {
+          "path": "capturas/rejected.png",
+          "sha256": "667c6cd8b4d31675c6869409da7ce47ee24690e0652fd4a3877f1c9b2efbb08c",
+          "capturedAt": "2026-11-07T15:59:36.142437+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-11",
+      "title": "Cancelación administrativa",
+      "requirements": [
+        "RF-14"
+      ],
+      "preconditions": "Fixture SQL #60 ACCEPTED futuro del CLIENT dummy",
+      "inputsAndSteps": "Buscar 60; Confirmadas; Cancelar cita; confirmar",
+      "expected": "CANCELLED con liberación del horario",
+      "observed": "Confirmación administrativa y API CANCELLED",
+      "status": "PASS",
+      "date": "2026-11-07T16:00:56.709686+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/cancel-actions.png",
+          "sha256": "7ac4988601638792ef2ce93c59972077917e915efaf807f6561a80adf23d4366",
+          "capturedAt": "2026-11-07T16:00:35.456692+00:00"
+        },
+        {
+          "path": "capturas/admin-cancel-dialog.png",
+          "sha256": "3ad44b894b8606609b74633c18a78e5e92664ec864d330e59f3ad5b92e87387d",
+          "capturedAt": "2026-11-07T16:00:49.679868+00:00"
+        },
+        {
+          "path": "capturas/admin-cancelled.png",
+          "sha256": "4a620977a6325e85a7a7c732b5f1439040be7cd477ab5641122ae37d5cdd6d26",
+          "capturedAt": "2026-11-07T16:00:56.709686+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-12",
+      "title": "Completar desde interfaz",
+      "requirements": [
+        "RF-15"
+      ],
+      "preconditions": "Fixture SQL #61 ACCEPTED pasado; no se altera una cita real",
+      "inputsAndSteps": "Buscar 61; Marcar cita como completada; Sí completar",
+      "expected": "COMPLETED persistido; no habilitar completar una futura",
+      "observed": "Botón de completar visible para #61; mensaje de éxito y API COMPLETED; #60 futura mostraba restricción",
+      "status": "PASS",
+      "date": "2026-11-07T16:01:59.115415+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/complete-actions.png",
+          "sha256": "ff462a8c7fe9b1afa244c95240f5b59083dc0c5ce4975375f7c484ddc8691d9b",
+          "capturedAt": "2026-11-07T16:01:31.980591+00:00"
+        },
+        {
+          "path": "capturas/complete-dialog.png",
+          "sha256": "85569ee7325c4dfe982dad2c4267aa47da2d844af8a7752afa7ed72b9e884425",
+          "capturedAt": "2026-11-07T16:01:52.865562+00:00"
+        },
+        {
+          "path": "capturas/completed.png",
+          "sha256": "858c1b5b47f4c00f72cff5e39ef876f46bf099346a8bbccbf4925ed264ab6d19",
+          "capturedAt": "2026-11-07T16:01:59.115415+00:00"
+        },
+        {
+          "path": "capturas/cancel-actions.png",
+          "sha256": "7ac4988601638792ef2ce93c59972077917e915efaf807f6561a80adf23d4366",
+          "capturedAt": "2026-11-07T16:00:35.456692+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-13",
+      "title": "Recordatorio manual desde ADMIN",
+      "requirements": [
+        "RF-22"
+      ],
+      "preconditions": "Solo #58 elegible; CLIENT activo en segundo emulador",
+      "inputsAndSteps": "Enviar 1 recordatorio; revisar diálogo; confirmar",
+      "expected": "Un trabajo persistente en cola para #58",
+      "observed": "Job #7 ADMIN_MANUAL/QUEUED, solicitado 16:02:53.343 UTC",
+      "status": "PASS",
+      "date": "2026-11-07T16:02:57.192804+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/reminder-dialog.png",
+          "sha256": "42f9fdcb2641ad845fb3a120872a20a5971d185881d21367372553a7e0ef5542",
+          "capturedAt": "2026-11-07T16:02:40.955619+00:00"
+        },
+        {
+          "path": "capturas/reminder-queued.png",
+          "sha256": "b9e32a5cebae161b6b68bab580914e3cd2dc78aba335d50d82f20b906ed88003",
+          "capturedAt": "2026-11-07T16:02:57.192804+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-14",
+      "title": "Recepción push manual en APK actual",
+      "requirements": [
+        "RF-18",
+        "RF-22"
+      ],
+      "preconditions": "Job #7 pendiente y token CLIENT activo",
+      "inputsAndSteps": "Esperar worker cron sin invocarlo manualmente; abrir bandeja",
+      "expected": "Aviso real correspondiente a #58 y estado SENT",
+      "observed": "Job #7 SENT 16:03:01.723 UTC; notificación visible 16:03:15 UTC para 08/11 11:00",
+      "status": "PASS",
+      "date": "2026-11-07T16:03:15.077742+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-push-received.png",
+          "sha256": "84c91de7a6269bbb93c866eda5da16182ffb85fd65a3b7f0848e03766736d7e9",
+          "capturedAt": "2026-11-07T16:03:15.077742+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-15",
+      "title": "Apertura de notificación recibida",
+      "requirements": [
+        "RF-20"
+      ],
+      "preconditions": "Push manual visible en Android",
+      "inputsAndSteps": "Tocar ¿Confirmas tu cita?",
+      "expected": "Abrir Mis citas en la aplicación",
+      "observed": "Mis citas y cita aceptada visibles; la confirmación se ejecutó en su botón",
+      "status": "PASS",
+      "date": "2026-11-07T16:03:45.164214+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-push-open.png",
+          "sha256": "4ed61603cf8b17064fca7232b4c418b173f07bf3e2279171e1d8f8f4d653ee58",
+          "capturedAt": "2026-11-07T16:03:45.164214+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-16",
+      "title": "Confirmación de asistencia",
+      "requirements": [
+        "RF-20",
+        "RF-21"
+      ],
+      "preconditions": "Cita #58 ACCEPTED futura y sin confirmación",
+      "inputsAndSteps": "Desde Mis citas pulsar Confirmar asistencia",
+      "expected": "Asistencia CONFIRMED manteniendo ACCEPTED",
+      "observed": "Mensaje Asistencia confirmada; API ACCEPTED/CONFIRMED; timestamp 16:04:52.318 UTC",
+      "status": "PASS",
+      "date": "2026-11-07T16:04:55.942088+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-attendance-button.png",
+          "sha256": "1c09a723f5cd9f0360a157063c38943af37f664517841e10f6961383432665a4",
+          "capturedAt": "2026-11-07T16:04:25.099363+00:00"
+        },
+        {
+          "path": "capturas/client-device-attendance-confirmed.png",
+          "sha256": "79782a7bc3bb22eec1d7e6c0a945e5cb9381b96309eee83c4feeb4f745895972",
+          "capturedAt": "2026-11-07T16:04:55.942088+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-17",
+      "title": "Agenda por período y estado",
+      "requirements": [
+        "RF-13"
+      ],
+      "preconditions": "ADMIN autenticado; #58 en el rango de mañana",
+      "inputsAndSteps": "Abrir agenda; Mañana; Confirmadas",
+      "expected": "Limitar al 08/11 y mostrar #58; distinguir estados y conteos",
+      "observed": "Rango de un día y una confirmada; después de cancelar se muestran dos canceladas y cero activas",
+      "status": "PASS",
+      "date": "2026-11-07T16:08:21.995391+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/agenda-tomorrow.png",
+          "sha256": "8db1e6a9f97a2e740b43140414960606df9da0408aa4c3898ae1df500d4e7968",
+          "capturedAt": "2026-11-07T16:04:02.264769+00:00"
+        },
+        {
+          "path": "capturas/agenda-confirmed.png",
+          "sha256": "abc57ffe5f32b7ad6557fbc490bf63ba016412152af4cb7141d9fb61f515d185",
+          "capturedAt": "2026-11-07T16:05:02.379854+00:00"
+        },
+        {
+          "path": "capturas/agenda-cancelled.png",
+          "sha256": "ced232b4e2aaea3d911f28aaa56562568ddb3a2738f311176909df9e09b5ca00",
+          "capturedAt": "2026-11-07T16:08:21.995391+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-18",
+      "title": "Búsqueda positiva en agenda",
+      "requirements": [
+        "RF-13"
+      ],
+      "preconditions": "Agenda del 08/11 con dos citas dummy canceladas",
+      "inputsAndSteps": "Buscar Mario; combinar con estado Canceladas",
+      "expected": "Conservar solo coincidencias del período/estado",
+      "observed": "Dos resultados Mario y datos del período; no se declara aquí búsqueda negativa UI",
+      "status": "PASS",
+      "date": "2026-11-07T16:08:40.697373+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/agenda-positive.png",
+          "sha256": "b91b1f90abb438a7a566f716c45a4341ad3278b594d453182b4143796132eda3",
+          "capturedAt": "2026-11-07T16:08:40.697373+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-19",
+      "title": "Volver del diálogo sin mutar",
+      "requirements": [
+        "RF-09"
+      ],
+      "preconditions": "#58 ACCEPTED/CONFIRMED dentro del plazo permitido",
+      "inputsAndSteps": "Cancelar cita; Volver; consultar API",
+      "expected": "Conservar estado y asistencia",
+      "observed": "ACCEPTED/CONFIRMED sin cancelación al volver",
+      "status": "PASS",
+      "date": "2026-11-07T16:05:41.377655+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-cancel-dialog-final.png",
+          "sha256": "8cf88dd0472d9d3738f5010e3e28ce532420bb42e0533a9fa2ea761c720db721",
+          "capturedAt": "2026-11-07T16:05:35.307547+00:00"
+        },
+        {
+          "path": "capturas/client-device-cancel-aborted-final.png",
+          "sha256": "4825ccad2542b1f3a27a719aa718fe5792e668436c87585e1de9ff1edccf917c",
+          "capturedAt": "2026-11-07T16:05:41.377655+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-20",
+      "title": "Cancelación CLIENT e historial",
+      "requirements": [
+        "RF-07",
+        "RF-08",
+        "RF-09"
+      ],
+      "preconditions": "#58 elegible para cancelar",
+      "inputsAndSteps": "Abrir diálogo; Sí cancelar; consultar próximas e historial; verificar disponibilidad",
+      "expected": "CANCELLED, historial conservado, próximas cero y bloque libre",
+      "observed": "Cita cancelada; Historial 08/11 11:00 Cancelada; API bloque 11:00 libre",
+      "status": "PASS",
+      "date": "2026-11-07T16:07:06.066302+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-client-cancelled-final.png",
+          "sha256": "129e6f78ad021c802327feae6ddff4a571727c03afee252954ae4126e03aadc3",
+          "capturedAt": "2026-11-07T16:05:56.625668+00:00"
+        },
+        {
+          "path": "capturas/client-device-history-main-cancel.png",
+          "sha256": "67e9fb5e2969d80cc0befe124c9d8c2ee740bdcb03f3e8b7af052e9f3982e1f1",
+          "capturedAt": "2026-11-07T16:07:06.066302+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-21",
+      "title": "Recordatorio automático real",
+      "requirements": [
+        "RF-19"
+      ],
+      "preconditions": "Fixture SQL #62 ACCEPTED a +40 minutos, sin asistencia y con dispositivo activo",
+      "inputsAndSteps": "Esperar cron sin activar envío manual; verificar reminder_sent_at y bandeja",
+      "expected": "Un envío automático dentro de la ventana de una hora y recepción en APK 1.0.1",
+      "observed": "Programada 10:47:13 local; reminder_sent_at 16:08:01.085 UTC; intento 1; notificación 10:47 visible; sin job manual para #62",
+      "status": "PASS",
+      "date": "2026-11-07T16:08:15.799535+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-automatic-push-received.png",
+          "sha256": "5b5418e3e4be85b1ec0702f50af95ef8e4b5ab08e89dd383e3b1266e8138bad0",
+          "capturedAt": "2026-11-07T16:08:15.799535+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-22",
+      "title": "Sin recordar: reinicio independiente",
+      "requirements": [
+        "RF-03"
+      ],
+      "preconditions": "CLIENT del segundo dispositivo autenticado con Recordar desactivado; sin logout previo",
+      "inputsAndSteps": "Forzar cierre; arrancar y esperar",
+      "expected": "No restaurar identidad CLIENT",
+      "observed": "Acceso público Iniciar sesión visible después del reinicio",
+      "status": "PASS",
+      "date": "2026-11-07T16:15:22.215783+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/client-device-client-login-bottom.png",
+          "sha256": "536d2e9dea09d449a56877599346b73253507f4a533a02fba8eb77f92d044a4e",
+          "capturedAt": "2026-11-07T15:58:46.325754+00:00"
+        },
+        {
+          "path": "capturas/client-device-client-no-remember-ready.png",
+          "sha256": "e8e88f5e1ab520bf98887dcbd9a8e52485019246de88d0bc83d99ef429faad67",
+          "capturedAt": "2026-11-07T16:15:22.215783+00:00"
+        }
+      ]
+    },
+    {
+      "id": "UIF-23",
+      "title": "Logout ADMIN y reinicio",
+      "requirements": [
+        "RF-04"
+      ],
+      "preconditions": "ADMIN autenticado tras controles de gestión",
+      "inputsAndSteps": "Cerrar sesión; forzar cierre; abrir y esperar",
+      "expected": "No conservar sesión administrativa",
+      "observed": "Acceso público tras logout y reinicio",
+      "status": "PASS",
+      "date": "2026-11-07T16:15:25.038329+00:00",
+      "executor": "Codex con ADB autorizado por Hanssel",
+      "apkVersion": "1.0.1 / versionCode 2",
+      "apkSha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+      "evidence": [
+        {
+          "path": "capturas/admin-logout-final.png",
+          "sha256": "097acb432192a5a89e5cd2c26645f6e059875b29b57dcd92d603307598f26ea8",
+          "capturedAt": "2026-11-07T16:13:25.398229+00:00"
+        },
+        {
+          "path": "capturas/admin-logged-out-ready.png",
+          "sha256": "ba760ebe4e2ffe0eef6dfa7cd23083029f66fd15ec4e6985f5db568e32bc63c1",
+          "capturedAt": "2026-11-07T16:15:25.038329+00:00"
+        }
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "path": "capturas/client-login.png",
+      "sha256": "92fdef9cbb1642664343c5f6aef3eebc95099f02b4abebc5cd3ce71b71783e88",
+      "capturedAt": "2026-11-07T15:47:45.197953+00:00"
+    },
+    {
+      "path": "capturas/remember-enabled.png",
+      "sha256": "3ad222a9f84bd7b6ee807265f4fa743a6ec15b67ab17f8ca544effad8885494c",
+      "capturedAt": "2026-11-07T15:47:38.740022+00:00"
+    },
+    {
+      "path": "capturas/client-restored-ready.png",
+      "sha256": "9e8d4c4b6138092bcbea36adbcf9399551d6c7c2570b96f42af1ae4dc0900a7d",
+      "capturedAt": "2026-11-07T15:49:27.394166+00:00"
+    },
+    {
+      "path": "capturas/main-slot.png",
+      "sha256": "08669f0d0753a970937d577aba8838eb4658ad02c4821b747205eeebfd64719e",
+      "capturedAt": "2026-11-07T15:48:53.009713+00:00"
+    },
+    {
+      "path": "capturas/main-created.png",
+      "sha256": "db61c4aed410edc190d43eba2fff1b55527b25fd803b6b95e5c04866a6820cd9",
+      "capturedAt": "2026-11-07T15:48:59.450146+00:00"
+    },
+    {
+      "path": "capturas/client-logout.png",
+      "sha256": "898ae1537dc7842c5b6ae5977d506cec80da792446bd8ee73dd3c2edb900b199",
+      "capturedAt": "2026-11-07T15:49:39.915795+00:00"
+    },
+    {
+      "path": "capturas/admin-login.png",
+      "sha256": "0ad5d82a0565208ff9144025c0557b2c10913a0f252e6aa1438f4e06a2b4fcc2",
+      "capturedAt": "2026-11-07T15:51:10.646108+00:00"
+    },
+    {
+      "path": "capturas/search-id.png",
+      "sha256": "6d7f3cd6c9bfab9c1892062f6bfb143bb65e4e0fabe6c3d49b0a05218de1b069",
+      "capturedAt": "2026-11-07T15:57:43.538165+00:00"
+    },
+    {
+      "path": "capturas/accepted-card.png",
+      "sha256": "d2115b77996f4d9dd6a79f0055031569b890bdb67a6e9a72b65d5fbd0bf2ecdd",
+      "capturedAt": "2026-11-07T15:57:47.544214+00:00"
+    },
+    {
+      "path": "capturas/admin-list.png",
+      "sha256": "f8a882c32fea06c1209ef15193ccea1f0c54160ec904996fcca4fd9ef92dd2c1",
+      "capturedAt": "2026-11-07T15:52:49.880177+00:00"
+    },
+    {
+      "path": "capturas/accept-dialog.png",
+      "sha256": "c35d5ceed38213090303664d0953af81de174bc714a756e119ea1313cdf91824",
+      "capturedAt": "2026-11-07T15:53:25.896203+00:00"
+    },
+    {
+      "path": "capturas/accepted.png",
+      "sha256": "80e755aff21c7742a1ae69cdbe50bcf601ff02131f9de9f5fea2f95cdeae3fa5",
+      "capturedAt": "2026-11-07T15:53:32.057141+00:00"
+    },
+    {
+      "path": "capturas/whatsapp-browser.png",
+      "sha256": "658c40d37982596ba9564482d6b64e3d7a89c1207151302cfb98a1c5f12fa168",
+      "capturedAt": "2026-11-07T15:56:03.338413+00:00"
+    },
+    {
+      "path": "capturas/accepted-details.png",
+      "sha256": "52d0f7b409bc6d8b8d0d7c171e1882f4daad7ada57e8f1212e8086bf54619cdd",
+      "capturedAt": "2026-11-07T15:57:54.011139+00:00"
+    },
+    {
+      "path": "capturas/reject-card.png",
+      "sha256": "4f7baee6be0484e3c07d8d873449736978441d68cae36edfd6b56bdac3385426",
+      "capturedAt": "2026-11-07T15:59:08.397360+00:00"
+    },
+    {
+      "path": "capturas/reject-dialog.png",
+      "sha256": "fcc68f964eb09c99d9ec804d953c128fbf27af3006f1efab5d546b12e7db19f8",
+      "capturedAt": "2026-11-07T15:59:29.105297+00:00"
+    },
+    {
+      "path": "capturas/rejected.png",
+      "sha256": "667c6cd8b4d31675c6869409da7ce47ee24690e0652fd4a3877f1c9b2efbb08c",
+      "capturedAt": "2026-11-07T15:59:36.142437+00:00"
+    },
+    {
+      "path": "capturas/cancel-actions.png",
+      "sha256": "7ac4988601638792ef2ce93c59972077917e915efaf807f6561a80adf23d4366",
+      "capturedAt": "2026-11-07T16:00:35.456692+00:00"
+    },
+    {
+      "path": "capturas/admin-cancel-dialog.png",
+      "sha256": "3ad44b894b8606609b74633c18a78e5e92664ec864d330e59f3ad5b92e87387d",
+      "capturedAt": "2026-11-07T16:00:49.679868+00:00"
+    },
+    {
+      "path": "capturas/admin-cancelled.png",
+      "sha256": "4a620977a6325e85a7a7c732b5f1439040be7cd477ab5641122ae37d5cdd6d26",
+      "capturedAt": "2026-11-07T16:00:56.709686+00:00"
+    },
+    {
+      "path": "capturas/complete-actions.png",
+      "sha256": "ff462a8c7fe9b1afa244c95240f5b59083dc0c5ce4975375f7c484ddc8691d9b",
+      "capturedAt": "2026-11-07T16:01:31.980591+00:00"
+    },
+    {
+      "path": "capturas/complete-dialog.png",
+      "sha256": "85569ee7325c4dfe982dad2c4267aa47da2d844af8a7752afa7ed72b9e884425",
+      "capturedAt": "2026-11-07T16:01:52.865562+00:00"
+    },
+    {
+      "path": "capturas/completed.png",
+      "sha256": "858c1b5b47f4c00f72cff5e39ef876f46bf099346a8bbccbf4925ed264ab6d19",
+      "capturedAt": "2026-11-07T16:01:59.115415+00:00"
+    },
+    {
+      "path": "capturas/reminder-dialog.png",
+      "sha256": "42f9fdcb2641ad845fb3a120872a20a5971d185881d21367372553a7e0ef5542",
+      "capturedAt": "2026-11-07T16:02:40.955619+00:00"
+    },
+    {
+      "path": "capturas/reminder-queued.png",
+      "sha256": "b9e32a5cebae161b6b68bab580914e3cd2dc78aba335d50d82f20b906ed88003",
+      "capturedAt": "2026-11-07T16:02:57.192804+00:00"
+    },
+    {
+      "path": "capturas/client-device-push-received.png",
+      "sha256": "84c91de7a6269bbb93c866eda5da16182ffb85fd65a3b7f0848e03766736d7e9",
+      "capturedAt": "2026-11-07T16:03:15.077742+00:00"
+    },
+    {
+      "path": "capturas/client-device-push-open.png",
+      "sha256": "4ed61603cf8b17064fca7232b4c418b173f07bf3e2279171e1d8f8f4d653ee58",
+      "capturedAt": "2026-11-07T16:03:45.164214+00:00"
+    },
+    {
+      "path": "capturas/client-device-attendance-button.png",
+      "sha256": "1c09a723f5cd9f0360a157063c38943af37f664517841e10f6961383432665a4",
+      "capturedAt": "2026-11-07T16:04:25.099363+00:00"
+    },
+    {
+      "path": "capturas/client-device-attendance-confirmed.png",
+      "sha256": "79782a7bc3bb22eec1d7e6c0a945e5cb9381b96309eee83c4feeb4f745895972",
+      "capturedAt": "2026-11-07T16:04:55.942088+00:00"
+    },
+    {
+      "path": "capturas/agenda-tomorrow.png",
+      "sha256": "8db1e6a9f97a2e740b43140414960606df9da0408aa4c3898ae1df500d4e7968",
+      "capturedAt": "2026-11-07T16:04:02.264769+00:00"
+    },
+    {
+      "path": "capturas/agenda-confirmed.png",
+      "sha256": "abc57ffe5f32b7ad6557fbc490bf63ba016412152af4cb7141d9fb61f515d185",
+      "capturedAt": "2026-11-07T16:05:02.379854+00:00"
+    },
+    {
+      "path": "capturas/agenda-cancelled.png",
+      "sha256": "ced232b4e2aaea3d911f28aaa56562568ddb3a2738f311176909df9e09b5ca00",
+      "capturedAt": "2026-11-07T16:08:21.995391+00:00"
+    },
+    {
+      "path": "capturas/agenda-positive.png",
+      "sha256": "b91b1f90abb438a7a566f716c45a4341ad3278b594d453182b4143796132eda3",
+      "capturedAt": "2026-11-07T16:08:40.697373+00:00"
+    },
+    {
+      "path": "capturas/client-device-cancel-dialog-final.png",
+      "sha256": "8cf88dd0472d9d3738f5010e3e28ce532420bb42e0533a9fa2ea761c720db721",
+      "capturedAt": "2026-11-07T16:05:35.307547+00:00"
+    },
+    {
+      "path": "capturas/client-device-cancel-aborted-final.png",
+      "sha256": "4825ccad2542b1f3a27a719aa718fe5792e668436c87585e1de9ff1edccf917c",
+      "capturedAt": "2026-11-07T16:05:41.377655+00:00"
+    },
+    {
+      "path": "capturas/client-device-client-cancelled-final.png",
+      "sha256": "129e6f78ad021c802327feae6ddff4a571727c03afee252954ae4126e03aadc3",
+      "capturedAt": "2026-11-07T16:05:56.625668+00:00"
+    },
+    {
+      "path": "capturas/client-device-history-main-cancel.png",
+      "sha256": "67e9fb5e2969d80cc0befe124c9d8c2ee740bdcb03f3e8b7af052e9f3982e1f1",
+      "capturedAt": "2026-11-07T16:07:06.066302+00:00"
+    },
+    {
+      "path": "capturas/client-device-automatic-push-received.png",
+      "sha256": "5b5418e3e4be85b1ec0702f50af95ef8e4b5ab08e89dd383e3b1266e8138bad0",
+      "capturedAt": "2026-11-07T16:08:15.799535+00:00"
+    },
+    {
+      "path": "capturas/client-device-client-login-bottom.png",
+      "sha256": "536d2e9dea09d449a56877599346b73253507f4a533a02fba8eb77f92d044a4e",
+      "capturedAt": "2026-11-07T15:58:46.325754+00:00"
+    },
+    {
+      "path": "capturas/client-device-client-no-remember-ready.png",
+      "sha256": "e8e88f5e1ab520bf98887dcbd9a8e52485019246de88d0bc83d99ef429faad67",
+      "capturedAt": "2026-11-07T16:15:22.215783+00:00"
+    },
+    {
+      "path": "capturas/admin-logout-final.png",
+      "sha256": "097acb432192a5a89e5cd2c26645f6e059875b29b57dcd92d603307598f26ea8",
+      "capturedAt": "2026-11-07T16:13:25.398229+00:00"
+    },
+    {
+      "path": "capturas/admin-logged-out-ready.png",
+      "sha256": "ba760ebe4e2ffe0eef6dfa7cd23083029f66fd15ec4e6985f5db568e32bc63c1",
+      "capturedAt": "2026-11-07T16:15:25.038329+00:00"
+    }
+  ],
+  "cleanup": {
+    "fixturesTerminal": true,
+    "mainSlotReleased": true,
+    "testDeviceDeactivated": true,
+    "temporaryEmulatorClosed": true
+  },
+  "limitations": [
+    "Pruebas manuales asistidas, selección representativa; no cobertura total ni revisión humana independiente nueva",
+    "WhatsApp: apertura de enlace y borrador; no envío ni instalación/autenticación de WhatsApp nativo",
+    "Tap de notificación abre Mis citas; la pestaña Historial previamente abierta puede conservarse; no se acredita la acción directa del botón de notificación",
+    "No se considera PASS una búsqueda negativa UI que no pudo completarse con la automatización; los negativos de API sí están en PF",
+    "No se demuestra iOS, recorrido web integral, carga sostenida, SLA o aceptación de negocio"
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "startedAt": "2026-11-07T16:23:55.734Z",
+  "sourceCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "executor": "Codex autorizado por Hanssel",
+  "scope": "GET de agenda publicado; sin mutaciones; login ADMIN dummy",
+  "cases": [
+    {
+      "id": "API-F01",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "93 días inclusivos",
+      "preconditions": "API Render SHA verificado; ADMIN dummy autenticado",
+      "inputs": "/admin/appointments?startDate=2026-11-07&endDate=2027-02-07",
+      "steps": "GET y comparación de HTTP, IDs/estados u orden cuando aplica",
+      "expected": "Rango exacto 93 días aceptado",
+      "observed": {
+        "http": 200,
+        "ids": [
+          62,
+          57,
+          58,
+          59,
+          60
+        ],
+        "states": [
+          "CANCELLED",
+          "CANCELLED",
+          "CANCELLED",
+          "REJECTED",
+          "CANCELLED"
+        ],
+        "times": [
+          "10:47",
+          "10:00",
+          "11:00",
+          "15:00",
+          "15:00"
+        ]
+      },
+      "status": "PASS",
+      "date": "2026-11-07T16:23:55.735Z"
+    },
+    {
+      "id": "API-F02",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "94 días inclusivos",
+      "preconditions": "API Render SHA verificado; ADMIN dummy autenticado",
+      "inputs": "/admin/appointments?startDate=2026-11-07&endDate=2027-02-08",
+      "steps": "GET y comparación de HTTP, IDs/estados u orden cuando aplica",
+      "expected": "Rechazo del rango de 94 días",
+      "observed": {
+        "http": 400,
+        "ids": [],
+        "states": [],
+        "times": [],
+        "message": "El rango máximo de consulta es de 93 días."
+      },
+      "status": "PASS",
+      "date": "2026-11-07T16:23:56.572Z"
+    },
+    {
+      "id": "API-F03",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "Rango invertido",
+      "preconditions": "API Render SHA verificado; ADMIN dummy autenticado",
+      "inputs": "/admin/appointments?startDate=2026-11-08&endDate=2026-11-07",
+      "steps": "GET y comparación de HTTP, IDs/estados u orden cuando aplica",
+      "expected": "Rechazo de fecha inicial posterior",
+      "observed": {
+        "http": 400,
+        "ids": [],
+        "states": [],
+        "times": [],
+        "message": "La fecha inicial no puede ser posterior a la fecha final."
+      },
+      "status": "PASS",
+      "date": "2026-11-07T16:23:56.799Z"
+    },
+    {
+      "id": "API-F04",
+      "requirements": [
+        "RF-13",
+        "RF-10"
+      ],
+      "title": "Búsqueda #ID y estado",
+      "preconditions": "API Render SHA verificado; ADMIN dummy autenticado",
+      "inputs": "/admin/appointments?startDate=2026-11-08&endDate=2026-11-08&search=%2358&status=CANCELLED",
+      "steps": "GET y comparación de HTTP, IDs/estados u orden cuando aplica",
+      "expected": "Solo cita #58 CANCELLED",
+      "observed": {
+        "http": 200,
+        "ids": [
+          58
+        ],
+        "states": [
+          "CANCELLED"
+        ],
+        "times": [
+          "11:00"
+        ]
+      },
+      "status": "PASS",
+      "date": "2026-11-07T16:23:57.024Z"
+    },
+    {
+      "id": "API-F05",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "Estado inválido",
+      "preconditions": "API Render SHA verificado; ADMIN dummy autenticado",
+      "inputs": "/admin/appointments?startDate=2026-11-08&endDate=2026-11-08&status=INVALID",
+      "steps": "GET y comparación de HTTP, IDs/estados u orden cuando aplica",
+      "expected": "Rechazo de estado no permitido",
+      "observed": {
+        "http": 400,
+        "ids": [],
+        "states": [],
+        "times": [],
+        "message": "El estado seleccionado no es válido."
+      },
+      "status": "PASS",
+      "date": "2026-11-07T16:23:57.308Z"
+    },
+    {
+      "id": "API-F06",
+      "requirements": [
+        "RF-13"
+      ],
+      "title": "Orden y filtro combinado",
+      "preconditions": "API Render SHA verificado; ADMIN dummy autenticado",
+      "inputs": "/admin/appointments?startDate=2026-11-08&endDate=2026-11-08&search=Mario&status=CANCELLED",
+      "steps": "GET y comparación de HTTP, IDs/estados u orden cuando aplica",
+      "expected": "Citas del rango y estado; orden ascendente por hora; incluye #58",
+      "observed": {
+        "http": 200,
+        "ids": [
+          57,
+          58
+        ],
+        "states": [
+          "CANCELLED",
+          "CANCELLED"
+        ],
+        "times": [
+          "10:00",
+          "11:00"
+        ]
+      },
+      "status": "PASS",
+      "date": "2026-11-07T16:23:57.535Z"
+    }
+  ],
+  "finishedAt": "2026-11-07T16:23:57.828Z",
+  "summary": {
+    "executed": 6,
+    "passed": 6,
+    "failed": 0,
+    "blocked": 0
+  }
+}

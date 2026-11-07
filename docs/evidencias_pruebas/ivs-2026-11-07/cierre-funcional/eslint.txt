@@ -1,0 +1,3 @@
+
+> barberia-cale@1.0.1 lint
+> expo lint

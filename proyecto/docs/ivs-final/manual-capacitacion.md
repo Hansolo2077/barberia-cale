@@ -1,5 +1,8 @@
 # Manual de operación y capacitación
 
+> Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
+
+
 Este material corresponde a CLIENT y ADMIN de Barbería Cale. Las pantallas de referencia están en [capturas de la app](../../../docs/arquitectura-actual/Capturas_App_Segundo_Parcial.md). Son capturas históricas identificadas; la preparación de este manual no implica que se haya impartido una capacitación o aprobado una evaluación de usuarios.
 
 ## Cliente

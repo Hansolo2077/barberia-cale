@@ -1,0 +1,809 @@
+{
+  "startedAt": "2026-11-07T16:10:28.870Z",
+  "timeZone": "America/Guatemala",
+  "sourceCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "workingTreeChanges": true,
+  "environment": {
+    "node": "v24.16.0",
+    "platform": "win32",
+    "database": "PostgreSQL real; esquemas efimeros aislados",
+    "http": "Express local con rutas y middleware reales",
+    "providers": "Sin envio a Expo ni WhatsApp",
+    "postgresql": "17.6"
+  },
+  "cases": [
+    {
+      "id": "PF-01",
+      "requirements": [
+        "RF-01",
+        "RC-02"
+      ],
+      "title": "Registro y hash sin exponer credenciales",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "POST /auth/register con datos sinteticos",
+        "Comprobar hash bcrypt y respuesta publica"
+      ],
+      "expected": "201, rol CLIENT, hash distinto de la clave y ausencia de password_hash en respuesta",
+      "observed": {
+        "http": 201,
+        "role": "CLIENT",
+        "bcryptVerified": true,
+        "secretReturned": false
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:31.481Z",
+      "finishedAt": "2026-11-07T16:10:31.989Z"
+    },
+    {
+      "id": "PF-02",
+      "requirements": [
+        "RF-01"
+      ],
+      "title": "Rechazo de registro duplicado",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Repetir celular sintetico PF-01"
+      ],
+      "expected": "409 y una sola cuenta",
+      "observed": {
+        "http": 409
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:32.760Z",
+      "finishedAt": "2026-11-07T16:10:32.857Z"
+    },
+    {
+      "id": "PF-03",
+      "requirements": [
+        "RF-02"
+      ],
+      "title": "Login invalido y campos vacios",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Enviar cuerpo vacio",
+        "Enviar clave incorrecta"
+      ],
+      "expected": "400 y 401 respectivamente",
+      "observed": {
+        "empty": 400,
+        "invalid": 401
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:32.857Z",
+      "finishedAt": "2026-11-07T16:10:33.030Z"
+    },
+    {
+      "id": "PF-04",
+      "requirements": [
+        "RF-16",
+        "RC-01"
+      ],
+      "title": "Autorizacion HTTP por rol y token",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "GET /admin/appointments sin token, token invalido, CLIENT y ADMIN",
+        "GET /appointments/my con ADMIN"
+      ],
+      "expected": "401,401,403,200 y 403; sin mutaciones",
+      "observed": {
+        "statuses": [
+          401,
+          401,
+          403,
+          200,
+          403
+        ]
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:33.030Z",
+      "finishedAt": "2026-11-07T16:10:34.040Z"
+    },
+    {
+      "id": "PF-05",
+      "requirements": [
+        "RF-05"
+      ],
+      "title": "Disponibilidad y fecha invalida",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Consultar fecha futura valida",
+        "Consultar 2026-02-30"
+      ],
+      "expected": "200 con bloques y 400 para fecha imposible",
+      "observed": {
+        "valid": 200,
+        "slots": 10,
+        "invalid": 400
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:34.040Z",
+      "finishedAt": "2026-11-07T16:10:34.513Z"
+    },
+    {
+      "id": "PF-06",
+      "requirements": [
+        "RF-06",
+        "RC-03"
+      ],
+      "title": "Reserva valida y consulta persistida",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Crear cita futura 08:00",
+        "GET /appointments/my y SELECT por ID"
+      ],
+      "expected": "201 PENDING, mismo ID recuperado",
+      "observed": {
+        "http": 201,
+        "state": "PENDING",
+        "recovered": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:34.513Z",
+      "finishedAt": "2026-11-07T16:10:35.460Z"
+    },
+    {
+      "id": "PF-07",
+      "requirements": [
+        "RF-06",
+        "RC-03"
+      ],
+      "title": "Limite de una cita activa diaria",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Reservar otra hora el mismo dia para PF-06"
+      ],
+      "expected": "409 y una cita activa",
+      "observed": {
+        "http": 409,
+        "active": 1
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:35.460Z",
+      "finishedAt": "2026-11-07T16:10:36.138Z"
+    },
+    {
+      "id": "PF-08",
+      "requirements": [
+        "RF-06",
+        "RC-03"
+      ],
+      "title": "Anticipacion y servicio invalido",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Reservar fecha pasada",
+        "Enviar servicio fuera del catalogo"
+      ],
+      "expected": "400 en ambos casos",
+      "observed": {
+        "statuses": [
+          400,
+          400
+        ]
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:36.138Z",
+      "finishedAt": "2026-11-07T16:10:36.728Z"
+    },
+    {
+      "id": "PF-09",
+      "requirements": [
+        "RF-11",
+        "RF-20",
+        "RF-21"
+      ],
+      "title": "Aceptacion y asistencia idempotente",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "ADMIN acepta PF-06",
+        "CLIENT confirma dos veces",
+        "Comparar timestamps"
+      ],
+      "expected": "ACCEPTED y primera confirmacion conservada",
+      "observed": {
+        "state": "ACCEPTED",
+        "attendance": "CONFIRMED",
+        "idempotent": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:36.728Z",
+      "finishedAt": "2026-11-07T16:10:37.408Z"
+    },
+    {
+      "id": "PF-10",
+      "requirements": [
+        "RF-09",
+        "RF-16"
+      ],
+      "title": "Otro cliente no puede cancelar cita ajena",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Otro CLIENT intenta cancelar PF-06",
+        "Comprobar estado almacenado"
+      ],
+      "expected": "404 y cita ACCEPTED intacta",
+      "observed": {
+        "http": 404,
+        "unchanged": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:37.408Z",
+      "finishedAt": "2026-11-07T16:10:37.794Z"
+    },
+    {
+      "id": "PF-11",
+      "requirements": [
+        "RF-09",
+        "RF-05",
+        "RF-08"
+      ],
+      "title": "Cancelacion libera horario y conserva historial",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "CLIENT cancela PF-06",
+        "Consultar disponibilidad e historial"
+      ],
+      "expected": "CANCELLED y 08:00 libre",
+      "observed": {
+        "http": 200,
+        "state": "CANCELLED",
+        "slotReleased": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:37.794Z",
+      "finishedAt": "2026-11-07T16:10:38.581Z"
+    },
+    {
+      "id": "PF-12",
+      "requirements": [
+        "RF-06",
+        "RC-04"
+      ],
+      "title": "Concurrencia real por el mismo horario",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Lanzar dos POST simultaneos de clientes distintos para 10:00",
+        "Contar citas activas en PostgreSQL"
+      ],
+      "expected": "Un 201, un 409 y exactamente una cita activa",
+      "observed": {
+        "statuses": [
+          201,
+          409
+        ],
+        "active": 1,
+        "requests": 2
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:38.581Z",
+      "finishedAt": "2026-11-07T16:10:39.624Z"
+    },
+    {
+      "id": "PF-13",
+      "requirements": [
+        "RF-06",
+        "RC-03"
+      ],
+      "title": "Concurrencia del mismo cliente y limite semanal",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Crear dos fechas distintas dentro de siete dias",
+        "Intentar tercera reserva en la ventana"
+      ],
+      "expected": "Dos creaciones y tercer intento 409",
+      "observed": {
+        "created": 2,
+        "thirdRejected": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:39.624Z",
+      "finishedAt": "2026-11-07T16:10:41.344Z"
+    },
+    {
+      "id": "PF-14",
+      "requirements": [
+        "RF-12"
+      ],
+      "title": "Rechazo administrativo libera solicitud",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Insertar fixture PENDING",
+        "PATCH reject y comprobar DB"
+      ],
+      "expected": "REJECTED",
+      "observed": {
+        "http": 200,
+        "state": "REJECTED"
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:41.344Z",
+      "finishedAt": "2026-11-07T16:10:41.743Z"
+    },
+    {
+      "id": "PF-15",
+      "requirements": [
+        "RF-14",
+        "RF-15"
+      ],
+      "title": "Cancelacion administrativa y cierre COMPLETED",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Intentar completar cita futura ACCEPTED",
+        "Cancelar cita futura",
+        "Completar fixture pasado ACCEPTED"
+      ],
+      "expected": "409 o 400 para futura; CANCELLED y COMPLETED en elegibles",
+      "observed": {
+        "futureBlocked": 400,
+        "cancelled": true,
+        "completed": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:41.743Z",
+      "finishedAt": "2026-11-07T16:10:42.707Z"
+    },
+    {
+      "id": "PF-16",
+      "requirements": [
+        "RF-10",
+        "RF-13"
+      ],
+      "title": "Agenda filtrada y rango invalido",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "GET agenda con rango y estado",
+        "Enviar rango invertido"
+      ],
+      "expected": "200 y 400",
+      "observed": {
+        "valid": 200,
+        "invalid": 400
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:42.707Z",
+      "finishedAt": "2026-11-07T16:10:43.013Z"
+    },
+    {
+      "id": "PF-17",
+      "requirements": [
+        "RF-18"
+      ],
+      "title": "Dispositivo idempotente y desactivacion por propietario",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Registrar token sintetico dos veces",
+        "Desactivar como otro usuario",
+        "Desactivar como propietario"
+      ],
+      "expected": "Una fila; otro usuario no desactiva; propietario si",
+      "observed": {
+        "rows": 1,
+        "ownershipProtected": true,
+        "deactivated": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:43.013Z",
+      "finishedAt": "2026-11-07T16:10:44.087Z"
+    },
+    {
+      "id": "PF-18",
+      "requirements": [
+        "RF-22",
+        "RC-11"
+      ],
+      "title": "Cola manual concurrente sin duplicados",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Activar dispositivo sintetico sin contactar Expo",
+        "Dos solicitudes simultaneas de recordatorio para fixture ACCEPTED"
+      ],
+      "expected": "Un trabajo activo y otra solicitud rechazada",
+      "observed": {
+        "requests": 2,
+        "activeJobs": 1
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:44.087Z",
+      "finishedAt": "2026-11-07T16:10:44.489Z"
+    },
+    {
+      "id": "PF-19",
+      "requirements": [
+        "RF-22",
+        "RC-11"
+      ],
+      "title": "Claim, revalidacion y reintento manual reales",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Reclamar con UUID",
+        "Revalidar UUID correcto e incorrecto",
+        "Liberar por fallo sintetico"
+      ],
+      "expected": "CLAIMED, solo UUID propietario valido, retorno QUEUED con backoff",
+      "observed": {
+        "claimed": 1,
+        "wrongClaimRejected": true,
+        "state": "QUEUED",
+        "attempts": 1,
+        "backoff": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:44.489Z",
+      "finishedAt": "2026-11-07T16:10:44.959Z"
+    },
+    {
+      "id": "PF-20",
+      "requirements": [
+        "RF-20",
+        "RF-22",
+        "RC-11"
+      ],
+      "title": "Confirmar asistencia invalida trabajos pendientes",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Confirmar asistencia en cita del trabajo reintentable PF-19",
+        "Consultar trabajo"
+      ],
+      "expected": "SKIPPED con ATTENDANCE_ALREADY_CONFIRMED",
+      "observed": {
+        "state": "SKIPPED",
+        "reason": "ATTENDANCE_ALREADY_CONFIRMED"
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:44.959Z",
+      "finishedAt": "2026-11-07T16:10:45.149Z"
+    },
+    {
+      "id": "PF-21",
+      "requirements": [
+        "RF-19",
+        "RC-11"
+      ],
+      "title": "Recordatorio automatico elegible y claim exclusivo",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Insertar fixture a +40 minutos",
+        "Dos workers SQL reclaman simultaneamente",
+        "Marcar con UUID correcto"
+      ],
+      "expected": "Solo un worker reclama la cita; marca interna una vez",
+      "observed": {
+        "workers": 2,
+        "claims": 1,
+        "wrongClaimRejected": true,
+        "internalMarkedSent": true,
+        "externalDeliveryTested": false
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:45.149Z",
+      "finishedAt": "2026-11-07T16:10:45.534Z"
+    },
+    {
+      "id": "PF-22",
+      "requirements": [
+        "RC-02",
+        "RC-01"
+      ],
+      "title": "Tablas sensibles no accesibles a anon",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Consultar privilegios efectivos de anon y authenticated"
+      ],
+      "expected": "Sin SELECT users ni ejecucion de RPC privilegiada",
+      "observed": {
+        "anon_users": false,
+        "authenticated_users": false,
+        "anon_claim": false
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:45.534Z",
+      "finishedAt": "2026-11-07T16:10:45.629Z"
+    },
+    {
+      "id": "PF-23",
+      "requirements": [
+        "RC-10"
+      ],
+      "title": "Persistencia tras nueva conexion PostgreSQL",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Guardar conteo e IDs sinteticos",
+        "Abrir conexion independiente",
+        "Releer registros"
+      ],
+      "expected": "Mismos registros visibles en nueva conexion; no equivale a redeploy",
+      "observed": {
+        "count": 9,
+        "newConnection": true,
+        "redeployTested": false
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:45.630Z",
+      "finishedAt": "2026-11-07T16:10:46.525Z"
+    },
+    {
+      "id": "PF-24",
+      "requirements": [
+        "RF-02",
+        "RF-16"
+      ],
+      "title": "Revalidacion de identidad y rechazo de token expirado",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "GET /auth/me con CLIENT valido",
+        "GET con JWT expirado y JWT adulterado"
+      ],
+      "expected": "200 con identidad publica; 401 para tokens no validos",
+      "observed": {
+        "valid": 200,
+        "rejected": [
+          401,
+          401
+        ],
+        "publicIdentity": true,
+        "deviceRestartTested": false
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:46.525Z",
+      "finishedAt": "2026-11-07T16:10:46.628Z"
+    },
+    {
+      "id": "PF-25",
+      "requirements": [
+        "RF-09"
+      ],
+      "title": "Cancelacion en ambos lados del limite de 60 minutos",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "Preparar fixtures SQL a 60 min 30 s y 59 min 30 s",
+        "Cancelar mediante API como propietario"
+      ],
+      "expected": "La primera se cancela; la segunda se rechaza sin modificar",
+      "observed": {
+        "offsetsSeconds": [
+          3630,
+          3570
+        ],
+        "statuses": [
+          200,
+          400
+        ],
+        "states": [
+          "CANCELLED",
+          "PENDING"
+        ],
+        "exactBoundaryTested": false,
+        "fixturesBypassCreationRules": true
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:46.628Z",
+      "finishedAt": "2026-11-07T16:10:47.413Z"
+    },
+    {
+      "id": "PF-26",
+      "requirements": [
+        "RF-06"
+      ],
+      "title": "Rollback real ante fallo de una operacion compuesta",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "BEGIN en conexion dedicada",
+        "Insertar cita sintetica",
+        "Provocar FK inexistente",
+        "ROLLBACK y comprobar ausencia"
+      ],
+      "expected": "SQLSTATE 23503 y ninguna escritura parcial",
+      "observed": {
+        "sqlState": "23503",
+        "partialWrites": 0,
+        "rollback": true,
+        "scope": "Transaccion PostgreSQL controlada; no restauracion de produccion"
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:47.413Z",
+      "finishedAt": "2026-11-07T16:10:47.997Z"
+    },
+    {
+      "id": "PF-27",
+      "requirements": [
+        "RF-09"
+      ],
+      "title": "Limite exacto de 60 minutos con reloj transaccional",
+      "preconditions": "Esquemas nuevos; usuarios sinteticos; API local; PostgreSQL real",
+      "steps": [
+        "BEGIN en conexion dedicada",
+        "Preparar fixture exactamente NOW + 60 minutos",
+        "Ejecutar servicio real en esa conexion",
+        "ROLLBACK para retirar fixture"
+      ],
+      "expected": "Cancelacion permitida en el limite inclusivo exacto",
+      "observed": {
+        "exactOffsetMinutes": 60,
+        "status": "CANCELLED",
+        "realPostgresql": true,
+        "transactionClock": true,
+        "httpBoundaryTested": false
+      },
+      "status": "PASS",
+      "startedAt": "2026-11-07T16:10:47.997Z",
+      "finishedAt": "2026-11-07T16:10:48.382Z"
+    }
+  ],
+  "performance": [
+    {
+      "name": "login",
+      "samplesMs": [
+        167.967,
+        168.37,
+        169.345,
+        173.401,
+        164.219,
+        161.576,
+        162.979,
+        164.544,
+        194.343,
+        178.277,
+        172.992,
+        171.069,
+        172.515,
+        169.719,
+        171.05
+      ],
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "n": 15,
+      "concurrency": 1,
+      "metric": "HTTP completo hasta JSON; incluye red a PostgreSQL; no mide feedback de UI",
+      "warmup": 1,
+      "p50Ms": 169.719,
+      "p95Ms": 194.343,
+      "maxMs": 194.343,
+      "thresholdMs": 1000,
+      "status": "PASS",
+      "limitations": "Muestra pequena; entorno local con DB remota; no equivale al RC-05 de interfaz ni al despliegue Render"
+    },
+    {
+      "name": "disponibilidad",
+      "samplesMs": [
+        384.221,
+        377.613,
+        379.684,
+        382.728,
+        389.001,
+        386.44,
+        390.141,
+        382.386,
+        388.327,
+        384.891,
+        388.993,
+        383.206,
+        390.466,
+        387.915,
+        379.287
+      ],
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "n": 15,
+      "concurrency": 1,
+      "metric": "HTTP completo hasta JSON; incluye red a PostgreSQL; no mide feedback de UI",
+      "warmup": 1,
+      "p50Ms": 384.891,
+      "p95Ms": 390.466,
+      "maxMs": 390.466,
+      "thresholdMs": 1000,
+      "status": "PASS",
+      "limitations": "Muestra pequena; entorno local con DB remota; no equivale al RC-05 de interfaz ni al despliegue Render"
+    },
+    {
+      "name": "mis_citas",
+      "samplesMs": [
+        201.189,
+        197.586,
+        196.429,
+        191.944,
+        191.833,
+        191.566,
+        199.716,
+        192.533,
+        190.251,
+        191.538,
+        192.872,
+        193.148,
+        193.193,
+        193.358,
+        191.264
+      ],
+      "statuses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "n": 15,
+      "concurrency": 1,
+      "metric": "HTTP completo hasta JSON; incluye red a PostgreSQL; no mide feedback de UI",
+      "warmup": 1,
+      "p50Ms": 192.872,
+      "p95Ms": 201.189,
+      "maxMs": 201.189,
+      "thresholdMs": 1000,
+      "status": "PASS",
+      "limitations": "Muestra pequena; entorno local con DB remota; no equivale al RC-05 de interfaz ni al despliegue Render"
+    }
+  ],
+  "cleanup": true,
+  "sqlFiles": [
+    {
+      "file": "backend/src/database/schema.sql",
+      "sha256": "9618efa45ef4f591fdc09151c6b065cc74874f85a7ddff15a5848c911737094a"
+    },
+    {
+      "file": "backend/src/database/migrations/20260823_attendance_reminders.sql",
+      "sha256": "349abf633247e014c1d78cc15ca04691b27fa7a4c816387ee31befd9af3de368"
+    },
+    {
+      "file": "backend/src/database/migrations/20260823_reminder_api_boundary.sql",
+      "sha256": "876bd923182baddbaafdcc0bb97797f568f91ab8fe94352fee5d88cb89ded2f4"
+    },
+    {
+      "file": "backend/src/database/migrations/20260824_reminder_reliability.sql",
+      "sha256": "29a52fe08856a83025f8fa74e85f9f4166552748fc88e64adebafa8a62d0d0c6"
+    },
+    {
+      "file": "backend/src/database/migrations/20260825_manual_attendance_reminders.sql",
+      "sha256": "a09225ccbc155d30b420752d612457022506817fac7820d8097aeb9524431f54"
+    }
+  ],
+  "testData": {
+    "appointmentDate": "2026-11-10",
+    "users": "Tres cuentas sinteticas en esquema efimero; ninguna cuenta real",
+    "password": "Aleatoria en memoria, no publicada"
+  },
+  "finishedAt": "2026-11-07T16:11:01.388Z",
+  "summary": {
+    "executed": 27,
+    "passed": 27,
+    "failed": 0
+  }
+}

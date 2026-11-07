@@ -1,5 +1,8 @@
 # Revisión de usabilidad y evolución
 
+> Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
+
+
 Base: cinco hallazgos de la sección 17.3 del Hito 1 de IVS y observaciones docentes. Revisión actual de código: 7/11/2026. La escala histórica es baja/media/alta. Esta revisión no es una encuesta SUS ni una nueva sesión de usuarios. Computer Use falló inicialmente; después se verificó un recorrido reducido del APK mediante ADB autorizado, con resultados en interfaz-apk.json.
 
 | ID | Pantalla y hallazgo anterior | Heurística de Nielsen | Severidad | Corrección identificada | Evidencia y estado |

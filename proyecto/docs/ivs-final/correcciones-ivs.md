@@ -1,5 +1,8 @@
 # Correcciones de I y II de Implementación y Validación
 
+> Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
+
+
 Fuentes: Retroalimentacion.docx del Parcial I y New Microsoft Word Document.docx del Parcial II, en Implementacion de software/Examen III. Estos son los hallazgos de IVS; no se sustituyen por la matriz de Calidad. Fecha de seguimiento: 7/11/2026. Responsable de consolidación: Hanssel. Evidencia nueva: docs/evidencias_pruebas/ivs-2026-11-07.
 
 | ID | Observación docente | Acción/evidencia | Estado |

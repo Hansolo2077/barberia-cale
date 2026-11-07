@@ -1,0 +1,20 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const expected = process.argv[2];
+if (!/^[a-f0-9]{40}$/i.test(expected || '')) throw new Error('Pass the expected full Git commit SHA');
+const output = path.resolve(process.argv[3] || 'docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/despliegue-verificado.json');
+(async () => {
+  const url = 'https://barberia-cale.onrender.com/api/health';
+  const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(60000) });
+  const data = await response.json();
+  const report = { verifiedAt: new Date().toISOString(), url, http: response.status, expectedCommit: expected.toLowerCase(), observedCommit: data.build?.revision, provider: data.build?.provider, cacheControl: response.headers.get('cache-control'), status: 'FAIL', limits: 'Verifies HTTP process deployment identity, not database availability or an SLA' };
+  assert.equal(response.status, 200);
+  assert.equal(data.build?.revision, expected.toLowerCase());
+  assert.equal(data.build?.provider, 'render');
+  assert.equal(report.cacheControl, 'no-store');
+  report.status = 'PASS';
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
+  console.log(JSON.stringify(report));
+})().catch(error => { console.error(error.message); process.exitCode = 1; });

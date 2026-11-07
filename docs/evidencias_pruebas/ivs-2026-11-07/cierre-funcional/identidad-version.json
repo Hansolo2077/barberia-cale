@@ -1,0 +1,14 @@
+{
+  "recordedAt": "2026-11-07T16:18:40.500770+00:00",
+  "apk": {
+    "version": "1.0.1",
+    "versionCode": 2,
+    "sha256": "4318b1d55452b1c13bc10147e8570237104e0159d57fc5c3c21c8230ab582e6f",
+    "unchangedFromSecurityRelease": true
+  },
+  "backendRevision": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "backendTree": "a3bd52fab1f12dfcfa6c810fd56730eb741d1700",
+  "frontendBase": "c1ac4612de9e5a887628b614ef35a6ba106472cb",
+  "frontendDiffAtValidation": "git diff --exit-code c1ac461 HEAD -- src assets app.json package.json package-lock.json = exit 0",
+  "releaseRule": "El commit del release puede añadir evidencias/documentación; comprobar que su árbol backend coincide con backendTree y que la API devuelve backendRevision."
+}

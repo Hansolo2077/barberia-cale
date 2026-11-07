@@ -1,5 +1,8 @@
 # Migración de datos y recuperación
 
+> Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
+
+
 ## Procedimiento de migración
 
 El origen propuesto es un registro anterior de citas exportado a CSV o transcrito con autorización. No se presume que exista un archivo real del negocio. El destino es una instancia de pruebas con el esquema de Barbería Cale. Una migración de datos de ese origen no fue ejecutada en esta preparación; sí se ejecutó el ensayo de respaldo/restauración descrito después.

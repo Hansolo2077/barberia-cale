@@ -1,0 +1,1171 @@
+{
+  "startedAt": "2026-11-07T15:46:55.720Z",
+  "fixtures": [
+    {
+      "purpose": "reject",
+      "id": "59",
+      "date": "2026-11-17",
+      "time": "15:00:00",
+      "status": "PENDING",
+      "seededAt": "2026-11-07T15:58:04.458Z",
+      "precondition": "Fixture SQL sintético del CLIENT dummy autorizado; no creado por el flujo normal de reserva"
+    },
+    {
+      "purpose": "admin-cancel",
+      "id": "60",
+      "date": "2026-11-18",
+      "time": "15:00:00",
+      "status": "ACCEPTED",
+      "seededAt": "2026-11-07T15:58:04.554Z",
+      "precondition": "Fixture SQL sintético del CLIENT dummy autorizado; no creado por el flujo normal de reserva"
+    },
+    {
+      "purpose": "complete",
+      "id": "61",
+      "date": "2026-10-28",
+      "time": "10:00:00",
+      "status": "ACCEPTED",
+      "seededAt": "2026-11-07T15:58:04.651Z",
+      "precondition": "Fixture SQL sintético del CLIENT dummy autorizado; no creado por el flujo normal de reserva"
+    },
+    {
+      "purpose": "automatic-push",
+      "id": "62",
+      "date": "2026-11-07",
+      "time": "10:47:13.158989",
+      "status": "ACCEPTED",
+      "seededAt": "2026-11-07T16:07:13.182Z",
+      "precondition": "Fixture SQL sintético a +40 minutos para probar ventana automática; no representa reserva normal ni omite sus reglas en la API"
+    }
+  ],
+  "observations": [
+    {
+      "at": "2026-11-07T15:47:20.084Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando"
+        }
+      },
+      "appointments": [],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T14:21:37.308Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T15:48:41.147Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando"
+        }
+      },
+      "appointments": [],
+      "device": [
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:47:43.159Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T15:52:53.005Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "PENDING",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T15:54:36.404Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T15:58:06.155Z",
+      "action": "seed-admin",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "PENDING",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "ACCEPTED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T15:59:10.378Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "PENDING",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "ACCEPTED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T16:02:23.004Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": []
+    },
+    {
+      "at": "2026-11-07T16:02:59.457Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "QUEUED",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": null,
+          "completed_at": null,
+          "last_error": null
+        }
+      ]
+    },
+    {
+      "at": "2026-11-07T16:03:18.087Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ]
+    },
+    {
+      "at": "2026-11-07T16:05:44.260Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "ACCEPTED",
+          "attendance": "CONFIRMED",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ]
+    },
+    {
+      "at": "2026-11-07T16:07:14.998Z",
+      "action": "seed-auto",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 62,
+          "date": "2026-11-07",
+          "time": "10:47",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ]
+    },
+    {
+      "at": "2026-11-07T16:08:04.119Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 62,
+          "date": "2026-11-07",
+          "time": "10:47",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ],
+      "automatic": [
+        {
+          "id": "58",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": "2026-11-07T16:04:52.318Z"
+        },
+        {
+          "id": "59",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "60",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "61",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "62",
+          "reminder_sent_at": "2026-11-07T16:08:01.085Z",
+          "reminder_claimed_at": null,
+          "reminder_attempts": 1,
+          "client_attendance_confirmed_at": null
+        }
+      ],
+      "mainSlot": {
+        "date": "2026-11-08",
+        "time": "11:00",
+        "http": 200,
+        "available": true
+      }
+    },
+    {
+      "at": "2026-11-07T16:11:31.033Z",
+      "action": "cleanup-auto",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 62,
+          "date": "2026-11-07",
+          "time": "10:47",
+          "status": "ACCEPTED",
+          "attendance": "AWAITING",
+          "canConfirmAttendance": true
+        },
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ],
+      "automatic": [
+        {
+          "id": "58",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": "2026-11-07T16:04:52.318Z"
+        },
+        {
+          "id": "59",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "60",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "61",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "62",
+          "reminder_sent_at": "2026-11-07T16:08:01.085Z",
+          "reminder_claimed_at": null,
+          "reminder_attempts": 1,
+          "client_attendance_confirmed_at": null
+        }
+      ],
+      "mainSlot": {
+        "date": "2026-11-08",
+        "time": "11:00",
+        "http": 200,
+        "available": true
+      }
+    },
+    {
+      "at": "2026-11-07T16:13:26.996Z",
+      "action": "status",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 62,
+          "date": "2026-11-07",
+          "time": "10:47",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": true,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ],
+      "automatic": [
+        {
+          "id": "58",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": "2026-11-07T16:04:52.318Z"
+        },
+        {
+          "id": "59",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "60",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "61",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "62",
+          "reminder_sent_at": "2026-11-07T16:08:01.085Z",
+          "reminder_claimed_at": null,
+          "reminder_attempts": 1,
+          "client_attendance_confirmed_at": null
+        }
+      ],
+      "mainSlot": {
+        "date": "2026-11-08",
+        "time": "11:00",
+        "http": 200,
+        "available": true
+      }
+    },
+    {
+      "at": "2026-11-07T16:17:21.206Z",
+      "action": "deactivate-test-device",
+      "health": {
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "API de Barbería Cale funcionando",
+          "build": {
+            "revision": "51a6a28314452045d912d8f0940190a24c344bfb",
+            "provider": "render"
+          }
+        }
+      },
+      "appointments": [
+        {
+          "id": 60,
+          "date": "2026-11-18",
+          "time": "15:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 59,
+          "date": "2026-11-17",
+          "time": "15:00",
+          "status": "REJECTED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 58,
+          "date": "2026-11-08",
+          "time": "11:00",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 62,
+          "date": "2026-11-07",
+          "time": "10:47",
+          "status": "CANCELLED",
+          "attendance": "NOT_APPLICABLE",
+          "canConfirmAttendance": false
+        },
+        {
+          "id": 61,
+          "date": "2026-10-28",
+          "time": "10:00",
+          "status": "COMPLETED",
+          "attendance": "NO_RESPONSE",
+          "canConfirmAttendance": false
+        }
+      ],
+      "device": [
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:49:03.930Z",
+          "token_fingerprint": "c75b3925358045c48918430df58b4f35"
+        },
+        {
+          "platform": "android",
+          "active": false,
+          "last_seen_at": "2026-11-07T15:58:50.597Z",
+          "token_fingerprint": "38998a22eee44d43014b3b45e56ac095"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7",
+          "appointment_id": "58",
+          "status": "SENT",
+          "kind": "ATTENDANCE_REMINDER",
+          "source": "ADMIN_MANUAL",
+          "requested_at": "2026-11-07T16:02:53.343Z",
+          "sent_at": "2026-11-07T16:03:01.723Z",
+          "completed_at": "2026-11-07T16:03:01.723Z",
+          "last_error": null
+        }
+      ],
+      "automatic": [
+        {
+          "id": "58",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": "2026-11-07T16:04:52.318Z"
+        },
+        {
+          "id": "59",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "60",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "61",
+          "reminder_sent_at": null,
+          "reminder_claimed_at": null,
+          "reminder_attempts": 0,
+          "client_attendance_confirmed_at": null
+        },
+        {
+          "id": "62",
+          "reminder_sent_at": "2026-11-07T16:08:01.085Z",
+          "reminder_claimed_at": null,
+          "reminder_attempts": 1,
+          "client_attendance_confirmed_at": null
+        }
+      ],
+      "mainSlot": {
+        "date": "2026-11-08",
+        "time": "11:00",
+        "http": 200,
+        "available": true
+      }
+    }
+  ],
+  "cleanupAutomatic": {
+    "at": "2026-11-07T16:11:29.586Z",
+    "id": "62",
+    "http": 200,
+    "method": "API ADMIN; limpieza del fixture sintético, no se contabiliza como prueba UI"
+  },
+  "deviceCleanup": {
+    "at": "2026-11-07T16:17:19.754Z",
+    "http": 200,
+    "fingerprint": "38998a22eee44d43014b3b45e56ac095",
+    "scope": "Solo el dispositivo temporal creado para esta campaña"
+  }
+}

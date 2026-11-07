@@ -1,0 +1,1617 @@
+{
+  "tag": "v1.0.1-ivs.20261107-r2",
+  "backendCommit": "51a6a28314452045d912d8f0940190a24c344bfb",
+  "backendTree": "a3bd52fab1f12dfcfa6c810fd56730eb741d1700",
+  "files": [
+    {
+      "path": ".github/workflows/quality-security.yml",
+      "bytes": 9013,
+      "sha256": "ca2490adb7ca43a57d4949f01743b069735d8e38fe1ed60af4dc58aafa8dd442"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 1124,
+      "sha256": "e822fc6ed723605463a1da92f742bc335285d1ef7bfe9b19f8f5de1ed512a8c3"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1106,
+      "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3674,
+      "sha256": "94fcde020c90be554df5e0f55bacbb0f7925ca39617f4968bfc0b0fe6813aeed"
+    },
+    {
+      "path": "app.json",
+      "bytes": 1571,
+      "sha256": "18b67d6d69369dfbae1baf8f705bd0cdae33a5ddf4ea1796f550637c3a04438f"
+    },
+    {
+      "path": "assets/expo.icon/Assets/expo-symbol 2.svg",
+      "bytes": 608,
+      "sha256": "ad117d20fd819f4ec71876ce09c0e8b9275b1f20c5ec3c9d7d1914977ceffec6"
+    },
+    {
+      "path": "assets/expo.icon/Assets/grid.png",
+      "bytes": 53681,
+      "sha256": "8247d79a2b31328fe4e330a973e6fae16924ed9aebd72c64d464d6856ab18c72"
+    },
+    {
+      "path": "assets/expo.icon/icon.json",
+      "bytes": 780,
+      "sha256": "747c56e178222a6255c6dd61c5de011b286cdc935febe89f04d1b191c3d076fe"
+    },
+    {
+      "path": "assets/images/android-icon-background.png",
+      "bytes": 17549,
+      "sha256": "fb139c2dee362ebf2070e23b96da6fc0d43f8492de38b8af1fd7223e19b5861d"
+    },
+    {
+      "path": "assets/images/android-icon-foreground.png",
+      "bytes": 78796,
+      "sha256": "9e3d0315a33c6799de601dd34cd8bf8cc3a8d16f3bf75592baec2ceb7240b391"
+    },
+    {
+      "path": "assets/images/android-icon-monochrome.png",
+      "bytes": 4140,
+      "sha256": "6371fc2c12e33ad2215a86c281db3d682a81bebe7c957a842c13b8bf00cceb83"
+    },
+    {
+      "path": "assets/images/expo-badge-white.png",
+      "bytes": 4129,
+      "sha256": "d9ba28c5e93aea3c2dabd901ee96fea3bb296ad8e648f6f64706dae11a1a62bd"
+    },
+    {
+      "path": "assets/images/expo-badge.png",
+      "bytes": 4137,
+      "sha256": "ff353c7efadbd379903923cb604fca11c908cba0d4658cc2bd1f147d98317249"
+    },
+    {
+      "path": "assets/images/expo-logo.png",
+      "bytes": 3317,
+      "sha256": "27b060a757a29038c9618586baa0ba3894dbe60d084c6059df497ff429c2d92f"
+    },
+    {
+      "path": "assets/images/favicon.png",
+      "bytes": 1129,
+      "sha256": "a4e030697a7571b3e95d31860e4da55d2f98e5e861e2b55e414f45a8556828ba"
+    },
+    {
+      "path": "assets/images/icon.png",
+      "bytes": 799005,
+      "sha256": "7a667804bb80a6a424a5daf18a2599c4f32237cf06fe78fc0de45dbb09e0eccf"
+    },
+    {
+      "path": "assets/images/logo-cale.png",
+      "bytes": 756711,
+      "sha256": "1c6730c2cf5279a96fadee087deff89d7ae5b2930d311ea31f8445b2aefeefe5"
+    },
+    {
+      "path": "assets/images/logo-glow.png",
+      "bytes": 331624,
+      "sha256": "bbd98a3f3c12d090f4df6065b7462fcdf6bc266209d002b4ef5fe554c245f66c"
+    },
+    {
+      "path": "assets/images/react-logo.png",
+      "bytes": 6341,
+      "sha256": "224b7636b15e672801579b5b418077cbc2ca42f0146389062364356b0ecb5c5c"
+    },
+    {
+      "path": "assets/images/react-logo@2x.png",
+      "bytes": 14225,
+      "sha256": "fa600be9ad2f869c7a8dbaffc78bb15af741123e1319c948f0be51753a153cde"
+    },
+    {
+      "path": "assets/images/react-logo@3x.png",
+      "bytes": 21252,
+      "sha256": "cd84e02a5d542a3e71b7fa10a685c1b9fb51db4aff92aca6c0da6461ce17be16"
+    },
+    {
+      "path": "assets/images/splash-icon.png",
+      "bytes": 3317,
+      "sha256": "27b060a757a29038c9618586baa0ba3894dbe60d084c6059df497ff429c2d92f"
+    },
+    {
+      "path": "assets/images/tabIcons/explore.png",
+      "bytes": 215,
+      "sha256": "e2dea1c2d20929d83e8eebd74818e808b1b72e376d3a1f3a03679fff0255d073"
+    },
+    {
+      "path": "assets/images/tabIcons/explore@2x.png",
+      "bytes": 347,
+      "sha256": "1b54913b3a0acc3e1fb72d3b9b79ad04814304b35bbb9d03a533e6130ad6c26a"
+    },
+    {
+      "path": "assets/images/tabIcons/explore@3x.png",
+      "bytes": 468,
+      "sha256": "2f3e43801df70ebe83273b90a7d170bacf5ca74a8a8dc5c154a020c2c8b06609"
+    },
+    {
+      "path": "assets/images/tabIcons/home.png",
+      "bytes": 253,
+      "sha256": "3829632ec7d495225395f5da3d0942935d7d055979b174613d1ade82fe420e76"
+    },
+    {
+      "path": "assets/images/tabIcons/home@2x.png",
+      "bytes": 343,
+      "sha256": "21c5a07df9017d97464a0a8256e265288f2fca0741ca651de05e12b32f32f5ab"
+    },
+    {
+      "path": "assets/images/tabIcons/home@3x.png",
+      "bytes": 479,
+      "sha256": "fe5b397975e7cb70ae7a122472d174ed12ec2ae106f7b49c968225ad37f8b3b8"
+    },
+    {
+      "path": "assets/images/tutorial-web.png",
+      "bytes": 58959,
+      "sha256": "e372ec23ad6262e2e0dc2799ce416b495a631a565bcd24f0615d4afc04dac3bd"
+    },
+    {
+      "path": "backend/.env.example",
+      "bytes": 219,
+      "sha256": "c9e89c985131e200c9b92fa853955514da23d0e01c24cdd9b8da683381d131eb"
+    },
+    {
+      "path": "backend/package-lock.json",
+      "bytes": 43610,
+      "sha256": "ba0517aeda134ed17f58cc690f3022bd8291c70ab548e76e056e98566544a20c"
+    },
+    {
+      "path": "backend/package.json",
+      "bytes": 410,
+      "sha256": "60a010dbfea89686db24657da78443b09ac6665ae88ec3c166887ab76f26f173"
+    },
+    {
+      "path": "backend/src/controllers/admin-reminder.controller.js",
+      "bytes": 2683,
+      "sha256": "14ff2dc68437ad2f5a8f5db85f90ee38541a1d42476fe876debda94742f0823b"
+    },
+    {
+      "path": "backend/src/controllers/admin-reminder.controller.test.js",
+      "bytes": 6616,
+      "sha256": "06dfe2525640f1bf7319fffb3c6228a42f7b53cb5d897f7b1f49df0a29add376"
+    },
+    {
+      "path": "backend/src/controllers/admin.controller.js",
+      "bytes": 7448,
+      "sha256": "e4ca1a9528b5b70777c1b7504601e3476d4e1a0421266748ca2f65643610e209"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "bytes": 6050,
+      "sha256": "4b333af1b4b39cf14ac5ebba3846b13f597c638cdb58bd5d8454d60255fbf14a"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.test.js",
+      "bytes": 1894,
+      "sha256": "b46654e1d504524aada31e225fb8af26a45b4bce06c8af4289b5c1a395c87968"
+    },
+    {
+      "path": "backend/src/controllers/auth.controller.js",
+      "bytes": 5057,
+      "sha256": "f42015dcca47c8b4b918378618a9ecb1c04aca47d22b6c08b54330fda4610531"
+    },
+    {
+      "path": "backend/src/controllers/auth.controller.test.js",
+      "bytes": 1302,
+      "sha256": "83d6b350afdc7a96804c242f5d6538dd5467224ced9a3a3cf34ba3eba34c0134"
+    },
+    {
+      "path": "backend/src/controllers/notification.controller.js",
+      "bytes": 2378,
+      "sha256": "0da4dba45c735a31fb637c22910999e39f497a0ff62e85c533714baaf21ace3e"
+    },
+    {
+      "path": "backend/src/controllers/notification.controller.test.js",
+      "bytes": 2655,
+      "sha256": "815b1c594fb1f530d669fde9f6543292aea51bb71471888f6801bb2c73fc90df"
+    },
+    {
+      "path": "backend/src/database/db.js",
+      "bytes": 868,
+      "sha256": "a1a25d52a1333bc27e28ab089cd0a8f159de7bdc9c97ee103e4cbc2f4bff8769"
+    },
+    {
+      "path": "backend/src/database/init.js",
+      "bytes": 77,
+      "sha256": "0530cb8f82bd694748bc6c7ceb90a90902307fc279b7586085b6841eda6779d8"
+    },
+    {
+      "path": "backend/src/database/make-admin.js",
+      "bytes": 1068,
+      "sha256": "f05fe60520131fe37d5f865591cd77b4f41a34779dda899e974e851d7e64c797"
+    },
+    {
+      "path": "backend/src/database/migrations/20260823_attendance_reminders.sql",
+      "bytes": 6948,
+      "sha256": "349abf633247e014c1d78cc15ca04691b27fa7a4c816387ee31befd9af3de368"
+    },
+    {
+      "path": "backend/src/database/migrations/20260823_reminder_api_boundary.sql",
+      "bytes": 4486,
+      "sha256": "876bd923182baddbaafdcc0bb97797f568f91ab8fe94352fee5d88cb89ded2f4"
+    },
+    {
+      "path": "backend/src/database/migrations/20260824_reminder_reliability.sql",
+      "bytes": 10610,
+      "sha256": "29a52fe08856a83025f8fa74e85f9f4166552748fc88e64adebafa8a62d0d0c6"
+    },
+    {
+      "path": "backend/src/database/migrations/20260825_manual_attendance_reminders.sql",
+      "bytes": 28399,
+      "sha256": "a09225ccbc155d30b420752d612457022506817fac7820d8097aeb9524431f54"
+    },
+    {
+      "path": "backend/src/database/schema.sql",
+      "bytes": 9177,
+      "sha256": "9618efa45ef4f591fdc09151c6b065cc74874f85a7ddff15a5848c911737094a"
+    },
+    {
+      "path": "backend/src/database/test-db.js",
+      "bytes": 511,
+      "sha256": "23e108f79233490795151ed1411171d9ef3ca57a0d1bdf0670e7f3306047e230"
+    },
+    {
+      "path": "backend/src/middleware/admin.middleware.js",
+      "bytes": 408,
+      "sha256": "ee9e5d502572c11d887ac8475427c45f4121527d51f753486c464e0acbf9f6f8"
+    },
+    {
+      "path": "backend/src/middleware/auth.middleware.js",
+      "bytes": 1784,
+      "sha256": "28de01a53b5995ef2d161ee5b2c480a36fa50ae48cfb9a290166804ba2679681"
+    },
+    {
+      "path": "backend/src/middleware/auth.middleware.test.js",
+      "bytes": 1607,
+      "sha256": "846d2e49d687930259069bb7afc3971772318810485f5c897519eee2d98e5363"
+    },
+    {
+      "path": "backend/src/middleware/client.middleware.js",
+      "bytes": 418,
+      "sha256": "2406e4e06ceab303b8e13259d2cb6605054269b50be0723daeb8231c3762b342"
+    },
+    {
+      "path": "backend/src/middleware/client.middleware.test.js",
+      "bytes": 854,
+      "sha256": "d82bad43ef88e4b6d39260869402d6e181ea191bc45ccffcf2415253f5aaebdd"
+    },
+    {
+      "path": "backend/src/middleware/json-parser.integration.test.js",
+      "bytes": 1579,
+      "sha256": "72c330fe594af09e7dafbae208d3c2dbd4ea4322f735be43bc515607eca4ecc4"
+    },
+    {
+      "path": "backend/src/middleware/rate-limit.middleware.js",
+      "bytes": 1114,
+      "sha256": "299d19c5a9c0ecf24f293570a1c98feaebc470971d317cb6d3486eef6f986565"
+    },
+    {
+      "path": "backend/src/middleware/rate-limit.middleware.test.js",
+      "bytes": 1282,
+      "sha256": "1100fb5e02e83d7ac5c7e76edb13d0a0952fd63472795167aa846fa218441afb"
+    },
+    {
+      "path": "backend/src/routes/admin.routes.js",
+      "bytes": 2237,
+      "sha256": "aae568dcbe4bdc00f4cf15a6ed429d4942987ab76780fb620279ed64f91d658d"
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "bytes": 790,
+      "sha256": "faace8807553ac15d38e3bcebe1f72c5111f080370bb2e1c842f8178e0e6c392"
+    },
+    {
+      "path": "backend/src/routes/auth.routes.js",
+      "bytes": 900,
+      "sha256": "f52339dade40eb795f8af9557f2068174e6c14c54eecb9aeb58e22af0418fe58"
+    },
+    {
+      "path": "backend/src/routes/health.routes.js",
+      "bytes": 374,
+      "sha256": "8db1bad9dd7ce6bee7ff8de4fd9b55c4752c0f0e4a43198a80902e984b53d263"
+    },
+    {
+      "path": "backend/src/routes/notification.routes.js",
+      "bytes": 521,
+      "sha256": "00ced57987a3919bf2a3e5a8407183fc940076b958a6e10d960b6a3d095fba59"
+    },
+    {
+      "path": "backend/src/server.js",
+      "bytes": 2078,
+      "sha256": "87df70ad98eea46919a055fc3ee9028dba4db5536b6c6dfd423b601f7719cb5f"
+    },
+    {
+      "path": "backend/src/services/admin-reminder.service.js",
+      "bytes": 12995,
+      "sha256": "fead93a1347f88733c3b5b546ab65d0b4483cb10e5eebad9c10b3937617b1adb"
+    },
+    {
+      "path": "backend/src/services/admin-reminder.service.test.js",
+      "bytes": 8046,
+      "sha256": "2e6e257618d07bf791a82cb748315de70c8d11b7ac2462244f1b5818b323d414"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "bytes": 42289,
+      "sha256": "65d3a892c24f11667e48c0d69081035b1debd198f53b9c450215a2bc7d958b59"
+    },
+    {
+      "path": "backend/src/services/appointment.service.test.js",
+      "bytes": 11563,
+      "sha256": "702604e382e9ac72a9dcd5f47cc2c007c064c110fcaba06d5a4faf56aaf078d0"
+    },
+    {
+      "path": "backend/src/services/auth.service.js",
+      "bytes": 3108,
+      "sha256": "2e8232920b07f39ed2bd9dab8fbf33705de6d5b17c5293d3e4b778d5c85b82f7"
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "bytes": 1527,
+      "sha256": "c88c902bb140e12639c7a775ebdb233c84341e2c9f636df6c884cf791506e243"
+    },
+    {
+      "path": "backend/src/services/notification.service.test.js",
+      "bytes": 1781,
+      "sha256": "2fdea26a55ff4bc534b1de67214b75b3940b2a22cd381fcc70fee309350a1b22"
+    },
+    {
+      "path": "backend/src/utils/build-identity.js",
+      "bytes": 371,
+      "sha256": "0ba09281b7a3e522a7ee1713b15fe8578523e060903f2be6c17c0af44b668bf8"
+    },
+    {
+      "path": "backend/src/utils/build-identity.test.js",
+      "bytes": 764,
+      "sha256": "e0624cf6ba94c14db53ae565a06060108f36cc2e7003a94c318d01f4871b4bfa"
+    },
+    {
+      "path": "backend/src/utils/date.js",
+      "bytes": 903,
+      "sha256": "df099ebdac12c536f9b6ddf1417c6b3dca480392e9b95aca2d46128c11faea03"
+    },
+    {
+      "path": "backend/src/utils/date.test.js",
+      "bytes": 755,
+      "sha256": "668383af095ec5b3fd980da0ec46a86c35c7865e7e599aaa31fb63969075175e"
+    },
+    {
+      "path": "backend/src/utils/expo-push-token.js",
+      "bytes": 334,
+      "sha256": "5dfcfaee0ded09ccd3b410286a076b30c7f20a34e43b0e17c536a3664be100b3"
+    },
+    {
+      "path": "backend/src/utils/expo-push-token.test.js",
+      "bytes": 720,
+      "sha256": "d3707a7ff71bc68e5ecc3e6d90110dfdb4da79920f7b80c5c1bcf5b0e26d7323"
+    },
+    {
+      "path": "backend/src/utils/http-error.js",
+      "bytes": 564,
+      "sha256": "2ad279e34422eee6c69b5d4d13260d5c7c0cdcc049469a34582ffee5bd82dd7e"
+    },
+    {
+      "path": "backend/src/utils/http-error.test.js",
+      "bytes": 1125,
+      "sha256": "feff36182f9c7f71fbc7f559c44cd4b3e06198390aff1efbf612612f86de2401"
+    },
+    {
+      "path": "backend/src/utils/pagination.js",
+      "bytes": 866,
+      "sha256": "68c4b7b49e1fd01094a76fdcf083aa603813c772374258ca745795eaabe1dc93"
+    },
+    {
+      "path": "backend/src/utils/pagination.test.js",
+      "bytes": 768,
+      "sha256": "02702b33c4d36095edabb75109afff0943c9f122088b9806fe92b66bc994e7fa"
+    },
+    {
+      "path": "backend/src/utils/phone.js",
+      "bytes": 356,
+      "sha256": "6608c99fe0d1f896c40e0521d2d243d42a503ecb71f7182496e6884e5e523177"
+    },
+    {
+      "path": "backend/src/utils/phone.test.js",
+      "bytes": 1234,
+      "sha256": "ccbba1f8ea865e854ac7ac508eabf11511ec79a6c8e65ffda122b974630893c1"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/README.md",
+      "bytes": 2524,
+      "sha256": "494b10463e4a5109183ab3ce35ebc9c2bb35dd38803c0b978326d4cb352d76a8"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/audit-backend.json",
+      "bytes": 362,
+      "sha256": "2b508fb09213c2239cc7aed174a94eac8ca8d5c06add09f7e06c71666ac122a5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/audit-frontend.json",
+      "bytes": 14605,
+      "sha256": "9ceb099c7c80fd19c7cc8cc47a41f87ae58f101c26dab060bc0971ef6483dfc7"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/backend-tests.txt",
+      "bytes": 8866,
+      "sha256": "58e0f40c0e8d83d6158a575f9e394a1c20151bec984797afa74fe7f5412d01d0"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/controles.json",
+      "bytes": 3097,
+      "sha256": "8946386e4a1b3cf2b84f595aebfee9806a23eb0a1a6ad3409d9d71d5f4d149d1"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/eslint.txt",
+      "bytes": 41,
+      "sha256": "44aeb02c810b0f9b3e09ebdd8b51e69e2e431e7a959f003757e793e4e2d6810b"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/expo-compatibility-stderr.txt",
+      "bytes": 1153,
+      "sha256": "aef6527b7a39094a436036e93387064a0393898857467d2f272fc5948161c523"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/expo-compatibility.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/frontend-tests.txt",
+      "bytes": 817,
+      "sha256": "b40d43e9c143bcdc5e7e0270a83d13a96f33e45e0a5198a7bf916d5bbedd77c2"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/antes-parches/typescript.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/audit-backend.json",
+      "bytes": 362,
+      "sha256": "2b508fb09213c2239cc7aed174a94eac8ca8d5c06add09f7e06c71666ac122a5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/audit-frontend.json",
+      "bytes": 8878,
+      "sha256": "5286a9a4361a71d21198c52399028a76a243f7114caf7762c4fe85b2a928e57c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/backend-tests.txt",
+      "bytes": 8863,
+      "sha256": "0a4efc20ccb50d0c14014a802e4517fd91860b6c2e59dabebc308b2f62f81909"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-after-logout-restart.png",
+      "bytes": 182529,
+      "sha256": "f725b9e746b62e85418250b334a4bde53db9da9bbf0bf5596fff47787ef95dcf"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-attendance-confirmed.png",
+      "bytes": 173981,
+      "sha256": "d535d35028d5acd36c998f8c4c3fcc8f91bd7c3fe391d347bce48e8bcc50c9d3"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-booking.png",
+      "bytes": 151686,
+      "sha256": "4549db6a4d59844518fbd78d057e7e5843b3a352a94d8286905fd08ecf87d199"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-cancel-aborted.png",
+      "bytes": 163333,
+      "sha256": "9b5eb03f717b20fb10407532587d487aa6aeb3f4b0f59e604cb00422c980f182"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-cancel-dialog.png",
+      "bytes": 162084,
+      "sha256": "fb14f5e65411d6b61ce140a717b2d3418844f853048a56a2250478c64830433c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-cancelled.png",
+      "bytes": 149009,
+      "sha256": "de016c55a80fc4e75436a5cbf251b1bc28e87aaf94c511333fde1b9f913e95ac"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-history.png",
+      "bytes": 181782,
+      "sha256": "3c18371533b0d74aea32136e1a6f1b24549a0b8a717dc55a751e2df12c609eae"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-home.png",
+      "bytes": 182770,
+      "sha256": "32719ab712b0e9ddb8f2256e68d3b9f751f91b0dc3acdc4163681359a228e6f7"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-login.png",
+      "bytes": 173644,
+      "sha256": "4751a133d8b6ec586469a2833e1251b4f40227c7fc680716f6aaceab690822b1"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-slot-selected.png",
+      "bytes": 139817,
+      "sha256": "d08cf1f7a55a51505ba9a3ea1daf7211ea37dd2c7dc2f56d8e9f1efe9144b4c2"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-upcoming-refresh.png",
+      "bytes": 173245,
+      "sha256": "da498cb98fc193e2c36146c1ed2581f32f777de59b09bada1dea2ece2bae4d01"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/capturas/apk-upcoming.png",
+      "bytes": 171400,
+      "sha256": "d800d97fe2aa52684f3ee922c2fd048b4881d318844f6e55e7be826020482989"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/audit-backend.json",
+      "bytes": 362,
+      "sha256": "2b508fb09213c2239cc7aed174a94eac8ca8d5c06add09f7e06c71666ac122a5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/audit-frontend.json",
+      "bytes": 6417,
+      "sha256": "257e99f55093a2a7a8517bba8221e94ea482e8cc8cf7a5831366c6ea00c72a34"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/backend-tests.txt",
+      "bytes": 9238,
+      "sha256": "7a876abf5cd08fb9e64e473ec65a51ec55346fbafacaa86e0f6008c186bf2fe9"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/accept-dialog.png",
+      "bytes": 181061,
+      "sha256": "c35d5ceed38213090303664d0953af81de174bc714a756e119ea1313cdf91824"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/accepted-card.png",
+      "bytes": 175806,
+      "sha256": "d2115b77996f4d9dd6a79f0055031569b890bdb67a6e9a72b65d5fbd0bf2ecdd"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/accepted-details.png",
+      "bytes": 155994,
+      "sha256": "52d0f7b409bc6d8b8d0d7c171e1882f4daad7ada57e8f1212e8086bf54619cdd"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/accepted.png",
+      "bytes": 198789,
+      "sha256": "80e755aff21c7742a1ae69cdbe50bcf601ff02131f9de9f5fea2f95cdeae3fa5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/admin-cancel-dialog.png",
+      "bytes": 148153,
+      "sha256": "3ad44b894b8606609b74633c18a78e5e92664ec864d330e59f3ad5b92e87387d"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/admin-cancelled.png",
+      "bytes": 197481,
+      "sha256": "4a620977a6325e85a7a7c732b5f1439040be7cd477ab5641122ae37d5cdd6d26"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/admin-list.png",
+      "bytes": 179229,
+      "sha256": "f8a882c32fea06c1209ef15193ccea1f0c54160ec904996fcca4fd9ef92dd2c1"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/admin-logged-out-ready.png",
+      "bytes": 182455,
+      "sha256": "ba760ebe4e2ffe0eef6dfa7cd23083029f66fd15ec4e6985f5db568e32bc63c1"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/admin-login.png",
+      "bytes": 177311,
+      "sha256": "0ad5d82a0565208ff9144025c0557b2c10913a0f252e6aa1438f4e06a2b4fcc2"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/admin-logout-final.png",
+      "bytes": 173553,
+      "sha256": "097acb432192a5a89e5cd2c26645f6e059875b29b57dcd92d603307598f26ea8"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/agenda-cancelled.png",
+      "bytes": 193314,
+      "sha256": "ced232b4e2aaea3d911f28aaa56562568ddb3a2738f311176909df9e09b5ca00"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/agenda-confirmed.png",
+      "bytes": 198252,
+      "sha256": "abc57ffe5f32b7ad6557fbc490bf63ba016412152af4cb7141d9fb61f515d185"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/agenda-positive.png",
+      "bytes": 192020,
+      "sha256": "b91b1f90abb438a7a566f716c45a4341ad3278b594d453182b4143796132eda3"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/agenda-tomorrow.png",
+      "bytes": 187819,
+      "sha256": "8db1e6a9f97a2e740b43140414960606df9da0408aa4c3898ae1df500d4e7968"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/cancel-actions.png",
+      "bytes": 153607,
+      "sha256": "7ac4988601638792ef2ce93c59972077917e915efaf807f6561a80adf23d4366"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-attendance-button.png",
+      "bytes": 159650,
+      "sha256": "1c09a723f5cd9f0360a157063c38943af37f664517841e10f6961383432665a4"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-attendance-confirmed.png",
+      "bytes": 174727,
+      "sha256": "79782a7bc3bb22eec1d7e6c0a945e5cb9381b96309eee83c4feeb4f745895972"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-automatic-push-received.png",
+      "bytes": 260219,
+      "sha256": "5b5418e3e4be85b1ec0702f50af95ef8e4b5ab08e89dd383e3b1266e8138bad0"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-cancel-aborted-final.png",
+      "bytes": 161694,
+      "sha256": "4825ccad2542b1f3a27a719aa718fe5792e668436c87585e1de9ff1edccf917c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-cancel-dialog-final.png",
+      "bytes": 160709,
+      "sha256": "8cf88dd0472d9d3738f5010e3e28ce532420bb42e0533a9fa2ea761c720db721"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-client-cancelled-final.png",
+      "bytes": 149577,
+      "sha256": "129e6f78ad021c802327feae6ddff4a571727c03afee252954ae4126e03aadc3"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-client-login-bottom.png",
+      "bytes": 146236,
+      "sha256": "536d2e9dea09d449a56877599346b73253507f4a533a02fba8eb77f92d044a4e"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-client-no-remember-ready.png",
+      "bytes": 183729,
+      "sha256": "e8e88f5e1ab520bf98887dcbd9a8e52485019246de88d0bc83d99ef429faad67"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-history-main-cancel.png",
+      "bytes": 150241,
+      "sha256": "67e9fb5e2969d80cc0befe124c9d8c2ee740bdcb03f3e8b7af052e9f3982e1f1"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-push-open.png",
+      "bytes": 171419,
+      "sha256": "4ed61603cf8b17064fca7232b4c418b173f07bf3e2279171e1d8f8f4d653ee58"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-device-push-received.png",
+      "bytes": 248924,
+      "sha256": "84c91de7a6269bbb93c866eda5da16182ffb85fd65a3b7f0848e03766736d7e9"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-login.png",
+      "bytes": 165471,
+      "sha256": "92fdef9cbb1642664343c5f6aef3eebc95099f02b4abebc5cd3ce71b71783e88"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-logout.png",
+      "bytes": 173176,
+      "sha256": "898ae1537dc7842c5b6ae5977d506cec80da792446bd8ee73dd3c2edb900b199"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/client-restored-ready.png",
+      "bytes": 167108,
+      "sha256": "9e8d4c4b6138092bcbea36adbcf9399551d6c7c2570b96f42af1ae4dc0900a7d"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/complete-actions.png",
+      "bytes": 140127,
+      "sha256": "ff462a8c7fe9b1afa244c95240f5b59083dc0c5ce4975375f7c484ddc8691d9b"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/complete-dialog.png",
+      "bytes": 152015,
+      "sha256": "85569ee7325c4dfe982dad2c4267aa47da2d844af8a7752afa7ed72b9e884425"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/completed.png",
+      "bytes": 193186,
+      "sha256": "858c1b5b47f4c00f72cff5e39ef876f46bf099346a8bbccbf4925ed264ab6d19"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/main-created.png",
+      "bytes": 178664,
+      "sha256": "db61c4aed410edc190d43eba2fff1b55527b25fd803b6b95e5c04866a6820cd9"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/main-slot.png",
+      "bytes": 140234,
+      "sha256": "08669f0d0753a970937d577aba8838eb4658ad02c4821b747205eeebfd64719e"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/reject-card.png",
+      "bytes": 169800,
+      "sha256": "4f7baee6be0484e3c07d8d873449736978441d68cae36edfd6b56bdac3385426"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/reject-dialog.png",
+      "bytes": 170400,
+      "sha256": "fcc68f964eb09c99d9ec804d953c128fbf27af3006f1efab5d546b12e7db19f8"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/rejected.png",
+      "bytes": 198075,
+      "sha256": "667c6cd8b4d31675c6869409da7ce47ee24690e0652fd4a3877f1c9b2efbb08c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/remember-enabled.png",
+      "bytes": 147293,
+      "sha256": "3ad222a9f84bd7b6ee807265f4fa743a6ec15b67ab17f8ca544effad8885494c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/reminder-dialog.png",
+      "bytes": 187159,
+      "sha256": "42f9fdcb2641ad845fb3a120872a20a5971d185881d21367372553a7e0ef5542"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/reminder-queued.png",
+      "bytes": 189974,
+      "sha256": "b9e32a5cebae161b6b68bab580914e3cd2dc78aba335d50d82f20b906ed88003"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/search-id.png",
+      "bytes": 197802,
+      "sha256": "6d7f3cd6c9bfab9c1892062f6bfb143bb65e4e0fabe6c3d49b0a05218de1b069"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/capturas/whatsapp-browser.png",
+      "bytes": 162110,
+      "sha256": "658c40d37982596ba9564482d6b64e3d7a89c1207151302cfb98a1c5f12fa168"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/controles.json",
+      "bytes": 3487,
+      "sha256": "3912edd5cdc928a967067f3a4b6d5916545dd79182e4f5a2e335e04920eff5dd"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/correlacion-api-bd.json",
+      "bytes": 33056,
+      "sha256": "25f733b6da0e5f717b48bf55b913110b7f0ecec395b10fff65836ae445e71ed0"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/despliegue-verificado.json",
+      "bytes": 416,
+      "sha256": "559b758be63912cff7780afb07a89777a5a751a89aa8b2fb49854956a4f6f678"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/eslint.txt",
+      "bytes": 43,
+      "sha256": "ef4aa5aa5ea20ea85dd9c4e6e1eab3192613cc4c185eef69bca9a352e4afc8ec"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/expo-compatibility.txt",
+      "bytes": 28,
+      "sha256": "8152e1dfe2839254529bd71a5c9d6f299c93bc1132025c5930dcc5dc042489db"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/frontend-tests.txt",
+      "bytes": 817,
+      "sha256": "4aaf11571c1fc4fa99e44ea5dad4ebd663237caa9e69d121a3e9112bea8bd2b4"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/identidad-version.json",
+      "bytes": 751,
+      "sha256": "85df15365cc9e65aa1aed7c9399ac638f84fcbc670c96eb0a8a286bde98e128b"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/interfaz-final.json",
+      "bytes": 36967,
+      "sha256": "dfdbb2c2646236cb6dfbc44d62f330275b48ac740b3a019ba3415a2a7232d3c2"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/limites-agenda.json",
+      "bytes": 4749,
+      "sha256": "03d7344ab97e4578dc54b7af1d732bb7ca74e19de0f49f52666814a5027e108d"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/regresion.json",
+      "bytes": 22792,
+      "sha256": "ddf6a45bb2515a8243c4adf817dd84cbcdcaf5f98121005ccf792fd5fccec58a"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/routing-tests.txt",
+      "bytes": 769,
+      "sha256": "2f9846845545ec79afc09d9f40657da9611021f46083fabfe3275c51c5e7a429"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/cierre-funcional/typescript.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/compilacion.json",
+      "bytes": 1010,
+      "sha256": "a0c17caad6e12cda1288da093d48f6502285ff9b797ab04e78f8780363a3c413"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/controles.json",
+      "bytes": 3097,
+      "sha256": "b9a20bd21244698240d64914675f31c8a89576012cc93465628564ba650dd5bd"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/despliegue.json",
+      "bytes": 2941,
+      "sha256": "805723bc5b57bbed6227ca26f47188562a486863ad370d9255cbe0b89f4a28a3"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/diccionario.json",
+      "bytes": 20637,
+      "sha256": "2555b6c86ce96fc7b1ddaa19006366a3eb7098835ac99789d1708b945e880310"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/diccionario.md",
+      "bytes": 5515,
+      "sha256": "36818ab600483f3d8cbf5ab37c8e205334630cfe946c5424c52de6a98eddbb4a"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/eslint.txt",
+      "bytes": 41,
+      "sha256": "44aeb02c810b0f9b3e09ebdd8b51e69e2e431e7a959f003757e793e4e2d6810b"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/expo-compatibility.txt",
+      "bytes": 28,
+      "sha256": "8152e1dfe2839254529bd71a5c9d6f299c93bc1132025c5930dcc5dc042489db"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/frontend-tests.txt",
+      "bytes": 818,
+      "sha256": "3ca38c8fd8f54c735ba016a5bded92854415956648b9835afdd5a3dc7d0622a4"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/github-antes-release.json",
+      "bytes": 5984,
+      "sha256": "9f7a938400b152d014db7f63b6439a1c64dd0af5621c1e038319714a0a5a9232"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/integracion-final.json",
+      "bytes": 21941,
+      "sha256": "37d2e301fe0b302818091729695c3a42269328b36f6a929ea5f17e3c0c6004bf"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/integracion-inicial.json",
+      "bytes": 19503,
+      "sha256": "628aaedb056443766b7d7149168da8d6393f14fd39f16f807c2737cd992df1be"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/interfaz-apk.json",
+      "bytes": 11898,
+      "sha256": "97fbc17bbd9f5b93e3a8b20b589c586ccbb74661414b8743f44a02f78817de12"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/recorrido-cita.json",
+      "bytes": 1623,
+      "sha256": "134c5606b1fce48a51411c7a4c257e14838d853b96ce9b0784a44d612261187f"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/regresion-final.json",
+      "bytes": 22794,
+      "sha256": "5d1d9907d54372efda6034bbcb307adf9de73197bf6c2390a39839d9f737be92"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/respaldo-sintetico.json",
+      "bytes": 2068,
+      "sha256": "e355cf2537c645b23d044291df27eefeb9eb66a38aecb6b0ab503d54c4a285c8"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/restauracion.json",
+      "bytes": 2826,
+      "sha256": "e020c915c4a8488bf0f15ef7475bacbf963281f6170dd7b881d23d151c2e4136"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/android-build.txt",
+      "bytes": 89550,
+      "sha256": "d4c5796338c01bb0bf494a80780f0416f2d40e73a9487c208be4f1dba580e698"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/apk-1.0.1-deeplink.png",
+      "bytes": 173381,
+      "sha256": "ae53c393e266820a0f90f72841ad0f70bf62be279dbec648b2b4064858bc95bc"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/apk-1.0.1-home.png",
+      "bytes": 182371,
+      "sha256": "93b6167fb6cfdef625f7ee14d75e1d7c473628d830f06a736030e8e7e5fcd064"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/audit-backend.json",
+      "bytes": 362,
+      "sha256": "2b508fb09213c2239cc7aed174a94eac8ca8d5c06add09f7e06c71666ac122a5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/audit-frontend-antes.json",
+      "bytes": 8878,
+      "sha256": "5286a9a4361a71d21198c52399028a76a243f7114caf7762c4fe85b2a928e57c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/audit-frontend.json",
+      "bytes": 6423,
+      "sha256": "c2784005e787e1e9b545a2398f3f996857d9953495af64e52f835a0364860059"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/backend-tests.txt",
+      "bytes": 8867,
+      "sha256": "6d93e2425f26c57134acfea193b4d873dc472c1c9f0577a07ab19f6f532fb5d6"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/compilacion.json",
+      "bytes": 2870,
+      "sha256": "1fc6397fbbd1bc89b91aa5cc8d79309b939ea3644eaa703f79bc7336054e19f5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/controles.json",
+      "bytes": 3446,
+      "sha256": "7bdcca389498afdb3b452bde3f18ac303dfabc7dee241dfeb74686a23140693c"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/eslint.txt",
+      "bytes": 41,
+      "sha256": "580dbada47544227ff617fb9a6ef48ccc4cf2450e74ce45a984d026175937e34"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/expo-compatibility.txt",
+      "bytes": 28,
+      "sha256": "8152e1dfe2839254529bd71a5c9d6f299c93bc1132025c5930dcc5dc042489db"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/frontend-tests.txt",
+      "bytes": 816,
+      "sha256": "e682048be5d5aebe9f87fed19489c01286dfd32d86dbbe281e84f2fa2b356eb5"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/humo-apk.json",
+      "bytes": 1662,
+      "sha256": "2956e6ae52defbdf89b021619b0645cfb0833129d419bf7afb49853abd876b04"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/regresion-seguridad.json",
+      "bytes": 1551,
+      "sha256": "a547ad8bf6fda9bc78cb5334cc8e53f490071dd5bec0165907a7fad886da1f06"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/routing-tests.txt",
+      "bytes": 772,
+      "sha256": "d2f6b39f56b29c5e8a90bcc2559d3d66ec5079658a4a4d101f1cfd676bab0038"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/typescript.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/seguridad-frontend/web-build.txt",
+      "bytes": 2338,
+      "sha256": "a3042617f7a200ae354d9efd97a3dce3535d54f787d8c77f5bee0fcc8e0f0575"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/typescript.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidencias_pruebas/ivs-2026-11-07/usabilidad-codigo.json",
+      "bytes": 6185,
+      "sha256": "41d7f4e63d62aec732e0fb6e30bc687f1d3972a22ca0ab102d82f72933fbf415"
+    },
+    {
+      "path": "eas.json",
+      "bytes": 397,
+      "sha256": "345435254951eec345a27acaaee05b4d315631da9168b5decabe65aa137d1637"
+    },
+    {
+      "path": "eslint.config.js",
+      "bytes": 236,
+      "sha256": "6ea734f0e3f5b7c3c5720b3c467695516b14935724a78386b8534abc2959da12"
+    },
+    {
+      "path": "google-services.json",
+      "bytes": 683,
+      "sha256": "07d4be00190e62c8719a3d5cd721d2f7358bc37d8b7dadebee6f93eaeaef5c00"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 443709,
+      "sha256": "346f2887ef6337437d837e4e4dc6b8c4a676530a8800c7b880ec52d858f2d956"
+    },
+    {
+      "path": "package.json",
+      "bytes": 2024,
+      "sha256": "fb1f0f6014850061970380115f0a8ec5b29cd246430c7defd9c581bb2f718a7e"
+    },
+    {
+      "path": "proyecto/docs/alcance-actual.md",
+      "bytes": 3185,
+      "sha256": "8cf19ba031183a06b391fd7c5474aea08ee43ddb69f699311719c4990fef1c77"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/Arquitectura_y_Diseno_Actual_Barberia_Cale.md",
+      "bytes": 66683,
+      "sha256": "fc16138ef87a083531bb1a6ee392719b6c93dbdc052a106ded36ecc65b6d6fff"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/01-contexto.svg",
+      "bytes": 26056,
+      "sha256": "39086f62b10971201ce66ca8885362d365b0746b768b6e7aa4968de8003078b4"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/02-contenedores-despliegue.svg",
+      "bytes": 54307,
+      "sha256": "a99cce04a82b042c2c27c9506f1d99ccf48b9ad84dc17aa1bc2ff091ce7415ac"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/03-componentes-capasy-modulos.svg",
+      "bytes": 63996,
+      "sha256": "e295e84b212e9a16f131812f42252c7907b2ed5bd10502be6d9635b1044aa3fe"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/04-frontend-expo.svg",
+      "bytes": 70729,
+      "sha256": "472ca15b7e9357322425e1f9201f0b23f84f3987766c82a95751124fef58fc36"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/05-backend-api.svg",
+      "bytes": 71391,
+      "sha256": "7b56ff22db9c3c5dc9713b5e52bc7255c302bad74dba4dfd4f7f75bc6adaa4e4"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/06-secuencia-reserva.svg",
+      "bytes": 77261,
+      "sha256": "57bba7c31a01f1202588b28f25d6ed5de74a7f4ee65f46ea0612e6e63373ef6c"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/07-secuencia-recordatorios.svg",
+      "bytes": 105805,
+      "sha256": "c3d77305f8e12c03228681ab75f077ca8c79d5f8bbdaa2f4ca674b265738f451"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/08-modelo-datos.svg",
+      "bytes": 45232,
+      "sha256": "9ed240528b95641e1f96d697e440f7685591b328108f75a1c65f14abadc1c599"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/09-estados-cita.svg",
+      "bytes": 30100,
+      "sha256": "a52111a6f225b674e6b19bdde6a77e69a43d95c0e5c110cc139577c9ad6e5c2a"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/10-secuencia-autenticacion.svg",
+      "bytes": 94962,
+      "sha256": "eb2a05f834e6f495da2b2331ed188e6b4c580f43892aecb7eae02040355e8c88"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/11-secuencia-confirmacion-push.svg",
+      "bytes": 69311,
+      "sha256": "bf2d8acbb741bdcc4f6506a86c83df11b3348d3963d4d1d419debfa23b2c7641"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas-svg/12-fronteras-seguridad.svg",
+      "bytes": 55222,
+      "sha256": "f431b0d5440e32d51fef57fac0f2b6b168e7161b37f2bed054784955853b0e5f"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/01-contexto.png",
+      "bytes": 119042,
+      "sha256": "cfefa648d3d5c7c87f8f81483d799bf0c1f5fde515d0369f3383d1bc1b1740b9"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/02-contenedores-despliegue.png",
+      "bytes": 171098,
+      "sha256": "c4e3a6e3c831981dac0922d634fd053094780c1cd6f819369f74c14a96461c1b"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/03-componentes-capasy-modulos.png",
+      "bytes": 262823,
+      "sha256": "a2c0e7a3e54e1e8c908c0fbbcd5d97fd84c12f99f2d2d0e2b20c07b8ef7f29e7"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/04-frontend-expo.png",
+      "bytes": 413666,
+      "sha256": "a94d0439b507689be6eba3b5d260c7fed5c05096c4f7f784e1169f49fc44fc05"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/05-backend-api.png",
+      "bytes": 414451,
+      "sha256": "fe4fd22d9e476d518db99efe32bfff601611820dc4b347355b26f7bef6d665b5"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/06-secuencia-reserva.png",
+      "bytes": 286435,
+      "sha256": "0e71587b882081ff6cd467c6152f088ca8b958c3652ea873644eeeee69021bf5"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/07-secuencia-recordatorios.png",
+      "bytes": 470738,
+      "sha256": "4807b2732aa27dc9b123d0bea9347b54cc74ecf3379afcfb5c4861c9fea781e3"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/08-modelo-datos.png",
+      "bytes": 156234,
+      "sha256": "9b3c580acf225a769f4f0527c3d8661c6984b2f6b7c161596edea3d3b4922393"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/09-estados-cita.png",
+      "bytes": 142605,
+      "sha256": "cdb1a5d6da212b5433f480a241b3e1869c38657108633fa39f391914077cf41e"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/10-secuencia-autenticacion.png",
+      "bytes": 331903,
+      "sha256": "1dcbfce08a8906ba38b89a5101cfa0c513a440ad91bbdace196ded154c786f71"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/11-secuencia-confirmacion-push.png",
+      "bytes": 268410,
+      "sha256": "80f7182fcdd9a8654972960a2e4a1944c197f9365ea60c044756f72bd4092988"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/diagramas/12-fronteras-seguridad.png",
+      "bytes": 264653,
+      "sha256": "0bc2b87af94defb9f19eeb95567ffc1a3fcc1116617154937ebddbf89453c86e"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/01-contexto.puml",
+      "bytes": 2198,
+      "sha256": "adf964b2861d93bc45dc5bb09544febc165cfb4d2555d86a0c1d2119a96d8687"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/02-contenedores-despliegue.puml",
+      "bytes": 3579,
+      "sha256": "91ba32952df23e37a63e78bf95a1621c045d022308dae5c568c2a4f53b7f8f7f"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/03-componentes-capasy-modulos.puml",
+      "bytes": 5389,
+      "sha256": "285ce74e59f625914e2278241158b0ceea5bc6e98cc3d19224fe232e6abf2cec"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/04-frontend-expo.puml",
+      "bytes": 5532,
+      "sha256": "01c0330b7e0de418049258b09b85c65cfbe04c5765074385d092f291f790cd33"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/05-backend-api.puml",
+      "bytes": 6109,
+      "sha256": "c371582e030a4a15219b39d1da614dbcaa9d8608dc2241d0d12c3062c8854f37"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/06-secuencia-reserva.puml",
+      "bytes": 4964,
+      "sha256": "f242bc26e9b6332766152548c1f60666256ddad651f4312ef43555eff8f32344"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/07-secuencia-recordatorios.puml",
+      "bytes": 7392,
+      "sha256": "4b8ab50c5b4967d5cb072d80e542868c3713c8593df50a08d3ee000026f67220"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/08-modelo-datos.puml",
+      "bytes": 4954,
+      "sha256": "f5748c098b81331805f8eeac2ff4e93cd35f3039209eba25ac900d9f042c7519"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/09-estados-cita.puml",
+      "bytes": 2740,
+      "sha256": "00b32396affe0d4e8bcbfdaa46833a81cf5d50fc60f27be4d7c763a845533d11"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/10-secuencia-autenticacion.puml",
+      "bytes": 5526,
+      "sha256": "fa70cd93ef61dabdada292ab0f227a0c5457a31e81cbc5db6767871da3785159"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/11-secuencia-confirmacion-push.puml",
+      "bytes": 4850,
+      "sha256": "1a6a94fb16a16fe7e3e77d839a7d2ed979ab59cc6169e314da4c595a97ba358b"
+    },
+    {
+      "path": "proyecto/docs/arquitectura-actual/plantuml/12-fronteras-seguridad.puml",
+      "bytes": 4775,
+      "sha256": "c3d3908e61f881c72f8f6a6ac7ed680f1cfccec2ea66a19555ab6fce4bc634f0"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/README.md",
+      "bytes": 4008,
+      "sha256": "3c1ad5afad1f303e747ed6fee3c5503ff7a0c39754c359fece86135b3656464f"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/aceptacion-trazabilidad.md",
+      "bytes": 7768,
+      "sha256": "b03c9e256fd654577851cd9ae9e3f8126c698ad02c822aedfa9f74d203987b2a"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/cierre-funcional.md",
+      "bytes": 7978,
+      "sha256": "174004710012524548e4d0a210c8c8d6fdc67412b645baa5ff5a1a4a591d3e13"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/correcciones-ivs.md",
+      "bytes": 4055,
+      "sha256": "3739fc6f219784116ff392a7930fb64899852bc9bdb0ba38ead58548d942067b"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/estado-preparacion.md",
+      "bytes": 7504,
+      "sha256": "68476c189652dad26e51ea937793f106ab63ba5f4c6226d8a56928c9431a1cdb"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/informe-pruebas.md",
+      "bytes": 5532,
+      "sha256": "73562fdfccaab5078e08cca7b418f8b74d85faa931feb4b12c8cba4bcd3775b1"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/instalacion-operacion.md",
+      "bytes": 7517,
+      "sha256": "c6358fd854d5e3c6890d422b26b213f60c6f64b7364dba7d9dde5590df6c3f5c"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/manual-capacitacion.md",
+      "bytes": 6177,
+      "sha256": "8ce7fbb2aa5541fc3fb1ad2cea3ede5e162e0313de1f9df60f06e887b69cb620"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/migracion-recuperacion.md",
+      "bytes": 5341,
+      "sha256": "89c5d97c0386c4926e9acc75d41b796082a1da4b24071d851e89b35e5c712413"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/notas-release-1.0.1.md",
+      "bytes": 2285,
+      "sha256": "8c4e251c796d8e09bf1cc0fbecef7873aa44f8b1e7a46d3179ebd540dbf1e275"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/notas-release-r2.md",
+      "bytes": 1939,
+      "sha256": "0a22ca40505571d29724bbfdb47f50dd418b1e4d14406c53f516e251c2a2d7d8"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/notas-release.md",
+      "bytes": 4706,
+      "sha256": "6991c973b77c30a158e69dec5de2669e51aa9b873fedcb571c41380af6dbe079"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/plan-vv.md",
+      "bytes": 7402,
+      "sha256": "d46e3470dafa92b8b4b8f3050fc50862db19307ed993996727b2fcb1577b4da3"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/seguridad-frontend.md",
+      "bytes": 3484,
+      "sha256": "761e1244effd81566aa1d4ec77e685f7e7d1a36c4b572a9a6e050f32c2869336"
+    },
+    {
+      "path": "proyecto/docs/ivs-final/usabilidad.md",
+      "bytes": 5052,
+      "sha256": "0666abd8130b9152635c8a904130cc431d19381f8542563b5ca21fce5e942289"
+    },
+    {
+      "path": "proyecto/docs/requisitos-actuales.md",
+      "bytes": 4958,
+      "sha256": "ddeed7c47f4071b2dd26e871bc1e3524be127f276eb04175cd8d53b70b5059ba"
+    },
+    {
+      "path": "scripts/ivs-live.cjs",
+      "bytes": 4001,
+      "sha256": "e2b49c9061883a3c244a4f0b094289cc59e154619751aca433130356f51abf9f"
+    },
+    {
+      "path": "scripts/ivs-manifest.cjs",
+      "bytes": 2670,
+      "sha256": "f22284c8192a51212191c1856d4d93fe081f19692a4e449801d750c18c59a85e"
+    },
+    {
+      "path": "scripts/ivs-recovery.cjs",
+      "bytes": 9487,
+      "sha256": "1295f38c1bfd13f6f20f54468960787025ff6c322618be9563acdab40c470afd"
+    },
+    {
+      "path": "scripts/ivs-usability.cjs",
+      "bytes": 3226,
+      "sha256": "368b55ab63478e18008e80c1322d0d687d0696a77257bfc7ddf4236f3c808ea2"
+    },
+    {
+      "path": "scripts/ivs-verify-deployment.cjs",
+      "bytes": 1418,
+      "sha256": "ba50ef40a5f6f51c26598180ea4d2f44692ab801521afa76843f1825ea577528"
+    },
+    {
+      "path": "scripts/patch-query-string.cjs",
+      "bytes": 1043,
+      "sha256": "e4594c3af85e7c001f557d7c64f0817169ac726e1a14b3cc00b45758eb1a9938"
+    },
+    {
+      "path": "scripts/quality-archive.py",
+      "bytes": 1635,
+      "sha256": "e2ecb7ac072174535eb9489c53ce08ab671e5c8dbb24002f3f8c7ee159812f92"
+    },
+    {
+      "path": "scripts/quality-build-record.cjs",
+      "bytes": 3237,
+      "sha256": "dc58121da5b176543db6c9585b4782decc15ddefa03f078a568332ec42e6950b"
+    },
+    {
+      "path": "scripts/quality-checks.cjs",
+      "bytes": 2661,
+      "sha256": "eee849d08ece88e43b25090dfd1d176e098dcc55dd0fc05f31eb2a4094e39f34"
+    },
+    {
+      "path": "scripts/quality-ci-db.cjs",
+      "bytes": 745,
+      "sha256": "ecf31155f70f246df45a46f400471b729914c0c50afb841bcd3f134fa4f683cc"
+    },
+    {
+      "path": "scripts/quality-integration.cjs",
+      "bytes": 30028,
+      "sha256": "6a11aadbb5a17bae70bd248381a03295c3fccb628058353101da5ffe494e0320"
+    },
+    {
+      "path": "scripts/quality-live.cjs",
+      "bytes": 4165,
+      "sha256": "9e8eedfebd88d856cb91535c6516aff3d463116af6c0dae6ae6d86962499c60b"
+    },
+    {
+      "path": "scripts/quality-notification-evidence.cjs",
+      "bytes": 2717,
+      "sha256": "282a81126d5f93f802b19cb1a6b3febc2c32ec495b06a1d620ba84e5a11fbf5b"
+    },
+    {
+      "path": "scripts/quality-package.cjs",
+      "bytes": 49600,
+      "sha256": "910ca788e5452dff0d2ffaace8b93351b67d1fe0579c5138ccade004835e7256"
+    },
+    {
+      "path": "scripts/quality-preflight.cjs",
+      "bytes": 1045,
+      "sha256": "4d1248d8d61851769259e615ecfa58c7350d71b74ce04df5a18febabc4155222"
+    },
+    {
+      "path": "scripts/quality-rotate-access.cjs",
+      "bytes": 4569,
+      "sha256": "ec31ea17216deaf767f920492e13d1a30eff680bc488f689d1527c2cebcf939e"
+    },
+    {
+      "path": "scripts/quality-verify-package.cjs",
+      "bytes": 3041,
+      "sha256": "02050c7501d4b25d2acfb24acc43acb7b4fd737c2beec861c4c2defe49bfa9e6"
+    },
+    {
+      "path": "scripts/reset-project.js",
+      "bytes": 3710,
+      "sha256": "549922a40b983de34068b36d7879fcc8aed6c60b8d45b3c7b866267e766ae9fe"
+    },
+    {
+      "path": "src/api/admin.api.ts",
+      "bytes": 7509,
+      "sha256": "c75adc986376ebe4c1d289cd9a3abba848c70c77039834e975604b753de20cf2"
+    },
+    {
+      "path": "src/api/api-client.ts",
+      "bytes": 6538,
+      "sha256": "9e694a3b6dd0821b615d16d0d2129f142fe914479dc4e4abd4d0ca41b1db8ef6"
+    },
+    {
+      "path": "src/api/appointments.api.ts",
+      "bytes": 3328,
+      "sha256": "98305a1311b6e51440904e980c57fa0727ea0997ab8cf1bc7f2550da5ecf4513"
+    },
+    {
+      "path": "src/api/auth.api.ts",
+      "bytes": 1192,
+      "sha256": "d5ae25689e8036ad65b185b14b1e7da0bf7d2a1e37676bd0de74b344a5b28542"
+    },
+    {
+      "path": "src/api/notifications.api.ts",
+      "bytes": 841,
+      "sha256": "6e001f4931ce5de9d74a091732a9842b30a27302fa45114e7a313ee452a0de13"
+    },
+    {
+      "path": "src/app/+not-found.tsx",
+      "bytes": 286,
+      "sha256": "c186df9e8e1b35c4b145e2c00a64a26ede9cb3ccb7e75cde5f1a679443d3f6df"
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "bytes": 1283,
+      "sha256": "4cfee197f5017cfbc0ce3b0d6d7857e7bb9e22ee7023c6075498cb093bf021db"
+    },
+    {
+      "path": "src/app/admin/_layout.tsx",
+      "bytes": 1461,
+      "sha256": "d580587c4dedfb4f4850ea0a29eb3cf4456950f9c9634b7409e1776fec5144e0"
+    },
+    {
+      "path": "src/app/admin/appointments.tsx",
+      "bytes": 115646,
+      "sha256": "78d7bfa6900818bb69d443fd9fa4e098e682899278b2c0a5eb06fce2a097debf"
+    },
+    {
+      "path": "src/app/admin/index.tsx",
+      "bytes": 20505,
+      "sha256": "0769257fd4d3f46b3ca70f33f1c1ee67fb69798ca47cb6b7fe64331ac33fea57"
+    },
+    {
+      "path": "src/app/admin/schedule.tsx",
+      "bytes": 79731,
+      "sha256": "2dc5ca4b0fdecf84525fada6ab912e597e1d2d4da00b12aa9ee36220878c9311"
+    },
+    {
+      "path": "src/app/auth/_layout.tsx",
+      "bytes": 1428,
+      "sha256": "0ea3a3737cd1157cb3c3b98ece5a200b90569d833ecfb4ac451d11b888aa09af"
+    },
+    {
+      "path": "src/app/auth/login.tsx",
+      "bytes": 18106,
+      "sha256": "e4a954d2cd21031a9e4b407e20998d46539713c8a9a7e73850b8fd37bd7cf5bc"
+    },
+    {
+      "path": "src/app/auth/register.tsx",
+      "bytes": 22947,
+      "sha256": "62cde382a0ee7b8f91a8e080b51edf9a62e1d4e20aa2577aec424c79843f9e63"
+    },
+    {
+      "path": "src/app/client/_layout.tsx",
+      "bytes": 8274,
+      "sha256": "67d2f73ce5b95685d5973bcd8233bf5f669e693fb95f5c5a5dd821d71b5804d3"
+    },
+    {
+      "path": "src/app/client/appointment.tsx",
+      "bytes": 44831,
+      "sha256": "d1702e848a918a65642ed3109a1b570d5b283e7f7521d4aa28c28adbbacb07f6"
+    },
+    {
+      "path": "src/app/client/index.tsx",
+      "bytes": 28425,
+      "sha256": "dd8679139eac22566f2979d2455469ce3c4876ea812022a33956c3a7eef33fc3"
+    },
+    {
+      "path": "src/app/client/my-appointments.tsx",
+      "bytes": 58737,
+      "sha256": "7610dfa49557ecdec511b3074b1a689e6fb8ca7de190503c00b796af3fa3b794"
+    },
+    {
+      "path": "src/app/explore.tsx",
+      "bytes": 122,
+      "sha256": "2fd527449d9ec8a4142f33cfb9c0e30d53527c51322c968df02c82dee5a00959"
+    },
+    {
+      "path": "src/app/index.tsx",
+      "bytes": 11251,
+      "sha256": "2caf9b956a3b799c58a8108f462f3fdf1097583de3ff9cd3dcd9adeac35e34d6"
+    },
+    {
+      "path": "src/components/AppErrorFallback.tsx",
+      "bytes": 3470,
+      "sha256": "ce683ac1d89bad60cd4b188d6b38631304981b9b088b48323afb2eaa35480861"
+    },
+    {
+      "path": "src/components/AppIcon.tsx",
+      "bytes": 533,
+      "sha256": "dcf8dbfb33ba074d90345cc2af49d02794dacc9aed351ba18605db5dff29818c"
+    },
+    {
+      "path": "src/components/AttendanceBadge.tsx",
+      "bytes": 2198,
+      "sha256": "df2f06f42bc7daeadb52e22b6556a2072466a195073375c4b4ff383f28eeb43f"
+    },
+    {
+      "path": "src/components/BackButton.tsx",
+      "bytes": 2185,
+      "sha256": "5f68324be6b97dedb53497846e71a28adf562823d337791dbbc951b312744c51"
+    },
+    {
+      "path": "src/components/FeedbackProvider.tsx",
+      "bytes": 4068,
+      "sha256": "874d4664fe9623ed8f702975dcbf82142b9fc32ec5c3f8224b6f406a0e3166c8"
+    },
+    {
+      "path": "src/components/UserMenu.tsx",
+      "bytes": 5689,
+      "sha256": "4a1ef92f0596aa0819eb3b58f94ef83764df498233f95238a51a3c24a363d130"
+    },
+    {
+      "path": "src/components/WebDateInput.tsx",
+      "bytes": 308,
+      "sha256": "d41a36c7d93e693dbcf4a00691961e35b1909bacc5439fc45a1bbc4469ac33d5"
+    },
+    {
+      "path": "src/components/WebDateInput.web.tsx",
+      "bytes": 1292,
+      "sha256": "f61d2bcee80db8db8a8e575c23763947fcd75b36c4f5e0fe417d3367cd313217"
+    },
+    {
+      "path": "src/constants/app-theme.ts",
+      "bytes": 1034,
+      "sha256": "46040f0caedff4ea5b8007763b05e9ee37081d8003b8df3592b388672f3433f5"
+    },
+    {
+      "path": "src/constants/business.ts",
+      "bytes": 485,
+      "sha256": "8477ba17631523b608ecd4e6c853b51b3138ba0737d91362f9725bbf29f2b6f7"
+    },
+    {
+      "path": "src/context/AuthContext.tsx",
+      "bytes": 10378,
+      "sha256": "f55ad824714fb7705a246addf3a12b8c2b967ddae916918c43e411a6f6e80955"
+    },
+    {
+      "path": "src/context/NotificationContext.tsx",
+      "bytes": 26798,
+      "sha256": "e6a756f725acd519f06116a59d53ae1f8dade384d6cfd8e879340746f78497cd"
+    },
+    {
+      "path": "src/global.css",
+      "bytes": 968,
+      "sha256": "e7f82ed6ea00ecc25037862056e5215ef82a2de934fd20da4bbf8962210a1dc1"
+    },
+    {
+      "path": "src/types/expo.d.ts",
+      "bytes": 112,
+      "sha256": "30024b1aa3744920a1d80f59fdc88d63d93f057fec413dac3cd31587cea98917"
+    },
+    {
+      "path": "src/utils/business-date.ts",
+      "bytes": 2348,
+      "sha256": "f20022b64ec9372827b075f388584f09ad9bd12059279708c3f6b9c73f1e1767"
+    },
+    {
+      "path": "src/utils/date-format.ts",
+      "bytes": 838,
+      "sha256": "606b613c78e10bb6ce85ac79132aff41ad9ff0923987c492c038a76c7be498e5"
+    },
+    {
+      "path": "src/utils/notification-registration.ts",
+      "bytes": 1383,
+      "sha256": "eb519adee58a6eb70bc247d0a9adec4999251ecd93018645304c67f5dfef9b52"
+    },
+    {
+      "path": "src/utils/phone-validation.ts",
+      "bytes": 250,
+      "sha256": "0d59ddf495f5be534f746a9540a3b03bd3bd8290f5be58086d561dc837c769e7"
+    },
+    {
+      "path": "src/utils/show-message.ts",
+      "bytes": 1732,
+      "sha256": "4b8c55992da8eacd098738ec6497706db452a606130569be0eaf7c6985660ce9"
+    },
+    {
+      "path": "supabase/config.toml",
+      "bytes": 47,
+      "sha256": "abd99cecf884044ed8619bb0a5e3a729117a9eba3b09d1b9862c25c43f25bb25"
+    },
+    {
+      "path": "supabase/cron/schedule-appointment-reminders.sql",
+      "bytes": 727,
+      "sha256": "098ba250a2bc0cff991643dae5197baff7fe033820eaf742c987ee4b28ecc2ad"
+    },
+    {
+      "path": "supabase/functions/bright-endpoint/index.ts",
+      "bytes": 23432,
+      "sha256": "94daf2cabdd50653ae5cd345b4ed0230a5c0f5329869279df4efefbf0348244d"
+    },
+    {
+      "path": "tests/notification-registration.test.js",
+      "bytes": 1409,
+      "sha256": "75f8d9e02b2632983c749e990a75f8bf7fd1fe82f3f2de448955e10833912b1f"
+    },
+    {
+      "path": "tests/routing-security.test.cjs",
+      "bytes": 1619,
+      "sha256": "d08a8a06e9b68a5e389da99d667b11091c3c4d1ca6c51df85ce2d19c55c339f5"
+    },
+    {
+      "path": "tsconfig.json",
+      "bytes": 351,
+      "sha256": "070afdadc785944c698c68bbcc49098fd92d4036503c118c13738c5db316dcbc"
+    }
+  ]
+}

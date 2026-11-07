@@ -1,0 +1,310 @@
+TAP version 13
+# Subtest: summary controller exposes eligibility and policy
+ok 1 - summary controller exposes eligibility and policy
+  ---
+  duration_ms: 3.6292
+  type: 'test'
+  ...
+# Subtest: bulk controller queues as the authenticated administrator
+ok 2 - bulk controller queues as the authenticated administrator
+  ---
+  duration_ms: 0.8734
+  type: 'test'
+  ...
+# Subtest: bulk controller keeps an empty result friendly
+ok 3 - bulk controller keeps an empty result friendly
+  ---
+  duration_ms: 0.4081
+  type: 'test'
+  ...
+# Subtest: individual controller rejects unsafe appointment identifiers
+ok 4 - individual controller rejects unsafe appointment identifiers
+  ---
+  duration_ms: 0.5886
+  type: 'test'
+  ...
+# Subtest: individual controller records appointment and administrator
+ok 5 - individual controller records appointment and administrator
+  ---
+  duration_ms: 0.5325
+  type: 'test'
+  ...
+# Subtest: individual controller preserves public service errors
+ok 6 - individual controller preserves public service errors
+  ---
+  duration_ms: 0.6437
+  type: 'test'
+  ...
+# Subtest: confirmAttendance rejects identifiers outside the safe integer range
+ok 7 - confirmAttendance rejects identifiers outside the safe integer range
+  ---
+  duration_ms: 2.0786
+  type: 'test'
+  ...
+# Subtest: confirmAttendance uses the authenticated client as owner
+ok 8 - confirmAttendance uses the authenticated client as owner
+  ---
+  duration_ms: 2.0233
+  type: 'test'
+  ...
+# Subtest: register rejects a phone that does not satisfy the complete rule
+ok 9 - register rejects a phone that does not satisfy the complete rule
+  ---
+  duration_ms: 2.6034
+  type: 'test'
+  ...
+# Subtest: login rejects spaces even when eight digits are present
+ok 10 - login rejects spaces even when eight digits are present
+  ---
+  duration_ms: 0.4597
+  type: 'test'
+  ...
+# Subtest: registerDevice validates token and platform
+ok 11 - registerDevice validates token and platform
+  ---
+  duration_ms: 2.9849
+  type: 'test'
+  ...
+# Subtest: registerDevice binds a valid token to the authenticated client
+ok 12 - registerDevice binds a valid token to the authenticated client
+  ---
+  duration_ms: 3.0386
+  type: 'test'
+  ...
+# Subtest: deactivateDevice is idempotent and scoped by user
+ok 13 - deactivateDevice is idempotent and scoped by user
+  ---
+  duration_ms: 0.7646
+  type: 'test'
+  ...
+# Subtest: authenticateToken uses the current database role
+ok 14 - authenticateToken uses the current database role
+  ---
+  duration_ms: 7.478
+  type: 'test'
+  ...
+# Subtest: requireClient accepts CLIENT and rejects ADMIN
+ok 15 - requireClient accepts CLIENT and rejects ADMIN
+  ---
+  duration_ms: 1.7876
+  type: 'test'
+  ...
+# Subtest: compressed JSON with trailing bytes cannot crash the HTTP server
+ok 16 - compressed JSON with trailing bytes cannot crash the HTTP server
+  ---
+  duration_ms: 98.9976
+  type: 'test'
+  ...
+# Subtest: rate limiter rejects requests over the per-IP limit
+ok 17 - rate limiter rejects requests over the per-IP limit
+  ---
+  duration_ms: 7.2975
+  type: 'test'
+  ...
+# Subtest: manual reminder summary uses the server eligibility contract
+ok 18 - manual reminder summary uses the server eligibility contract
+  ---
+  duration_ms: 4.196
+  type: 'test'
+  ...
+# Subtest: bulk queue inserts at most 100 independently auditable jobs
+ok 19 - bulk queue inserts at most 100 independently auditable jobs
+  ---
+  duration_ms: 1.3618
+  type: 'test'
+  ...
+# Subtest: individual queue records the authenticated administrator
+ok 20 - individual queue records the authenticated administrator
+  ---
+  duration_ms: 1.6108
+  type: 'test'
+  ...
+# Subtest: individual queue reports each ineligible state explicitly
+ok 21 - individual queue reports each ineligible state explicitly
+  ---
+  duration_ms: 3.1504
+  type: 'test'
+  ...
+# Subtest: admin search recognizes \#ID without turning it into free text
+ok 22 - admin search recognizes \#ID without turning it into free text
+  ---
+  duration_ms: 4.8817
+  type: 'test'
+  ...
+# Subtest: plain numeric admin search supports ID and phone text
+ok 23 - plain numeric admin search supports ID and phone text
+  ---
+  duration_ms: 1.6556
+  type: 'test'
+  ...
+# Subtest: oversized IDs cannot overflow PostgreSQL bigint
+ok 24 - oversized IDs cannot overflow PostgreSQL bigint
+  ---
+  duration_ms: 0.9348
+  type: 'test'
+  ...
+# Subtest: appointment creation locks the client and commits atomically
+ok 25 - appointment creation locks the client and commits atomically
+  ---
+  duration_ms: 2.7551
+  type: 'test'
+  ...
+# Subtest: client cancellation is atomic and allows the exact 60-minute boundary
+ok 26 - client cancellation is atomic and allows the exact 60-minute boundary
+  ---
+  duration_ms: 1.9733
+  type: 'test'
+  ...
+# Subtest: client cancellation reports the one-hour cutoff using the same appointment-time rule
+ok 27 - client cancellation reports the one-hour cutoff using the same appointment-time rule
+  ---
+  duration_ms: 1.5273
+  type: 'test'
+  ...
+# Subtest: attendance confirmation is atomic, owned and keeps its first timestamp
+ok 28 - attendance confirmation is atomic, owned and keeps its first timestamp
+  ---
+  duration_ms: 1.0142
+  type: 'test'
+  ...
+# Subtest: administrative terminal transitions clear active reminder claims
+ok 29 - administrative terminal transitions clear active reminder claims
+  ---
+  duration_ms: 1.3436
+  type: 'test'
+  ...
+# Subtest: attendance confirmation retries return an existing confirmation
+ok 30 - attendance confirmation retries return an existing confirmation
+  ---
+  duration_ms: 1.4594
+  type: 'test'
+  ...
+# Subtest: attendance confirmation hides appointments owned by another client
+ok 31 - attendance confirmation hides appointments owned by another client
+  ---
+  duration_ms: 0.8545
+  type: 'test'
+  ...
+# Subtest: attendance confirmation rejects invalid state and elapsed appointments
+ok 32 - attendance confirmation rejects invalid state and elapsed appointments
+  ---
+  duration_ms: 0.8647
+  type: 'test'
+  ...
+# Subtest: client and admin listings expose the attendance contract
+ok 33 - client and admin listings expose the attendance contract
+  ---
+  duration_ms: 2.3491
+  type: 'test'
+  ...
+# Subtest: device registration transfers token ownership and reactivates it
+ok 34 - device registration transfers token ownership and reactivates it
+  ---
+  duration_ms: 5.9648
+  type: 'test'
+  ...
+# Subtest: device deactivation is scoped to the authenticated owner
+ok 35 - device deactivation is scoped to the authenticated owner
+  ---
+  duration_ms: 1.249
+  type: 'test'
+  ...
+# Subtest: deployment identity reports the provider supplied full SHA only
+ok 36 - deployment identity reports the provider supplied full SHA only
+  ---
+  duration_ms: 4.3757
+  type: 'test'
+  ...
+# Subtest: missing or malformed deployment revision stays unknown
+ok 37 - missing or malformed deployment revision stays unknown
+  ---
+  duration_ms: 0.6141
+  type: 'test'
+  ...
+# Subtest: isValidIsoDate rejects impossible calendar dates
+ok 38 - isValidIsoDate rejects impossible calendar dates
+  ---
+  duration_ms: 5.0555
+  type: 'test'
+  ...
+# Subtest: isValidIsoDate accepts leap days and valid ISO dates
+ok 39 - isValidIsoDate accepts leap days and valid ISO dates
+  ---
+  duration_ms: 0.3873
+  type: 'test'
+  ...
+# Subtest: daysBetween uses calendar days without local timezone drift
+ok 40 - daysBetween uses calendar days without local timezone drift
+  ---
+  duration_ms: 0.9319
+  type: 'test'
+  ...
+# Subtest: normalizes current and legacy Expo push tokens
+ok 41 - normalizes current and legacy Expo push tokens
+  ---
+  duration_ms: 2.8097
+  type: 'test'
+  ...
+# Subtest: rejects malformed Expo push tokens
+ok 42 - rejects malformed Expo push tokens
+  ---
+  duration_ms: 0.8549
+  type: 'test'
+  ...
+# Subtest: sendControllerError preserves classified 4xx messages
+ok 43 - sendControllerError preserves classified 4xx messages
+  ---
+  duration_ms: 1.4946
+  type: 'test'
+  ...
+# Subtest: sendControllerError hides unclassified internal messages
+ok 44 - sendControllerError hides unclassified internal messages
+  ---
+  duration_ms: 0.3545
+  type: 'test'
+  ...
+# Subtest: getPagination applies safe defaults and caps page size
+ok 45 - getPagination applies safe defaults and caps page size
+  ---
+  duration_ms: 2.9782
+  type: 'test'
+  ...
+# Subtest: buildPaginationMeta reports whether another page exists
+ok 46 - buildPaginationMeta reports whether another page exists
+  ---
+  duration_ms: 0.415
+  type: 'test'
+  ...
+# Subtest: accepts eight-digit phone numbers with an allowed prefix
+ok 47 - accepts eight-digit phone numbers with an allowed prefix
+  ---
+  duration_ms: 1.716
+  type: 'test'
+  ...
+# Subtest: rejects phones with a disallowed prefix
+ok 48 - rejects phones with a disallowed prefix
+  ---
+  duration_ms: 0.351
+  type: 'test'
+  ...
+# Subtest: rejects whitespace, punctuation, non-ASCII digits and wrong lengths
+ok 49 - rejects whitespace, punctuation, non-ASCII digits and wrong lengths
+  ---
+  duration_ms: 0.3413
+  type: 'test'
+  ...
+# Subtest: exposes a clear validation message
+ok 50 - exposes a clear validation message
+  ---
+  duration_ms: 0.2545
+  type: 'test'
+  ...
+1..50
+# tests 50
+# suites 0
+# pass 50
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 740.8782

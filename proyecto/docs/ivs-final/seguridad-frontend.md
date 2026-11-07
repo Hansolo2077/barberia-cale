@@ -1,5 +1,8 @@
 # Cierre de las tres alertas altas del frontend
 
+> Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
+
+
 Fecha: 7 de noviembre de 2026. Responsable: Hanssel, con ejecución técnica asistida autorizada. Versión corregida: 1.0.1; etiqueta `v1.0.1-ivs.20261107`. Se conserva el release 1.0.0 como antecedente, sin reemplazar sus binarios ni atribuirle este parche.
 
 ## Causa y corrección

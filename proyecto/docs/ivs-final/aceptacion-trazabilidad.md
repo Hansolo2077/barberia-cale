@@ -1,5 +1,8 @@
 # Aceptación y trazabilidad final de IVS
 
+> Cierre funcional posterior, 07/11/2026: APK 1.0.1 comprobado nuevamente, 23 casos UI conformes; 27/27 integración reejecutados; 50 backend + 4 notificaciones + 3 seguridad de navegación. API pública identificada por SHA 51a6a28314452045d912d8f0940190a24c344bfb. Las cifras/pendientes del primer corte se conservan como antecedentes y quedan actualizados por [cierre funcional](cierre-funcional.md).
+
+
 Los códigos RF se conservan desde el Hito 1 ampliado. RF-18 a RF-22 ya estaban descritos en el Hito I entregado y están formalizados en requisitos-actuales.md; no se presentan como cinco funciones nuevas de noviembre. El cierre añade verificaciones, recuperación y documentación. Las exclusiones siguen siendo pagos, inventario, múltiples sucursales, selección de barbero, recuperación automática de clave, web push y validación equivalente de iOS.
 
 El recorrido interfaz → componente → endpoint → datos está en la sección 14 de [arquitectura](../arquitectura-actual/Arquitectura_y_Diseno_Actual_Barberia_Cale.md). Esta tabla añade aceptación y evidencia. PF corresponde a regresion-final.json del corte IVS; capturas históricas son del 03/10 y NF del 31/10. Las once comprobaciones UI nuevas están en interfaz-apk.json y complementan esta matriz como se indica después.
